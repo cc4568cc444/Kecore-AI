@@ -1,0 +1,9 @@
+spring:
+  ai:
+    mcp:
+      client:
+        streamable-http:
+          connections:
+            utools:
+              url: http://127.0.0.1:3501
+              endpoint: /mcp

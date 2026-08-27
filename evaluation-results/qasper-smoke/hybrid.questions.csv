@@ -1,0 +1,3 @@
+﻿question_id,paper_id,question,answer,answer_f1,evidence_f1,context_recall_at_k,numeric_accuracy,abstention_correct,faithfulness,retrieval_ms,generation_ms,judge_ms,answer_latency_ms,total_latency_ms,client_latency_ms,retrieved_count,reranker_applied,error
+b6f15fb6279b82e34a5bf4828b7b5ddabfdf1d54,1912.01214,which multilingual approaches do they compare with?,,,0.1945337620578778,1.0,,,,156.0,0.0,0.0,156.0,156.0,181.0,8,False,
+f5e6f43454332e0521a778db0b769481e23e7682,1912.01214,what are the pivot-based baselines?,,,0.44741873804971316,0.9454545454545454,,,,176.0,0.0,0.0,176.0,176.0,185.0,8,False,

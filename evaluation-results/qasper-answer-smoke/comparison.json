@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-08-27T11:54:59.758945+00:00",
+  "cases": "D:\\Kecore AI\\src\\test\\resources\\qasper\\qasper-dev.jsonl",
+  "selected_cases": 1,
+  "offset": 0,
+  "config": {
+    "endpoint": "http://127.0.0.1:18080/paper/evaluation/query",
+    "model_id": "deepseek",
+    "top_k": 8,
+    "context_mode": "parent-child",
+    "generate_answer": true,
+    "judge": true
+  },
+  "modes": {
+    "hybrid": {
+      "mode": "hybrid",
+      "metrics": {
+        "total": 1,
+        "successful": 1,
+        "failed": 0,
+        "failure_rate": 0.0,
+        "context_recall_at_k": 1.0,
+        "evidence_f1": 0.194534,
+        "answer_f1": 0.214286,
+        "numeric_accuracy": null,
+        "abstention_accuracy": 1.0,
+        "faithfulness": 1.0,
+        "retrieval_latency_p50_ms": 155.0,
+        "retrieval_latency_p95_ms": 155.0,
+        "answer_latency_p50_ms": 2334.0,
+        "answer_latency_p95_ms": 2334.0,
+        "judge_latency_p50_ms": 2764.0,
+        "judge_latency_p95_ms": 2764.0,
+        "reranker_applied_rate": null
+      },
+      "questions": [
+        {
+          "question_id": "b6f15fb6279b82e34a5bf4828b7b5ddabfdf1d54",
+          "paper_id": "1912.01214",
+          "question": "which multilingual approaches do they compare with?",
+          "answer": "They compare with pivoting, multilingual NMT (MNMT), and cross-lingual transfer without pretraining [1]. They also compare against MNMT with back translation and pivoting$_m$ [4].",
+          "answer_f1": 0.21428571428571427,
+          "evidence_f1": 0.1945337620578778,
+          "context_recall_at_k": 1.0,
+          "numeric_accuracy": null,
+          "abstention_correct": true,
+          "faithfulness": 1.0,
+          "retrieval_ms": 155.0,
+          "generation_ms": 2179.0,
+          "judge_ms": 2764.0,
+          "answer_latency_ms": 2334.0,
+          "total_latency_ms": 5098.0,
+          "client_latency_ms": 5121.0,
+          "retrieved_count": 8,
+          "reranker_applied": false,
+          "error": ""
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/spring_agent}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:123}
+  ai:
+    openai:
+      chat:
+        api-key: ${CAICHEN_KEY:}
+    mcp:
+      client:
+        enabled: ${SPRING_AI_MCP_CLIENT_ENABLED:false}
+
+app:
+  embedding:
+    ollama:
+      base-url: ${APP_EMBEDDING_OLLAMA_BASE_URL:http://host.docker.internal:11434}
+  financial-rag:
+    rerank:
+      url: ${APP_FINANCIAL_RAG_RERANK_URL:http://host.docker.internal:8010}
+
+server:
+  port: ${SERVER_PORT:8088}

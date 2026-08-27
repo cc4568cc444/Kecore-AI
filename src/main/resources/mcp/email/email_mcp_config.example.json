@@ -1,0 +1,11 @@
+{
+  "smtp_host": "smtp.office365.com",
+  "smtp_port": 587,
+  "smtp_username": "SilverAddie0030@outlook.com",
+  "smtp_password": "YOUR_OUTLOOK_APP_PASSWORD_OR_SMTP_PASSWORD",
+  "from_email": "SilverAddie0030@outlook.com",
+  "from_name": "Spring AI Mailer",
+  "use_tls": true,
+  "use_ssl": false,
+  "timeout_seconds": 20
+}

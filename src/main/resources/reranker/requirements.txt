@@ -1,0 +1,4 @@
+fastapi>=0.116,<1
+safetensors>=0.4
+transformers>=4.51,<5
+uvicorn[standard]>=0.35,<1

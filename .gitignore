@@ -1,0 +1,58 @@
+.env
+HELP.md
+target/
+src/main/frontend/*.log
+**/node_modules/
+**/node_modules/.vite/
+**/.vite/
+MEMORY.md
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+memory/
+**/multi-doc-2025/
+src/main/resources/mcp/email/email_mcp_config.json
+src/main/resources/agent_test/reports/
+src/main/resources/agent_test/runs
+rag_shell.txt
+**/node_modules/
+**/node_modules/.vite/
+**/.vite/
+*.log
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Local RAG data and runtime artifacts ###
+*.zip
+.env
+**/.env
+**/__pycache__/
+src/main/resources/multi-doc-2025/**/original_doc/
+src/main/resources/multi-doc-2025/**/eval-results/
+datasets/qasper/

@@ -1,0 +1,143 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/spring_agent
+    username: postgres
+    password: 123
+    driver-class-name: org.postgresql.Driver
+  application:
+    name: springai
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  ai:
+    model:
+      chat: openai
+      embedding: none
+      audio:
+        speech: none
+        transcription: none
+      image: none
+      moderation: none
+    openai:
+      chat:
+        base-url: https://api.caichen.online
+        completions-path: /v1/chat/completions
+        api-key: ${CAICHEN_KEY}
+        options:
+          model: gpt-5.5
+          temperature: 0.4
+          #        base-url: https://token-plan-cn.xiaomimimo.com|https://api.xiaomimimo.com
+          #        api-key: ${MIMO_KEY}
+          #        completions-path: /v1/chat/completions
+    #    dashscope:
+    #      api-key: ${ALI_KEY}
+    #      embedding:
+    #        options:
+    #          model: text-embedding-v4
+    #          dimensions: 1024
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 768
+        max-document-batch-size: 10
+        initialize-schema: true
+    mcp:
+      client:
+        enabled: true
+        type: sync
+        initialized: false
+        toolcallback:
+          enabled: true
+        streamable-http:
+          connections:
+            utools:
+              url: http://127.0.0.1:3501
+              endpoint: /mcp
+            my-coffee:
+              url: https://gwmcp.lkcoffee.com
+              endpoint: /order/user/mcp
+        stdio:
+          connections:
+            email-mailer:
+              command: 'E:\python\python.exe'
+              args:
+                - src/main/resources/mcp/email/email_mcp_server.py
+              env:
+                EMAIL_MCP_CONFIG: ${EMAIL_MCP_CONFIG:}
+                EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:}
+                EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:}
+                EMAIL_SMTP_USERNAME: ${EMAIL_SMTP_USERNAME:}
+                EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD:}
+                EMAIL_SMTP_FROM_EMAIL: ${EMAIL_SMTP_FROM_EMAIL:}
+                EMAIL_SMTP_FROM_NAME: ${EMAIL_SMTP_FROM_NAME:Spring AI Mailer}
+                EMAIL_SMTP_USE_TLS: ${EMAIL_SMTP_USE_TLS:False}
+                EMAIL_SMTP_USE_SSL: ${EMAIL_SMTP_USE_SSL:True}
+                EMAIL_SMTP_TIMEOUT: ${EMAIL_SMTP_TIMEOUT:}
+            calculator:
+              command: node
+              args:
+                - D:\MCP\calculator-mcp\index.js
+
+app:
+  default-models:
+    model1:
+      base-url: https://api.deepseek.com
+      completions-path: /v1/chat/completions
+      api-key: ${DEEPSEEK_KEY:}
+      options:
+        model: deepseek-v4-flash
+    model2:
+      base-url: https://api.caichen.online
+      completions-path: /v1/chat/completions
+      api-key: ${CAICHEN_KEY:}
+      options:
+        model: gpt-5.5
+        temperature: 0.4
+  embedding:
+    ollama:
+      base-url: http://172.16.1.114:11434
+      model: qwen3-embedding:0.6b
+      #      model: nomic-embed-text-v2-moe:latest
+      dimensions: 1024
+  financial-rag:
+    table: multidoc_s2_full_chunks
+    fallback-table: multidoc_s2_medium_chunks
+    top-k: 15
+    hybrid-top-k: 60
+    rerank:
+      enabled: true
+      url: http://127.0.0.1:8010
+      model: Qwen3-Reranker-0.6B
+      doc-chars: 3000
+  paper-rag:
+    table: qasper_paper_chunks
+    top-k: 8
+    hybrid-top-k: 40
+    rerank:
+      enabled: true
+      url: http://127.0.0.1:8010
+      model: Qwen3-Reranker-0.6B
+      doc-chars: 3200
+  mcp:
+    http:
+      headers:
+        "[http://127.0.0.1:3501]":
+          x-mcp-key: ${UTOOLS_MCP_KEY:}
+        "[https://gwmcp.lkcoffee.com]":
+          Authorization: "Bearer ${LUCKIN_MCP_TOKEN:}"
+  tools:
+    shell:
+      command-timeout: 15m
+
+server:
+  address: 0.0.0.0
+  port: 8080
+
+logging:
+  level:
+    org.springframework.ai: DEBUG
+    io.modelcontextprovider: DEBUG
+    org.springframework.ai.chat.client.advisor: debug
+    com.cc.springai: debug

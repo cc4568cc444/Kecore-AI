@@ -1,0 +1,11 @@
+.git
+.github
+.idea
+.claude
+target
+memory
+*.zip
+*.log
+Dockerfile
+docker-compose*.yml
+src/main/resources/mcp/email/email_mcp_config.json

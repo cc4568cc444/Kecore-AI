@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kecore AI Vue</title>
+    <link rel="icon" type="image/svg+xml" href="/vue/favicon.svg">
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem("spring-ai-mode") || "chat";
+          if (mode === "game") mode = "finance";
+          if (!/^(chat|finance|agent)$/.test(mode)) mode = "chat";
+          document.documentElement.setAttribute("data-initial-mode", mode);
+        } catch (error) {
+          document.documentElement.setAttribute("data-initial-mode", "chat");
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="/webjars/katex/0.16.44/dist/katex.min.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

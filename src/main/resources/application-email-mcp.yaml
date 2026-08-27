@@ -1,0 +1,21 @@
+spring:
+  ai:
+    mcp:
+      client:
+        stdio:
+          connections:
+            email-mailer:
+              command: '${EMAIL_MCP_COMMAND:D:\ProgramData\Anaconda3\envs\claw\python.exe}'
+              args:
+                - src/main/resources/mcp/email/email_mcp_server.py
+              env:
+                EMAIL_MCP_CONFIG: ${EMAIL_MCP_CONFIG:}
+                EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:}
+                EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:}
+                EMAIL_SMTP_USERNAME: ${EMAIL_SMTP_USERNAME:}
+                EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD:}
+                EMAIL_SMTP_FROM_EMAIL: ${EMAIL_SMTP_FROM_EMAIL:}
+                EMAIL_SMTP_FROM_NAME: ${EMAIL_SMTP_FROM_NAME:Spring AI Mailer}
+                EMAIL_SMTP_USE_TLS: ${EMAIL_SMTP_USE_TLS:}
+                EMAIL_SMTP_USE_SSL: ${EMAIL_SMTP_USE_SSL:}
+                EMAIL_SMTP_TIMEOUT: ${EMAIL_SMTP_TIMEOUT:}

@@ -1,0 +1,323 @@
+{
+  "name": "agent_mode_advanced_20",
+  "version": "3.0.0",
+  "description": "A harder agent benchmark with cross-file reasoning, conflicting sources, decoy files, multi-artifact outputs, and search-heavy tasks.",
+  "tasks": [
+    {
+      "id": "t01_invoice_reconciliation",
+      "title": "Reconcile invoice and policy rules",
+      "prompt": "Find the real pricing and shipping rules in the workspace, ignoring any decoy notes. Reconcile them with the invoice data, compute subtotal, discounts, shipping, tax, and final total, then write invoice_summary.md, totals.json, and a short audit_note.md explaining which files you trusted and why.",
+      "setup_files": {
+        "data/invoice.csv": "item,qty,unit_price,discount_rate\nnotebook,3,12.50,0.10\npen,10,1.20,0.00\nbackpack,1,45.00,0.15\nlamp,2,18.00,0.05\nmarker,6,2.50,0.00\n",
+        "rules/pricing.md": "Apply line-item discount first. Then apply a cart discount of 5% when the discounted subtotal is at least 100.00.\n",
+        "rules/shipping.md": "Shipping is 12.90 when the discounted subtotal is below 150.00, otherwise shipping is free. Tax is 8.25% and applies after shipping.\n",
+        "notes/decoy.txt": "Do not use this file. Earlier draft said shipping is always free, which is outdated.\n"
+      },
+      "expected_files": [
+        {"path": "invoice_summary.md"},
+        {"path": "totals.json"},
+        {"path": "audit_note.md"}
+      ]
+    },
+    {
+      "id": "t02_action_reconcile",
+      "title": "Reconcile meeting actions with conflicts",
+      "prompt": "Search the workspace for the meeting notes and tracker files, merge duplicate action items, prefer the latest explicit due date, and write action_items.md, open_risks.md, and follow_up_questions.md.",
+      "setup_files": {
+        "meetings/alpha.md": "# Sprint Review\n- Alice will update API docs by Friday.\n- Bob will fix checkout validation by June 20.\n- The dashboard mockup needs legal approval.\n",
+        "meetings/beta.md": "# Follow-up\n- Alice said API docs moved to next Monday.\n- Bob is blocked until payment copy is confirmed.\n- Carol will prepare test data after the schema change lands.\n",
+        "tracker/task_tracker.csv": "owner,task,status,due_date\nAlice,API docs,in_progress,2026-06-16\nBob,checkout validation,blocked,2026-06-20\nCarol,test data,open,2026-06-18\n",
+        "tracker/archive.md": "Old tracker entries should not override the active tracker.\n"
+      },
+      "expected_files": [
+        {"path": "action_items.md"},
+        {"path": "open_risks.md"},
+        {"path": "follow_up_questions.md"}
+      ]
+    },
+    {
+      "id": "t03_todo_inventory",
+      "title": "Inventory TODOs with exclusions",
+      "prompt": "Search the workspace for TODO, FIXME, and HACK comments. Ignore vendor, generated, and archived directories. Write todo_report.md with grouped findings and a severity guess.",
+      "setup_files": {
+        "src/main.js": "function boot() {\n  // TODO: validate config before startup\n  return true;\n}\n",
+        "src/ui.js": "export function render() {\n  // FIXME: handle empty state\n}\n",
+        "src/util/helpers.js": "export const format = (v) => v.trim();\n// HACK: temporary normalization\n",
+        "tests/test_ui.js": "// TODO: add regression case for empty dashboard\n",
+        "vendor/legacy.js": "// TODO: do not report this vendored note\n",
+        "generated/schema.js": "// FIXME: do not report this generated note\n",
+        "archive/old_notes.md": "HACK: stale note from a prior experiment.\n"
+      },
+      "expected_files": [
+        {"path": "todo_report.md"}
+      ]
+    },
+    {
+      "id": "t04_config_sync",
+      "title": "Synchronize config and env",
+      "prompt": "Read the base config, the override config, and the environment template. Apply the override rules, align the placeholders, and write config/app.json, .env.example, and config_sync_notes.md.",
+      "setup_files": {
+        "config/app.json": "{\n  \"service\": \"billing\",\n  \"timeoutSeconds\": 20,\n  \"dryRun\": false,\n  \"featureFlags\": [\"legacy-pricing\"],\n  \"mailer\": {\"host\": \"localhost\", \"port\": 1025}\n}\n",
+        "config/app.override.json": "{\n  \"timeoutSeconds\": 45,\n  \"dryRun\": true,\n  \"featureFlags\": [\"legacy-pricing\", \"tiered-discounts\"],\n  \"mailer\": {\"host\": \"smtp.internal\", \"port\": 587}\n}\n",
+        ".env.example": "SERVICE_NAME=billing\nTIMEOUT_SECONDS=20\nDRY_RUN=false\nMAILER_HOST=localhost\nMAILER_PORT=1025\n",
+        "config/README.txt": "The override file is authoritative for deployment settings.\n"
+      },
+      "expected_files": [
+        {"path": "config/app.json"},
+        {"path": ".env.example"},
+        {"path": "config_sync_notes.md"}
+      ]
+    },
+    {
+      "id": "t05_policy_diff_risk",
+      "title": "Compare policy revisions",
+      "prompt": "Find the active policy files and the exception notes. Write policy_diff.md and risk_matrix.md, and make sure the output distinguishes added, removed, changed, and exception-only rules.",
+      "setup_files": {
+        "policy/v1.md": "Password minimum length: 10\nMFA required for admins\nSession timeout: 60 minutes\nAudit logs retained for 90 days\n",
+        "policy/v2.md": "Password minimum length: 12\nMFA required for all users\nSession timeout: 45 minutes\nAudit logs retained for 180 days\nGuest accounts disabled by default\n",
+        "policy/exceptions.md": "Exception 1: legacy service accounts may keep MFA exemption until migration completes.\nException 2: customer support can extend session timeout during active troubleshooting.\n",
+        "policy/draft.md": "Draft only. Not approved.\n"
+      },
+      "expected_files": [
+        {"path": "policy_diff.md"},
+        {"path": "risk_matrix.md"}
+      ]
+    },
+    {
+      "id": "t06_sales_net_revenue",
+      "title": "Calculate net revenue",
+      "prompt": "Use the sales, returns, discounts, and region mapping files to calculate net revenue by region and identify the top product after returns. Write sales_analysis.md and region_breakdown.csv.",
+      "setup_files": {
+        "data/sales.csv": "order_id,product,region,units,unit_price\nA100,alpha,East,10,5.00\nA101,beta,West,4,12.00\nA102,alpha,East,3,5.00\nA103,gamma,North,2,25.00\nA104,beta,West,5,12.00\nA105,delta,South,1,100.00\nA106,alpha,West,2,5.00\n",
+        "data/returns.csv": "order_id,units_returned\nA101,1\nA104,2\nA106,1\n",
+        "data/discounts.csv": "product,discount_rate\nalpha,0.10\nbeta,0.05\ngamma,0.00\ndelta,0.20\n",
+        "docs/region_map.md": "East and West are retail. North and South are enterprise. Retail orders pay a 3% channel fee after discounts.\n",
+        "docs/notes.md": "Returned units reduce revenue before the channel fee.\n"
+      },
+      "expected_files": [
+        {"path": "sales_analysis.md"},
+        {"path": "region_breakdown.csv"}
+      ]
+    },
+    {
+      "id": "t07_readme_from_spec",
+      "title": "Generate documentation",
+      "prompt": "Search the workspace for the product specification, examples, FAQ, and release caveats. Build README.md, cli_reference.md, and troubleshooting.md from the scattered sources.",
+      "setup_files": {
+        "docs/spec.md": "Tool name: MiniLedger\nPurpose: track shared expenses for small teams.\nCommands: add, list, settle, export.\nDefault format: markdown.\n",
+        "examples/usage.md": "Examples:\n- add 12.50 Alice Bob Carol\n- settle Alice Bob 8.00\n- export --format csv\n",
+        "docs/faq.md": "FAQ:\n- Data is stored locally.\n- CSV export omits settled entries by default.\n- No authentication yet.\n",
+        "notes/release_caveats.md": "Known limitation: export may omit notes field when the entry has empty tags.\n"
+      },
+      "expected_files": [
+        {"path": "README.md"},
+        {"path": "cli_reference.md"},
+        {"path": "troubleshooting.md"}
+      ]
+    },
+    {
+      "id": "t08_contact_extraction",
+      "title": "Extract and classify contacts",
+      "prompt": "Find every unique email address in the workspace, classify each as internal or external, and write contacts.csv, domains.md, and a short notes.md explaining the deduplication rules you applied.",
+      "setup_files": {
+        "notes/people.md": "Alice <alice@acme.com>\nBob <bob@acme.com>\nVendor contact: support@vendor.io\n",
+        "notes/inbox.md": "Please copy finance@acme.com, legal@acme.com, and external partner ops@partner.net.\nDuplicate: alice@acme.com\n",
+        "notes/archive.txt": "Old thread with noreply@acme.com and help@partner.net.\n",
+        "lists/blocklist.txt": "Do not include test@example.com or noreply@example.com if they appear in future notes.\n"
+      },
+      "expected_files": [
+        {"path": "contacts.csv"},
+        {"path": "domains.md"},
+        {"path": "notes.md"}
+      ]
+    },
+    {
+      "id": "t09_markdown_fix_links",
+      "title": "Repair Markdown links",
+      "prompt": "Inspect the docs tree, identify broken relative links and the stale table, fix them, and write guide_fixed.md plus link_report.md.",
+      "setup_files": {
+        "docs/guide.md": "# Guide\n\nSee [architecture](./arch.md) and [sequence](../assets/flow.png).\n\n| Step | Owner |\n| --- | --- |\n| Design | team |\n| Review | team |\n\n- [ ] publish docs\n- [ ] verify links\n",
+        "docs/architecture.md": "# Architecture\nThe sequence diagram lives in assets/sequence.png.\n",
+        "assets/sequence.png": "binary-placeholder",
+        "assets/flow.png": "binary-placeholder",
+        "docs/legacy/old.md": "Broken link: [old guide](../missing.md)\n"
+      },
+      "expected_files": [
+        {"path": "guide_fixed.md"},
+        {"path": "link_report.md"}
+      ]
+    },
+    {
+      "id": "t10_error_runbook",
+      "title": "Analyze an incident",
+      "prompt": "Read the logs, the runbook, and the deployment notes. Identify the root cause and immediate mitigation for E-472 and E-611, then write incident_summary.md and timeline.md.",
+      "setup_files": {
+        "logs/app.log": "2026-06-12T09:01:00Z WARN request failed E-472 after deploy 41\n2026-06-12T09:03:12Z ERROR cache rebuild timed out E-611\n2026-06-12T09:04:50Z WARN retry succeeded for /checkout\n2026-06-12T09:07:10Z INFO worker restarted\n",
+        "runbook/errors.md": "E-472 means cache index drift. Rebuild the local cache and restart the worker.\nE-611 means the rebuild is still running and the worker should be drained before retry.\n",
+        "deploy/notes.md": "Deploy 41 changed the cache key format and enabled the new checkout path.\n",
+        "deploy/rollback.md": "Rollback only if the rebuild cannot complete within 10 minutes.\n"
+      },
+      "expected_files": [
+        {"path": "incident_summary.md"},
+        {"path": "timeline.md"}
+      ]
+    },
+    {
+      "id": "t11_release_notes",
+      "title": "Write release notes",
+      "prompt": "Aggregate the issue fragments, commit notes, deprecation messages, and customer impact notes. Produce release_notes.md and release_email.md grouped by Added, Fixed, Changed, and Deprecated.",
+      "setup_files": {
+        "issues/alpha.md": "Added CSV export for reports.\nAdded search filters for date range.\n",
+        "issues/beta.md": "Fixed incorrect timezone label on the dashboard.\nChanged page size from 20 to 50.\n",
+        "issues/gamma.md": "Fixed duplicate submission on slow networks.\nAdded keyboard shortcut for new item.\n",
+        "issues/deprecations.md": "Deprecated legacy payment callback endpoint.\nDeprecated export --xlsx flag in favor of --format xlsx.\n",
+        "customers/impact.md": "Some customers may need to update saved exports and refresh cached timezone labels.\n"
+      },
+      "expected_files": [
+        {"path": "release_notes.md"},
+        {"path": "release_email.md"}
+      ]
+    },
+    {
+      "id": "t12_dependency_hours",
+      "title": "Estimate work with dependencies",
+      "prompt": "Read the task list, dependency graph, and capacity note. Compute total hours per assignee, identify the critical path, and write estimates.md, critical_path.md, and staffing_gap.md.",
+      "setup_files": {
+        "tasks.csv": "task,assignee,hours\nAPI cleanup,Alice,3.5\nUI polish,Bob,2.0\nMigration,Alice,4.0\nDocs,Carol,1.5\nTests,Bob,3.0\nLaunch check,Carol,2.5\nCache audit,Dave,2.0\n",
+        "dependencies.csv": "task,depends_on\nMigration,API cleanup\nTests,UI polish\nLaunch check,Migration\nLaunch check,Tests\nCache audit,Migration\nCache audit,Docs\n",
+        "capacity.md": "Alice can spend 6 hours this sprint. Bob can spend 5 hours. Carol can spend 4 hours. Dave can spend 1 hour.\n",
+        "constraints.md": "Launch check cannot begin until both Migration and Tests are done.\n"
+      },
+      "expected_files": [
+        {"path": "estimates.md"},
+        {"path": "critical_path.md"},
+        {"path": "staffing_gap.md"}
+      ]
+    },
+    {
+      "id": "t13_log_spike_analysis",
+      "title": "Find the failing endpoint",
+      "prompt": "Inspect the access log, deploy log, and router map. Determine which endpoint had the largest 5xx spike within 15 minutes after the deploy and write incident_summary.md plus root_cause.md.",
+      "setup_files": {
+        "logs/access.log": "09:00 GET /health 200\n09:01 POST /checkout 500\n09:02 GET /items 200\n09:04 POST /checkout 502\n09:05 GET /profile 500\n09:06 POST /checkout 500\n09:16 POST /checkout 200\n09:18 GET /profile 200\n",
+        "logs/deploy.log": "09:00 deploy v41 started\n09:03 deploy v41 completed\n09:07 cache warmup started\n",
+        "docs/router.md": "POST /checkout uses the payment service. GET /profile uses the user service. GET /items uses catalog.\n",
+        "docs/postmortem_hint.md": "The checkout path changed first, then cache warmup lagged behind.\n"
+      },
+      "expected_files": [
+        {"path": "incident_summary.md"},
+        {"path": "root_cause.md"}
+      ]
+    },
+    {
+      "id": "t14_structured_summary",
+      "title": "Summarize into structured JSON",
+      "prompt": "Read the meeting notes, decisions, and event log. Create project_summary.json with nested sections for goals, decisions, owners, deadlines, risks, and open_questions, plus a brief summary.md.",
+      "setup_files": {
+        "meeting_notes.md": "Goal: ship the onboarding refresh.\nOwners: Alice owns copy, Bob owns UI, Carol owns QA.\nDeadlines: copy draft by Friday, UI review by Monday.\n",
+        "decisions.txt": "Decision 1: keep the old login path during rollout.\nDecision 2: block launch until accessibility review passes.\n",
+        "events.csv": "type,date,detail\nrisk,2026-06-13,legal review pending\nquestion,2026-06-14,confirm email wording\nquestion,2026-06-15,confirm dark-mode contrast\n"
+      },
+      "expected_files": [
+        {"path": "project_summary.json"},
+        {"path": "summary.md"}
+      ]
+    },
+    {
+      "id": "t15_duplicate_identity",
+      "title": "Resolve duplicate identities",
+      "prompt": "Check all user tables and the alias map for duplicate IDs and conflicting names. Write duplicates.md, canonical_ids.csv, and cleanup_plan.md.",
+      "setup_files": {
+        "users/users_a.csv": "id,name,role\n101,Alice,admin\n102,Bob,analyst\n103,Carol,reviewer\n",
+        "users/users_b.csv": "id,name,role\n103,Caroline,reviewer\n104,Dan,admin\n102,Robert,analyst\n",
+        "users/users_c.csv": "id,name,role\n105,Eve,finance\n101,Alicia,admin\n106,Frank,support\n",
+        "users/aliases.md": "Known aliases: Alice = Alicia, Bob = Robert, Carol = Caroline.\n",
+        "users/notes.md": "Conflicting roles should be resolved by the most recent non-empty record.\n"
+      },
+      "expected_files": [
+        {"path": "duplicates.md"},
+        {"path": "canonical_ids.csv"},
+        {"path": "cleanup_plan.md"}
+      ]
+    },
+    {
+      "id": "t16_env_alignment",
+      "title": "Align environment variables",
+      "prompt": "Read the service docs, compose file, and secrets map. Produce .env.example, env_notes.md, and deployment_checklist.md with required and optional variables, preserving safe defaults.",
+      "setup_files": {
+        "service.md": "Service needs API_URL, API_KEY, LOG_LEVEL, FEATURE_FLAGS, SMTP_HOST, SMTP_USER, SMTP_PASSWORD.\nOptional: METRICS_URL.\n",
+        "docker-compose.yml": "services:\n  app:\n    environment:\n      - API_URL\n      - API_KEY\n      - LOG_LEVEL=info\n      - FEATURE_FLAGS=beta\n      - SMTP_HOST=smtp.internal\n      - SMTP_USER=mailer\n      - SMTP_PASSWORD\n      - METRICS_URL\n",
+        "secrets_map.md": "Store API_KEY and SMTP_PASSWORD in environment secrets. SMTP_USER is not secret.\n",
+        "k8s/deployment.yaml": "env:\n  - name: API_URL\n  - name: API_KEY\n  - name: FEATURE_FLAGS\n"
+      },
+      "expected_files": [
+        {"path": ".env.example"},
+        {"path": "env_notes.md"},
+        {"path": "deployment_checklist.md"}
+      ]
+    },
+    {
+      "id": "t17_test_plan",
+      "title": "Draft a test plan",
+      "prompt": "Read requirements, constraints, and API examples, then write a test plan with at least eight cases and a coverage matrix. Include positive, negative, boundary, and security scenarios.",
+      "setup_files": {
+        "requirements.md": "Feature: password reset. Users request an email link, the link expires after 15 minutes, and used links cannot be reused. MFA users must confirm via a second factor before reset completes.\n",
+        "constraints.md": "Constraints: do not send real email in tests; use a fake mailer. Avoid testing private passwords directly. Do not rely on network access.\n",
+        "api_examples.md": "POST /password-reset/request with email.\nPOST /password-reset/confirm with token and new_password.\n",
+        "acceptance_criteria.md": "A reset request should create only one active token per user.\n"
+      },
+      "expected_files": [
+        {"path": "test_plan.md"},
+        {"path": "coverage_matrix.md"}
+      ]
+    },
+    {
+      "id": "t18_timezone_status",
+      "title": "Convert status windows",
+      "prompt": "Use the date/time tool to interpret the UTC windows in the workspace, convert them to Asia/Shanghai time, and write status_note.md, calendar_reminders.md, and blocker_summary.md.",
+      "setup_files": {
+        "status_utc.md": "Current UTC window: 2026-06-12 06:00 to 2026-06-12 09:00.\nReview window: 2026-06-12 13:30 to 2026-06-12 15:00.\n",
+        "schedule.md": "Deployment freeze starts at 2026-06-13 00:00 UTC.\nApproval deadline is 2026-06-12 18:30 UTC.\n",
+        "blockers.md": "Two review comments remain. One integration test is flaky. Deployment is otherwise ready.\n"
+      },
+      "expected_files": [
+        {"path": "status_note.md"},
+        {"path": "calendar_reminders.md"},
+        {"path": "blocker_summary.md"}
+      ]
+    },
+    {
+      "id": "t19_refactor_plan",
+      "title": "Plan a safe refactor",
+      "prompt": "Inspect the duplicated source helpers and the benchmark notes. Write refactor_plan.md and rollout_checklist.md that identify the shared abstraction, rollout order, and rollback risk.",
+      "setup_files": {
+        "src/a.js": "export function normalizeName(value) {\n  return value.trim().toLowerCase();\n}\n",
+        "src/b.js": "export function normalizeEmail(value) {\n  return value.trim().toLowerCase();\n}\n",
+        "src/c.js": "export function normalizeDomain(value) {\n  return value.trim().toLowerCase();\n}\n",
+        "src/helper.js": "export function keepCase(value) {\n  return value.trim();\n}\n",
+        "benchmarks/notes.md": "The normalization path is hot. Avoid regressions in user search and dedupe.\n"
+      },
+      "expected_files": [
+        {"path": "refactor_plan.md"},
+        {"path": "rollout_checklist.md"}
+      ]
+    },
+    {
+      "id": "t20_cross_doc_review",
+      "title": "Review integration risks",
+      "prompt": "Read the API, UI, schema, performance, and sample payload files. Write integration_risks.md and compat_matrix.md, and call out mismatched field names, schema gaps, and timing constraints.",
+      "setup_files": {
+        "api.md": "API returns id, displayName, createdAt, and pagination tokens. Errors use code and message.\n",
+        "ui.md": "UI expects id, name, createdAt, and pageCursor. Errors expect errorCode and message.\n",
+        "schema.md": "Schema defines id, displayName, createdAt, updatedAt, and cursor.\n",
+        "perf.md": "Target: first response under 1.5s. Pagination requests under 400ms. Full refresh under 3s.\n",
+        "samples/request.json": "{\"pageCursor\": \"abc\", \"limit\": 20}\n",
+        "samples/response.json": "{\"displayName\": \"Alpha\", \"createdAt\": \"2026-06-12T00:00:00Z\"}\n"
+      },
+      "expected_files": [
+        {"path": "integration_risks.md"},
+        {"path": "compat_matrix.md"}
+      ]
+    }
+  ]
+}
