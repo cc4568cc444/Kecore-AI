@@ -59,8 +59,15 @@ public class PaperRagController {
                 PaperRagService.RetrievalMode.fromValue("child".equalsIgnoreCase(contextMode) ? "default" : contextMode),
                 request.topK() == null ? 8 : request.topK(),
                 request.modelId(),
+                request.judgeModelId(),
+                request.goldAnswers(),
                 request.generateAnswer() == null || request.generateAnswer(),
                 Boolean.TRUE.equals(request.judgeFaithfulness())));
+    }
+
+    @GetMapping(value = "/evaluation/config", produces = MediaType.APPLICATION_JSON_VALUE)
+    public PaperRagService.EvaluationConfig evaluationConfig() {
+        return paperRagService.evaluationConfig();
     }
 
     @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -175,6 +182,8 @@ public class PaperRagController {
                                     String contextMode,
                                     Integer topK,
                                     String modelId,
+                                    String judgeModelId,
+                                    java.util.List<String> goldAnswers,
                                     Boolean generateAnswer,
                                     Boolean judgeFaithfulness) {
     }

@@ -64,8 +64,11 @@ public class PaperRagService {
     @Value("${app.paper-rag.top-k:8}")
     private int topK;
 
-    @Value("${app.paper-rag.hybrid-top-k:40}")
+    @Value("${app.paper-rag.hybrid-top-k:20}")
     private int hybridTopK;
+
+    @Value("${app.paper-rag.judge-model-id:gpt}")
+    private String defaultJudgeModelId;
 
     @Value("${app.paper-rag.rerank.enabled:true}")
     private boolean rerankEnabled;
@@ -78,6 +81,12 @@ public class PaperRagService {
 
     @Value("${app.paper-rag.rerank.doc-chars:3200}")
     private int rerankDocChars;
+
+    @Value("${app.embedding.ollama.model:unknown}")
+    private String embeddingModelName;
+
+    @Value("${app.embedding.ollama.dimensions:0}")
+    private int embeddingDimensions;
 
     public PaperRagService(EmbeddingModel embeddingModel,
                            JdbcTemplate jdbcTemplate,
@@ -194,10 +203,22 @@ public class PaperRagService {
         }
 
         FaithfulnessResult faithfulness = null;
+        AnswerEvaluation answerEvaluation = null;
         long judgeMs = 0L;
         if (query.judgeFaithfulness() && !answer.isBlank() && !search.chunks().isEmpty()) {
             long judgeStartedAt = System.currentTimeMillis();
-            faithfulness = judgeFaithfulness(question, answer, search.chunks(), contextMode, query.modelId());
+            String judgeModelId = clean(query.judgeModelId()).isBlank()
+                    ? defaultJudgeModelId
+                    : clean(query.judgeModelId());
+            EvaluationJudgement judgement = judgeEvaluation(
+                    question,
+                    answer,
+                    query.goldAnswers(),
+                    search.chunks(),
+                    contextMode,
+                    judgeModelId);
+            faithfulness = judgement.faithfulness();
+            answerEvaluation = judgement.answerEvaluation();
             judgeMs = elapsedMs(judgeStartedAt);
         }
 
@@ -233,7 +254,27 @@ public class PaperRagService {
                 generationMs,
                 judgeMs,
                 elapsedMs(startedAt),
-                faithfulness);
+                faithfulness,
+                answerEvaluation,
+                evaluationConfig());
+    }
+
+    public EvaluationConfig evaluationConfig() {
+        ModelConfigService.ResolvedModelConfig judge = modelConfigService.resolve(defaultJudgeModelId);
+        Map<String, Object> rerankerRuntime = rerankerRuntime();
+        return new EvaluationConfig(
+                tableName,
+                topK,
+                hybridTopK,
+                rerankEnabled,
+                rerankUrl,
+                rerankModel,
+                rerankDocChars,
+                rerankerRuntime,
+                embeddingModelName,
+                embeddingDimensions,
+                judge.id(),
+                judge.model());
     }
 
     private PaperAnswerStream directAnswer(String text, long planningMs, long retrievalMs, String query) {
@@ -604,16 +645,21 @@ public class PaperRagService {
                 .content();
     }
 
-    private FaithfulnessResult judgeFaithfulness(String question,
-                                                  String answer,
-                                                  List<PaperChunk> chunks,
-                                                  RetrievalMode contextMode,
-                                                  String modelId) {
+    private EvaluationJudgement judgeEvaluation(String question,
+                                                 String answer,
+                                                 List<String> goldAnswers,
+                                                 List<PaperChunk> chunks,
+                                                 RetrievalMode contextMode,
+                                                 String judgeModelId) {
         try {
-            String judged = evaluationChatClient(modelId)
+            String goldJson = objectMapper.writeValueAsString(goldAnswers == null ? List.of() : goldAnswers);
+            String judged = evaluationChatClient(judgeModelId)
                     .prompt()
                     .user("""
                             Question:
+                            %s
+
+                            Gold answers:
                             %s
 
                             Answer to judge:
@@ -622,18 +668,82 @@ public class PaperRagService {
                             Evidence:
                             %s
 
-                            Judge whether every factual claim in the answer is supported by the evidence.
-                            Return strict JSON only: {"score": 0.0, "reason": "brief explanation"}.
-                            score must be between 0 and 1, where 1 means fully supported and 0 means unsupported.
-                            """.formatted(question, answer, retrievedContext(chunks, contextMode)))
-                    .options(modelConfigService.chatOptions(modelId))
+                            Perform two independent checks:
+                            1. Compare the answer with any gold answer for semantic correctness. Preserve distinctions in
+                               numbers, units, negation, datasets, methods and experimental conclusions.
+                            2. Split the answer into minimal verifiable factual claims. For every claim, decide whether it
+                               is directly supported by the numbered evidence. Do not treat a citation marker alone as support.
+
+                            Return strict JSON only with this schema:
+                            {
+                              "answer_correct": true,
+                              "answer_score": 0.0,
+                              "answer_reason": "brief semantic comparison",
+                              "claims": [
+                                {
+                                  "claim": "one atomic factual claim",
+                                  "supported": true,
+                                  "evidence": [1, 2],
+                                  "reason": "brief support or contradiction explanation"
+                                }
+                              ],
+                              "faithfulness_reason": "brief overall explanation"
+                            }
+                            answer_score must be between 0 and 1. If Gold answers is empty, return null for
+                            answer_correct and answer_score. Include every factual claim, including numerical claims.
+                            """.formatted(question, goldJson, answer, retrievedContext(chunks, contextMode)))
+                    .options(modelConfigService.chatOptions(judgeModelId))
                     .call()
                     .content();
             JsonNode root = objectMapper.readTree(extractJson(judged));
-            double score = Math.max(0.0, Math.min(1.0, root.path("score").asDouble(0.0)));
-            return new FaithfulnessResult(score, clean(root.path("reason").asText("")));
+            List<ClaimAssessment> claims = new ArrayList<>();
+            JsonNode claimNodes = root.path("claims");
+            if (claimNodes.isArray()) {
+                for (JsonNode node : claimNodes) {
+                    String claim = clean(node.path("claim").asText(""));
+                    if (claim.isBlank()) continue;
+                    List<Integer> evidence = new ArrayList<>();
+                    JsonNode evidenceNodes = node.path("evidence");
+                    if (evidenceNodes.isArray()) {
+                        evidenceNodes.forEach(value -> {
+                            int index = value.asInt(-1);
+                            if (index > 0 && index <= chunks.size() && !evidence.contains(index)) {
+                                evidence.add(index);
+                            }
+                        });
+                    }
+                    claims.add(new ClaimAssessment(
+                            claim,
+                            node.path("supported").asBoolean(false),
+                            evidence,
+                            clean(node.path("reason").asText(""))));
+                }
+            }
+            int supportedClaims = (int) claims.stream().filter(ClaimAssessment::supported).count();
+            int totalClaims = claims.size();
+            Double faithfulnessScore = totalClaims == 0 ? null : supportedClaims / (double) totalClaims;
+            Boolean answerCorrect = root.hasNonNull("answer_correct")
+                    ? root.path("answer_correct").asBoolean(false)
+                    : null;
+            Double answerScore = root.hasNonNull("answer_score")
+                    ? Math.max(0.0, Math.min(1.0, root.path("answer_score").asDouble(0.0)))
+                    : null;
+            return new EvaluationJudgement(
+                    new FaithfulnessResult(
+                            faithfulnessScore,
+                            supportedClaims,
+                            totalClaims,
+                            claims,
+                            clean(root.path("faithfulness_reason").asText(""))),
+                    new AnswerEvaluation(
+                            answerCorrect,
+                            answerScore,
+                            clean(root.path("answer_reason").asText(""))));
         } catch (Exception ex) {
-            return new FaithfulnessResult(null, "judge failed: " + clean(ex.getMessage()));
+            String reason = "judge failed: " + clean(ex.getMessage());
+            return new EvaluationJudgement(
+                    new FaithfulnessResult(null, 0, 0, List.of(), reason),
+                    new AnswerEvaluation(null, null, reason));
         }
     }
 
@@ -842,6 +952,28 @@ public class PaperRagService {
         return value == null ? "" : value.replaceAll("/+$", "");
     }
 
+    private Map<String, Object> rerankerRuntime() {
+        if (!rerankEnabled || rerankUrl == null || rerankUrl.isBlank()) {
+            return Map.of("status", "disabled");
+        }
+        try {
+            JsonNode health = RestClient.builder()
+                    .baseUrl(trimTrailingSlash(rerankUrl))
+                    .requestFactory(new SimpleClientHttpRequestFactory())
+                    .build()
+                    .get()
+                    .uri("/health")
+                    .retrieve()
+                    .body(JsonNode.class);
+            if (health == null || !health.isObject()) {
+                return Map.of("status", "unavailable");
+            }
+            return objectMapper.convertValue(health, METADATA_TYPE);
+        } catch (Exception exception) {
+            return Map.of("status", "unavailable", "error", clean(exception.getMessage()));
+        }
+    }
+
     private long elapsedMs(long startedAt) {
         return Math.max(0L, System.currentTimeMillis() - startedAt);
     }
@@ -873,6 +1005,8 @@ public class PaperRagService {
                                   RetrievalMode contextMode,
                                   int topK,
                                   String modelId,
+                                  String judgeModelId,
+                                  List<String> goldAnswers,
                                   boolean generateAnswer,
                                   boolean judgeFaithfulness) {
     }
@@ -892,7 +1026,38 @@ public class PaperRagService {
                                   double rerankScore) {
     }
 
-    public record FaithfulnessResult(Double score, String reason) {
+    public record ClaimAssessment(String claim,
+                                  boolean supported,
+                                  List<Integer> evidence,
+                                  String reason) {
+    }
+
+    public record FaithfulnessResult(Double score,
+                                     int supportedClaims,
+                                     int totalClaims,
+                                     List<ClaimAssessment> claims,
+                                     String reason) {
+    }
+
+    public record AnswerEvaluation(Boolean correct, Double score, String reason) {
+    }
+
+    private record EvaluationJudgement(FaithfulnessResult faithfulness,
+                                       AnswerEvaluation answerEvaluation) {
+    }
+
+    public record EvaluationConfig(String table,
+                                   int topK,
+                                   int hybridTopK,
+                                   boolean rerankerEnabled,
+                                   String rerankerUrl,
+                                   String rerankerModel,
+                                   int rerankerDocChars,
+                                   Map<String, Object> rerankerRuntime,
+                                   String embeddingModel,
+                                   int embeddingDimensions,
+                                   String defaultJudgeModelId,
+                                   String defaultJudgeModel) {
     }
 
     public record EvaluationResult(String questionId,
@@ -908,7 +1073,9 @@ public class PaperRagService {
                                    long generationMs,
                                    long judgeMs,
                                    long latencyMs,
-                                   FaithfulnessResult faithfulness) {
+                                   FaithfulnessResult faithfulness,
+                                   AnswerEvaluation answerEvaluation,
+                                   EvaluationConfig evaluationConfig) {
     }
 
     public enum EvaluationRetrievalMode {

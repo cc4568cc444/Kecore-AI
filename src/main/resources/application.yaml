@@ -114,7 +114,8 @@ app:
   paper-rag:
     table: qasper_paper_chunks
     top-k: 8
-    hybrid-top-k: 40
+    hybrid-top-k: 20
+    judge-model-id: gpt
     rerank:
       enabled: true
       url: http://127.0.0.1:8010

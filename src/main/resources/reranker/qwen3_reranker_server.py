@@ -111,7 +111,9 @@ class Qwen3Reranker:
             return_tensors="pt",
         )
         inputs = {key: value.to(self.device) for key, value in inputs.items()}
-        logits = self.model(**inputs).logits[:, -1, :]
+        # Qwen3 only needs the final yes/no token for reranking. Avoid materializing
+        # vocabulary logits for every input position, which wastes VRAM and time.
+        logits = self.model(**inputs, logits_to_keep=1).logits[:, -1, :]
         yes_logits = logits[:, self.true_token_id]
         no_logits = logits[:, self.false_token_id]
         probabilities = self.torch.softmax(

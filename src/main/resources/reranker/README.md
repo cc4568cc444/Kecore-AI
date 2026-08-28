@@ -54,4 +54,6 @@ Invoke-RestMethod -Method Post `
 
 论文评测的 `hybrid_rerank` 响应应显示 `rerankerApplied: true`，完整报告中的 `reranker_applied_rate` 应为 `1.0`。
 
+服务只计算最后一个 yes/no token 的 logits；论文评测默认将 Hybrid 候选控制为 20 个，再选出 Top-8，以降低本地 4GB 显卡的重排延迟。
+
 若 GTX 1650 出现 CUDA 显存不足，请保持 `--batch-size 1`，并把 `--max-length` 降为 `1024`；该设置会截断过长候选段落，正式评测时需要在报告中记录。
