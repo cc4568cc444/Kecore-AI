@@ -20,9 +20,9 @@ let scrollFrame = 0;
 const suggestions = computed(() => {
   if (sessions.mode === "finance") {
     return [
-      { label: "Apple revenue", prompt: "Apple 2024 年的 revenue 是多少，相比 2023 年变化多少？" },
-      { label: "MSFT net income", prompt: "MSFT 2024 年 net income 是多少？" },
-      { label: "NVDA assets", prompt: "NVDA 2024 年 total assets 是多少？" }
+      { label: "跨年趋势", prompt: "Apple 的 revenue 从 2022 到 2024 年如何变化？请计算年度变化率。" },
+      { label: "同行对比", prompt: "比较 Microsoft 和 Apple 在 2024 财年的营业利润率，并说明差异。" },
+      { label: "多文档分析", prompt: "比较 NVIDIA 与 AMD 从 2022 到 2024 年的 revenue 增长趋势，并引用各年证据。" }
     ];
   }
   if (sessions.mode === "paper") {
@@ -204,7 +204,7 @@ function messageKey(message, index) {
 <template>
   <section ref="messagesEl" class="messages" id="messages" aria-live="polite" @scroll.passive="syncPinnedToBottom">
     <div v-if="!messages.length" class="empty-state" id="emptyState">
-      <div class="empty-logo" aria-hidden="true"></div>
+      <div class="empty-logo" aria-hidden="true"><span>K</span></div>
       <h2 id="emptyTitle">{{ sessions.emptyTitle }}</h2>
       <div class="suggestions" id="chatSuggestions">
         <button

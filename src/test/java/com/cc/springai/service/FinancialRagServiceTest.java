@@ -32,6 +32,16 @@ class FinancialRagServiceTest {
                           "translatedQuestion": "What about 2023?",
                           "resolvedQuestion": "What was Apple's revenue in fiscal 2023?",
                           "intent": "factual_metric",
+                          "subTasks": [{
+                            "id": "retrieve_aapl_2023_revenue",
+                            "query": "Apple net sales",
+                            "companies": ["AAPL"],
+                            "years": ["2023"],
+                            "metric": "revenue",
+                            "operation": "retrieve",
+                            "modality": "table",
+                            "dependsOn": []
+                          }],
                           "retrievalQueries": [
                             "Apple fiscal 2023 revenue net sales",
                             "AAPL 2023 consolidated statements net sales"
@@ -48,6 +58,9 @@ class FinancialRagServiceTest {
                 .contains("AAPL 2023 consolidated statements net sales")
                 .contains("What was Apple's revenue in fiscal 2023?");
         assertThat(plan.displayQuery()).contains(" | ");
+        assertThat(plan.subTasks()).hasSize(1);
+        assertThat(plan.subTasks().get(0).companies()).containsExactly("AAPL");
+        assertThat(plan.subTasks().get(0).years()).containsExactly("2023");
     }
 
     @Test
@@ -61,5 +74,6 @@ class FinancialRagServiceTest {
         assertThat(plan.queries()).hasSize(5);
         assertThat(plan.queries().get(0)).isEqualTo("Apple 2024 revenue 是多少？");
         assertThat(String.join(" ", plan.queries())).contains("net sales");
+        assertThat(plan.subTasks()).hasSize(1);
     }
 }

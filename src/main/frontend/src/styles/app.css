@@ -4443,7 +4443,7 @@ body[data-mode="game"] .send-button.is-running {
   border: 1px solid #e1e1e7;
   border-right: 0;
   border-bottom: 0;
-  border-radius: 20px 0 0 0;
+  border-radius: 0;
   background: #ffffff;
   box-shadow: -8px 0 30px rgba(35, 35, 45, 0.04);
 }
@@ -4459,7 +4459,7 @@ body[data-mode="game"] .send-button.is-running {
   height: auto;
   padding: 10px 24px;
   border-bottom: 1px solid #eeeef2;
-  border-radius: 20px 0 0 0;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(16px);
 }
@@ -4660,15 +4660,38 @@ html[data-initial-mode="agent"] .topbar-workspace-toggle[hidden] {
 }
 
 .chat-panel.is-empty .empty-logo {
+  display: grid;
   width: 40px;
   height: 40px;
   margin-bottom: 22px;
-  border-color: #3b3c43;
-  box-shadow: 0 14px 34px rgba(31, 32, 40, 0.08);
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #23252c 0%, #3e424d 100%);
+  box-shadow: 0 10px 24px rgba(31, 32, 40, 0.2);
+  color: #fff;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
 }
 
 .chat-panel.is-empty .empty-logo::before {
-  border-color: #3b3c43;
+  top: 14px;
+  left: 24px;
+  width: 5px;
+  height: 17px;
+  border: 0;
+  border-radius: 2px;
+  background: #f1aaa5;
+  content: "";
+  transform: rotate(-34deg);
+}
+
+.chat-panel.is-empty .empty-logo span {
+  position: relative;
+  z-index: 1;
 }
 
 .chat-panel.is-empty .empty-state h2 {

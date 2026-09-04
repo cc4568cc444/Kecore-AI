@@ -50,7 +50,6 @@ function sessionPreview(session) {
         type="button"
         data-mode="finance"
         role="tab"
-        hidden
         :data-active="sessions.mode === 'finance' ? 'true' : null"
         :aria-selected="sessions.mode === 'finance' ? 'true' : 'false'"
         @click="sessions.changeMode('finance')"
@@ -65,6 +64,7 @@ function sessionPreview(session) {
         type="button"
         data-mode="paper"
         role="tab"
+        hidden
         :data-active="sessions.mode === 'paper' ? 'true' : null"
         :aria-selected="sessions.mode === 'paper' ? 'true' : 'false'"
         @click="sessions.changeMode('paper')"

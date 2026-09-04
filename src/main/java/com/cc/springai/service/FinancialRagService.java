@@ -89,11 +89,14 @@ public class FinancialRagService {
     private final ChatMemory chatMemory;
     private final ModelConfigService modelConfigService;
 
-    @Value("${app.financial-rag.table:multidoc_s2_full_chunks}")
+    @Value("${app.financial-rag.table:multidoc_full_chunks}")
     private String tableName;
 
     @Value("${app.financial-rag.fallback-table:multidoc_s2_medium_chunks}")
     private String fallbackTableName;
+
+    @Value("${app.financial-rag.legacy-fallback-table:multidoc_s2_medium_chunks}")
+    private String legacyFallbackTableName;
 
     @Value("${app.financial-rag.top-k:8}")
     private int topK;
@@ -143,7 +146,7 @@ public class FinancialRagService {
             FinancialRetrievalPlan plan = planRetrieval(prompt, conversationId, modelId);
             List<FinancialChunk> chunks = search(plan, retrievalMode);
             if (chunks.isEmpty()) {
-                return Flux.just("未在 S2 年报知识库中检索到相关片段。请确认索引已构建，或在问题中补充公司和年份。");
+                return Flux.just("未在 Multi-Doc-2025 年报知识库中检索到相关片段。请确认索引已构建，或在问题中补充公司和年份。");
             }
 
             String context = retrievedContext(chunks, retrievalMode);
@@ -194,7 +197,7 @@ public class FinancialRagService {
             List<FinancialChunk> chunks = search(plan, retrievalMode);
             long retrievalMs = elapsedMs(retrievalStartedAt);
             if (chunks.isEmpty()) {
-                return new FinancialAnswerStream(Flux.just(new ModelStreamEvent("token", "未在 S2 年报知识库中检索到相关片段。请确认索引已构建，或在问题中补充公司和年份。")),
+                return new FinancialAnswerStream(Flux.just(new ModelStreamEvent("token", "未在 Multi-Doc-2025 年报知识库中检索到相关片段。请确认索引已构建，或在问题中补充公司和年份。")),
                         translationMs, retrievalMs, false, retrievalQuery);
             }
 
@@ -249,6 +252,18 @@ public class FinancialRagService {
                               "translatedQuestion": "concise English translation",
                               "resolvedQuestion": "self-contained English question with omitted company/year/metric filled when inferable",
                               "intent": "one of: factual_metric, comparison, trend, calculation, definition, risk_factor, segment_breakdown, source_lookup, unknown",
+                              "subTasks": [
+                                {
+                                  "id": "stable task id such as retrieve_aapl_2022_revenue",
+                                  "query": "focused retrieval query for exactly one financial fact",
+                                  "companies": ["SEC ticker"],
+                                  "years": ["fiscal year"],
+                                  "metric": "canonical financial metric",
+                                  "operation": "retrieve | compare | trend | calculate",
+                                  "modality": "text | table | hybrid",
+                                  "dependsOn": ["ids of prerequisite tasks"]
+                                }
+                              ],
                               "retrievalQueries": [
                                 "best standalone query for semantic/vector retrieval",
                                 "focused sub-query for metric/table/period/company",
@@ -261,6 +276,8 @@ public class FinancialRagService {
                             - If a pronoun or omission can be resolved from recent conversation, fill it in.
                             - If it cannot be resolved, keep the ambiguity explicit in resolvedQuestion.
                             - Prefer English retrieval queries because SEC filings are indexed in English.
+                            - For cross-company or cross-year questions, create one retrieve sub-task per company/year/metric fact.
+                            - Keep calculation/comparison nodes dependent on the retrieve nodes; do not combine all entities into one retrieve task.
                             - Return exactly 5 retrievalQueries.
                             - retrievalQueries[0] must be the direct concise English translation of the current user question.
                             - retrievalQueries[1] should be the resolved standalone question with omitted context filled in.
@@ -317,6 +334,7 @@ public class FinancialRagService {
             String translated = cleanLine(root.path("translatedQuestion").asText(""));
             String resolved = cleanLine(root.path("resolvedQuestion").asText(""));
             String intent = cleanLine(root.path("intent").asText("unknown"));
+            List<FinancialRetrievalTask> subTasks = parseSubTasks(root.path("subTasks"));
             List<String> queries = new ArrayList<>();
             FinancialRetrievalPlan fallback = fallbackRetrievalPlan(prompt);
             addQuery(queries, translated.isBlank() ? fallback.translatedQuestion() : translated);
@@ -336,7 +354,8 @@ public class FinancialRagService {
                     translated.isBlank() ? fallback.translatedQuestion() : translated,
                     resolved.isBlank() ? fallback.resolvedQuestion() : resolved,
                     intent.isBlank() ? "unknown" : intent,
-                    queries);
+                    queries,
+                    subTasks.isEmpty() ? fallback.subTasks() : subTasks);
         } catch (Exception ignored) {
             return fallbackRetrievalPlan(prompt);
         }
@@ -351,7 +370,60 @@ public class FinancialRagService {
         addQuery(queries, normalized + " annual report 10-K");
         addQuery(queries, normalized + " consolidated financial statements");
         addQuery(queries, normalized + " table fiscal year period");
-        return new FinancialRetrievalPlan(normalized, normalized, inferIntent(normalized), normalizeQueryCount(queries));
+        return new FinancialRetrievalPlan(normalized, normalized, inferIntent(normalized), normalizeQueryCount(queries),
+                List.of(new FinancialRetrievalTask("retrieve_1", expanded, List.of(), extractYears(normalized),
+                        "", "retrieve", "hybrid", List.of())));
+    }
+
+    private List<FinancialRetrievalTask> parseSubTasks(JsonNode nodes) {
+        if (!nodes.isArray()) {
+            return List.of();
+        }
+        List<FinancialRetrievalTask> tasks = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            String query = cleanLine(node.path("query").asText(""));
+            if (query.isBlank()) {
+                continue;
+            }
+            tasks.add(new FinancialRetrievalTask(
+                    cleanLine(node.path("id").asText("task_" + (tasks.size() + 1))),
+                    query,
+                    stringList(node.path("companies")),
+                    stringList(node.path("years")),
+                    cleanLine(node.path("metric").asText("")),
+                    cleanLine(node.path("operation").asText("retrieve")),
+                    cleanLine(node.path("modality").asText("hybrid")),
+                    stringList(node.path("dependsOn"))));
+            if (tasks.size() >= 24) {
+                break;
+            }
+        }
+        return List.copyOf(tasks);
+    }
+
+    private List<String> stringList(JsonNode nodes) {
+        if (!nodes.isArray()) {
+            return List.of();
+        }
+        List<String> values = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            String value = cleanLine(node.asText(""));
+            if (!value.isBlank() && values.stream().noneMatch(existing -> existing.equalsIgnoreCase(value))) {
+                values.add(value);
+            }
+        }
+        return List.copyOf(values);
+    }
+
+    private List<String> extractYears(String query) {
+        List<String> years = new ArrayList<>();
+        Matcher matcher = YEAR_PATTERN.matcher(query == null ? "" : query);
+        while (matcher.find()) {
+            if (!years.contains(matcher.group())) {
+                years.add(matcher.group());
+            }
+        }
+        return List.copyOf(years);
     }
 
     private String recentConversationContext(String conversationId) {
@@ -462,7 +534,8 @@ public class FinancialRagService {
                 - resolvedQuestion: %s
                 - intent: %s
                 - retrievalQueries: %s
-                """.formatted(plan.resolvedQuestion(), plan.intent(), plan.displayQuery());
+                - typedSubTasks: %s
+                """.formatted(plan.resolvedQuestion(), plan.intent(), plan.displayQuery(), plan.subTasks());
     }
 
     private ChatClient financeChatClient(String modelId) {
@@ -487,18 +560,20 @@ public class FinancialRagService {
     }
 
     private List<FinancialChunk> search(FinancialRetrievalPlan plan, FinancialRetrievalMode retrievalMode) {
-        List<String> queries = plan.queries().isEmpty()
-                ? List.of(plan.displayQuery())
-                : plan.queries();
+        List<FinancialSearchRequest> requests = taskScopedRequests(plan);
+        if (requests.isEmpty()) {
+            requests = List.of(new FinancialSearchRequest(plan.displayQuery(), "", ""));
+        }
         int finalTopK = Math.max(1, topK);
         Map<String, FinancialChunk> merged = new LinkedHashMap<>();
-        for (int index = 0; index < queries.size(); index++) {
-            String query = queries.get(index);
+        for (int index = 0; index < requests.size(); index++) {
+            FinancialSearchRequest request = requests.get(index);
+            String query = request.query();
             if (query == null || query.isBlank()) {
                 continue;
             }
             int limit = index == 0 ? Math.max(finalTopK, hybridTopK) : finalTopK;
-            for (FinancialChunk chunk : search(query, limit, retrievalMode)) {
+            for (FinancialChunk chunk : search(query, limit, retrievalMode, request.company(), request.year())) {
                 FinancialChunk existing = merged.get(chunk.chunkId());
                 if (existing == null || chunk.finalScore() > existing.finalScore()) {
                     merged.put(chunk.chunkId(), chunk);
@@ -511,6 +586,44 @@ public class FinancialRagService {
                 .toList();
     }
 
+    private List<FinancialSearchRequest> taskScopedRequests(FinancialRetrievalPlan plan) {
+        List<FinancialSearchRequest> requests = new ArrayList<>();
+        for (FinancialRetrievalTask task : plan.subTasks()) {
+            if (!"retrieve".equalsIgnoreCase(task.operation()) || task.query().isBlank()) {
+                continue;
+            }
+            List<String> companies = task.companies().isEmpty() ? List.of("") : task.companies();
+            List<String> years = task.years().isEmpty() ? List.of("") : task.years();
+            for (String company : companies) {
+                for (String year : years) {
+                    addSearchRequest(requests, new FinancialSearchRequest(
+                            String.join(" ", List.of(task.query(), task.metric())).strip(),
+                            company.toUpperCase(Locale.ROOT), year));
+                }
+            }
+        }
+        for (String query : plan.queries()) {
+            addSearchRequest(requests, new FinancialSearchRequest(query, "", ""));
+        }
+        return List.copyOf(requests);
+    }
+
+    private void addSearchRequest(List<FinancialSearchRequest> requests, FinancialSearchRequest candidate) {
+        String query = cleanLine(candidate.query());
+        if (query.isBlank()) {
+            return;
+        }
+        FinancialSearchRequest normalized = new FinancialSearchRequest(query, cleanLine(candidate.company()),
+                cleanLine(candidate.year()));
+        boolean duplicate = requests.stream().anyMatch(existing ->
+                existing.query().equalsIgnoreCase(normalized.query())
+                        && existing.company().equalsIgnoreCase(normalized.company())
+                        && existing.year().equalsIgnoreCase(normalized.year()));
+        if (!duplicate) {
+            requests.add(normalized);
+        }
+    }
+
     private List<FinancialChunk> search(String query) {
         return search(query, Math.max(1, topK), FinancialRetrievalMode.fromConfig(retrievalStrategy));
     }
@@ -521,13 +634,26 @@ public class FinancialRagService {
 
     private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode) {
         String table = resolveTableName();
+        return search(query, resultLimit, retrievalMode, table, inferFilters(query, table));
+    }
+
+    private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode,
+                                        String company, String year) {
+        String table = resolveTableName();
+        RetrievalFilters filters = explicitFilters(table, company, year);
+        if (filters.isEmpty()) {
+            filters = inferFilters(query, table);
+        }
+        return search(query, resultLimit, retrievalMode, table, filters);
+    }
+
+    private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode,
+                                        String table, RetrievalFilters filters) {
         float[] embedding = embeddingModel.embed(query);
         String vector = vectorLiteral(embedding);
         int finalTopK = Math.max(1, resultLimit);
         int finalHybridTopK = Math.max(hybridTopK, finalTopK);
         int vectorLimit = Math.max(finalHybridTopK * 3, finalTopK);
-        RetrievalFilters filters = inferFilters(query, table);
-
         List<FinancialChunk> vectorRows = fetchVectorCandidates(table, vector, filters, vectorLimit);
         List<FinancialChunk> candidateRows = fetchMetadataCandidates(table, filters);
         if (candidateRows.isEmpty() && filters.hasCompanyOrYear()) {
@@ -551,12 +677,28 @@ public class FinancialRagService {
         return ranked.stream().limit(finalTopK).toList();
     }
 
+    private RetrievalFilters explicitFilters(String table, String company, String year) {
+        String normalizedCompany = cleanLine(company).toUpperCase(Locale.ROOT);
+        String normalizedYear = cleanLine(year);
+        String sourceFile = "";
+        if (!normalizedCompany.isBlank() && !normalizedYear.isBlank()) {
+            String candidate = normalizedCompany + "_" + normalizedYear + ".html";
+            if (sourceFileExists(table, candidate)) {
+                sourceFile = candidate;
+            }
+        }
+        return new RetrievalFilters(sourceFile, normalizedCompany, normalizedYear);
+    }
+
     private String resolveTableName() {
         if (tableExists(tableName)) {
             return safeTableName(tableName);
         }
         if (tableExists(fallbackTableName)) {
             return safeTableName(fallbackTableName);
+        }
+        if (tableExists(legacyFallbackTableName)) {
+            return safeTableName(legacyFallbackTableName);
         }
         return safeTableName(tableName);
     }
@@ -1019,7 +1161,7 @@ public class FinancialRagService {
     }
 
     private String safeTableName(String table) {
-        String value = table == null || table.isBlank() ? "multidoc_s2_full_chunks" : table;
+        String value = table == null || table.isBlank() ? "multidoc_full_chunks" : table;
         if (!value.matches("[A-Za-z0-9_]+")) {
             throw new IllegalArgumentException("Invalid financial RAG table name: " + value);
         }
@@ -1058,13 +1200,27 @@ public class FinancialRagService {
     private record SqlWhere(String sql, List<Object> params) {
     }
 
+    private record FinancialSearchRequest(String query, String company, String year) {
+    }
+
     record FinancialRetrievalPlan(String translatedQuestion,
                                   String resolvedQuestion,
                                   String intent,
-                                  List<String> queries) {
+                                  List<String> queries,
+                                  List<FinancialRetrievalTask> subTasks) {
         String displayQuery() {
             return String.join(" | ", queries);
         }
+    }
+
+    record FinancialRetrievalTask(String id,
+                                  String query,
+                                  List<String> companies,
+                                  List<String> years,
+                                  String metric,
+                                  String operation,
+                                  String modality,
+                                  List<String> dependsOn) {
     }
 
     public record ModelStreamEvent(String type, String content) {

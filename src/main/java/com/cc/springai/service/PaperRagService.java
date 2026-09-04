@@ -44,6 +44,10 @@ public class PaperRagService {
     private static final Pattern SAFE_TABLE = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static final TypeReference<Map<String, Object>> METADATA_TYPE = new TypeReference<>() { };
     private static final Pattern TOKEN_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9_.-]*|\\d+(?:,\\d{3})*(?:\\.\\d+)?%?");
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("(?<![A-Za-z])[-+]?\\d+(?:,\\d{3})*(?:\\.\\d+)?%?");
+    private static final Pattern NUMERIC_QUESTION_PATTERN = Pattern.compile(
+            "(?i).*(how many|how much|accuracy|f1|bleu|rouge|percent|percentage|number|count|score|多少|数量|准确率|指标|得分).*"
+    );
     private static final Set<String> STOPWORDS = Set.of(
             "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "it",
             "of", "on", "or", "paper", "study", "that", "the", "this", "to", "was", "were", "what",
@@ -69,6 +73,15 @@ public class PaperRagService {
 
     @Value("${app.paper-rag.judge-model-id:gpt}")
     private String defaultJudgeModelId;
+
+    @Value("${app.paper-rag.quality-gate.enabled:true}")
+    private boolean qualityGateEnabled;
+
+    @Value("${app.paper-rag.quality-gate.min-query-coverage:0.35}")
+    private double qualityGateMinQueryCoverage;
+
+    @Value("${app.paper-rag.quality-gate.min-rerank-score:0.05}")
+    private double qualityGateMinRerankScore;
 
     @Value("${app.paper-rag.rerank.enabled:true}")
     private boolean rerankEnabled;
@@ -191,15 +204,19 @@ public class PaperRagService {
         long retrievalStartedAt = System.currentTimeMillis();
         EvaluationSearch search = searchForEvaluation(question, paperId, mode, contextMode, limit);
         long retrievalMs = elapsedMs(retrievalStartedAt);
+        RetrievalGate retrievalGate = assessRetrievalQuality(question, search, mode, contextMode);
 
         long generationMs = 0L;
         String answer = "";
         if (query.generateAnswer()) {
-            long generationStartedAt = System.currentTimeMillis();
-            answer = search.chunks().isEmpty()
-                    ? "无法从当前论文证据确定。"
-                    : generateEvaluationAnswer(question, paperId, search.chunks(), contextMode, query.modelId());
-            generationMs = elapsedMs(generationStartedAt);
+            if (retrievalGate.status() == RetrievalGateStatus.REJECT) {
+                answer = "cannot determine from the provided evidence";
+            } else {
+                long generationStartedAt = System.currentTimeMillis();
+                answer = generateEvaluationAnswer(
+                        question, paperId, search.chunks(), contextMode, query.modelId(), retrievalGate);
+                generationMs = elapsedMs(generationStartedAt);
+            }
         }
 
         FaithfulnessResult faithfulness = null;
@@ -248,6 +265,7 @@ public class PaperRagService {
                 mode.value,
                 contextMode == RetrievalMode.PARENT_CHILD ? "parent-child" : "child",
                 search.rerankerApplied(),
+                retrievalGate,
                 chunks,
                 chunks.stream().map(EvaluationChunk::content).toList(),
                 retrievalMs,
@@ -256,11 +274,18 @@ public class PaperRagService {
                 elapsedMs(startedAt),
                 faithfulness,
                 answerEvaluation,
-                evaluationConfig());
+                evaluationConfig(query.modelId(), query.judgeModelId()));
     }
 
     public EvaluationConfig evaluationConfig() {
-        ModelConfigService.ResolvedModelConfig judge = modelConfigService.resolve(defaultJudgeModelId);
+        return evaluationConfig("deepseek", defaultJudgeModelId);
+    }
+
+    private EvaluationConfig evaluationConfig(String generatorModelId, String judgeModelId) {
+        String resolvedGeneratorId = clean(generatorModelId).isBlank() ? "deepseek" : clean(generatorModelId);
+        String resolvedJudgeId = clean(judgeModelId).isBlank() ? defaultJudgeModelId : clean(judgeModelId);
+        ModelConfigService.ResolvedModelConfig generator = modelConfigService.resolve(resolvedGeneratorId);
+        ModelConfigService.ResolvedModelConfig judge = modelConfigService.resolve(resolvedJudgeId);
         Map<String, Object> rerankerRuntime = rerankerRuntime();
         return new EvaluationConfig(
                 tableName,
@@ -273,6 +298,11 @@ public class PaperRagService {
                 rerankerRuntime,
                 embeddingModelName,
                 embeddingDimensions,
+                qualityGateEnabled,
+                qualityGateMinQueryCoverage,
+                qualityGateMinRerankScore,
+                generator.id(),
+                generator.model(),
                 judge.id(),
                 judge.model());
     }
@@ -624,7 +654,8 @@ public class PaperRagService {
                                             String paperId,
                                             List<PaperChunk> chunks,
                                             RetrievalMode contextMode,
-                                            String modelId) {
+                                            String modelId,
+                                            RetrievalGate retrievalGate) {
         return evaluationChatClient(modelId)
                 .prompt()
                 .user("""
@@ -636,13 +667,82 @@ public class PaperRagService {
                         Retrieved evidence:
                         %s
 
-                        Answer only from the retrieved evidence. Preserve exact numbers, units, model names and dataset names.
-                        If the evidence is insufficient, answer exactly: cannot determine from the provided evidence.
-                        Keep the answer concise and cite supporting chunk numbers such as [1] and [2].
-                        """.formatted(paperId, question, retrievedContext(chunks, contextMode)))
+                        Retrieval quality: %s
+
+                        Return only the minimum sufficient answer to the question.
+                        Rules:
+                        1. Use only facts explicitly stated in the retrieved evidence.
+                        2. Do not repeat the question, explain reasoning, add background, or include related facts that were not asked for.
+                        3. For list questions, output only the requested names or items, separated by semicolons.
+                        4. For yes/no questions, begin with exactly "yes" or "no" and add at most one short clause if needed.
+                        5. For numeric questions, preserve the exact values, signs, units, metric names, and dataset labels.
+                        6. Do not include chunk numbers, citations, headings, bullets, markdown, or phrases such as "based on the evidence".
+                        7. Use at most two short sentences. Prefer a short noun phrase when it fully answers the question.
+                        8. If the evidence does not directly establish the answer, output exactly: cannot determine from the provided evidence
+                        """.formatted(
+                        paperId,
+                        question,
+                        retrievedContext(chunks, contextMode),
+                        retrievalGate.status().name() + " - " + retrievalGate.reason()))
                 .options(modelConfigService.chatOptions(modelId))
                 .call()
                 .content();
+    }
+
+    RetrievalGate assessRetrievalQuality(String question,
+                                         EvaluationSearch search,
+                                         EvaluationRetrievalMode mode,
+                                         RetrievalMode contextMode) {
+        if (!qualityGateEnabled) {
+            return new RetrievalGate(RetrievalGateStatus.PASS, 1.0, false, false,
+                    "quality gate disabled");
+        }
+        if (search == null || search.chunks() == null || search.chunks().isEmpty()) {
+            return new RetrievalGate(RetrievalGateStatus.REJECT, 0.0,
+                    NUMERIC_QUESTION_PATTERN.matcher(clean(question)).matches(), false,
+                    "no evidence chunks were retrieved");
+        }
+
+        Set<String> questionTokens = new LinkedHashSet<>(tokenize(question));
+        Set<String> evidenceTokens = new HashSet<>();
+        StringBuilder evidenceText = new StringBuilder();
+        for (PaperChunk chunk : search.chunks()) {
+            String content = retrievalContent(chunk, contextMode);
+            evidenceTokens.addAll(tokenize(content));
+            evidenceText.append(content).append('\n');
+        }
+        long matched = questionTokens.stream().filter(evidenceTokens::contains).count();
+        double coverage = questionTokens.isEmpty() ? 1.0 : (double) matched / questionTokens.size();
+        boolean numericQuestion = NUMERIC_QUESTION_PATTERN.matcher(clean(question)).matches();
+        boolean numericEvidence = NUMBER_PATTERN.matcher(evidenceText).find();
+
+        if (numericQuestion && !numericEvidence) {
+            return new RetrievalGate(RetrievalGateStatus.REJECT, coverage, true, false,
+                    "numeric question but retrieved evidence contains no numeric value");
+        }
+        if (!questionTokens.isEmpty() && matched == 0) {
+            return new RetrievalGate(RetrievalGateStatus.REJECT, coverage, numericQuestion, numericEvidence,
+                    "retrieved evidence contains none of the significant question terms");
+        }
+
+        List<String> cautions = new ArrayList<>();
+        if (coverage < qualityGateMinQueryCoverage) {
+            cautions.add("low significant-term coverage");
+        }
+        if (mode == EvaluationRetrievalMode.HYBRID_RERANK && search.rerankerApplied()) {
+            double bestRerankScore = search.chunks().stream()
+                    .mapToDouble(chunk -> chunk.rerankScore)
+                    .max()
+                    .orElse(0.0);
+            if (bestRerankScore < qualityGateMinRerankScore) {
+                cautions.add("low reranker confidence");
+            }
+        }
+        return cautions.isEmpty()
+                ? new RetrievalGate(RetrievalGateStatus.PASS, coverage, numericQuestion, numericEvidence,
+                "retrieved evidence passed deterministic quality checks")
+                : new RetrievalGate(RetrievalGateStatus.CAUTION, coverage, numericQuestion, numericEvidence,
+                String.join("; ", cautions));
     }
 
     private EvaluationJudgement judgeEvaluation(String question,
@@ -1056,8 +1156,13 @@ public class PaperRagService {
                                    Map<String, Object> rerankerRuntime,
                                    String embeddingModel,
                                    int embeddingDimensions,
-                                   String defaultJudgeModelId,
-                                   String defaultJudgeModel) {
+                                   boolean qualityGateEnabled,
+                                   double qualityGateMinQueryCoverage,
+                                   double qualityGateMinRerankScore,
+                                   String generatorModelId,
+                                   String generatorModel,
+                                   String judgeModelId,
+                                   String judgeModel) {
     }
 
     public record EvaluationResult(String questionId,
@@ -1067,6 +1172,7 @@ public class PaperRagService {
                                    String retrievalMode,
                                    String contextMode,
                                    boolean rerankerApplied,
+                                   RetrievalGate retrievalGate,
                                    List<EvaluationChunk> retrievedChunks,
                                    List<String> citations,
                                    long retrievalMs,
@@ -1102,6 +1208,19 @@ public class PaperRagService {
                 default -> throw new IllegalArgumentException("retrievalMode 必须是 vector、bm25、hybrid 或 hybrid_rerank");
             };
         }
+    }
+
+    public enum RetrievalGateStatus {
+        PASS,
+        CAUTION,
+        REJECT
+    }
+
+    public record RetrievalGate(RetrievalGateStatus status,
+                                double queryCoverage,
+                                boolean numericQuestion,
+                                boolean numericEvidence,
+                                String reason) {
     }
 
     public enum RetrievalMode {

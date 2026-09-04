@@ -9,7 +9,7 @@
       (function () {
         try {
           var mode = localStorage.getItem("spring-ai-mode") || "chat";
-          if (mode === "game") mode = "finance";
+          if (mode === "game" || mode === "paper") mode = "finance";
           if (!/^(chat|finance|agent)$/.test(mode)) mode = "chat";
           document.documentElement.setAttribute("data-initial-mode", mode);
         } catch (error) {
@@ -18,8 +18,8 @@
       })();
     </script>
     <link rel="stylesheet" href="/webjars/katex/0.16.44/dist/katex.min.css">
-    <script type="module" crossorigin src="/vue/assets/index-Bnsdiqn0.js"></script>
-    <link rel="stylesheet" crossorigin href="/vue/assets/index-DMiOVYPS.css">
+    <script type="module" crossorigin src="/vue/assets/index-DPv6clOH.js"></script>
+    <link rel="stylesheet" crossorigin href="/vue/assets/index-B2JhKDv4.css">
   </head>
   <body>
     <div id="app"></div>

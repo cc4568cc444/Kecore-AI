@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import statistics
@@ -31,6 +32,7 @@ SUPPORTED_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank")
 class RunConfig:
     endpoint: str
     model_id: str
+    judge_model_id: str
     top_k: int
     context_mode: str
     generate_answer: bool
@@ -38,6 +40,8 @@ class RunConfig:
     timeout: float
     retries: int
     delay: float
+    cases_sha256: str
+    server_config: dict[str, Any]
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,6 +52,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--modes", default="hybrid_rerank",
                         help="comma-separated: vector,bm25,hybrid,hybrid_rerank")
     parser.add_argument("--model-id", default="deepseek")
+    parser.add_argument("--judge-model-id", default="gpt",
+                        help="independent model config id used for semantic and claim-level judging")
     parser.add_argument("--top-k", type=int, default=8)
     parser.add_argument("--context-mode", choices=("child", "parent-child"), default="parent-child")
     parser.add_argument("--limit", type=int, default=0, help="0 evaluates all selected cases")
@@ -73,9 +79,12 @@ def main() -> None:
 
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
+    base_url = args.base_url.rstrip("/")
+    server_config = get_json(base_url + "/paper/evaluation/config", max(1.0, args.timeout))
     config = RunConfig(
-        endpoint=args.base_url.rstrip("/") + "/paper/evaluation/query",
+        endpoint=base_url + "/paper/evaluation/query",
         model_id=args.model_id,
+        judge_model_id=args.judge_model_id,
         top_k=max(1, args.top_k),
         context_mode=args.context_mode,
         generate_answer=not args.retrieval_only,
@@ -83,6 +92,8 @@ def main() -> None:
         timeout=max(1.0, args.timeout),
         retries=max(0, args.retries),
         delay=max(0.0, args.delay),
+        cases_sha256=sha256_file(args.cases),
+        server_config=server_config,
     )
 
     reports: dict[str, dict[str, Any]] = {}
@@ -102,10 +113,13 @@ def main() -> None:
         "config": {
             "endpoint": config.endpoint,
             "model_id": config.model_id,
+            "judge_model_id": config.judge_model_id,
             "top_k": config.top_k,
             "context_mode": config.context_mode,
             "generate_answer": config.generate_answer,
             "judge": config.judge,
+            "cases_sha256": config.cases_sha256,
+            "server": config.server_config,
         },
         "modes": reports,
     }
@@ -157,12 +171,19 @@ def run_mode(mode: str,
             "contextMode": config.context_mode,
             "topK": config.top_k,
             "modelId": config.model_id,
+            "judgeModelId": config.judge_model_id,
+            "goldAnswers": [str(item) for item in (case.get("gold_answers") or [])],
             "generateAnswer": config.generate_answer,
             "judgeFaithfulness": config.judge,
         }
         started = time.perf_counter()
         try:
             response = post_json(config.endpoint, payload, config.timeout, config.retries)
+            if config.judge and not valid_judgement(response):
+                faithfulness = response.get("faithfulness") or {}
+                answer_evaluation = response.get("answerEvaluation") or {}
+                reason = faithfulness.get("reason") or answer_evaluation.get("reason") or "missing judge output"
+                raise RuntimeError(f"judge did not return a score: {reason}")
             row = {
                 **response,
                 "question_id": question_id,
@@ -191,6 +212,11 @@ def run_mode(mode: str,
         rows.append(row)
         append_jsonl(result_path, row)
         print(f"[{index}/{len(cases)}] {question_id} {status}", flush=True)
+        if index == 1 and config.judge and row.get("error"):
+            raise SystemExit(
+                "Judge smoke check failed on the first case; stopping to avoid an expensive invalid run. "
+                f"Details: {row['error']}"
+            )
         if config.delay:
             time.sleep(config.delay)
     return rows
@@ -221,6 +247,28 @@ def post_json(url: str, payload: dict[str, Any], timeout: float, retries: int) -
     raise RuntimeError(str(last_error or "request failed"))
 
 
+def get_json(url: str, timeout: float) -> dict[str, Any]:
+    request = urllib.request.Request(url, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            value = json.loads(response.read().decode("utf-8"))
+            if not isinstance(value, dict):
+                raise RuntimeError("evaluation config response is not a JSON object")
+            return value
+    except Exception as exc:
+        raise SystemExit(
+            f"Cannot read {url}: {exc}. Restart Spring Boot so the optimized evaluation API is active."
+        ) from exc
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def summarize(mode: str,
               cases: list[dict[str, Any]],
               rows: list[dict[str, Any]],
@@ -236,9 +284,19 @@ def summarize(mode: str,
         evidence = [str(item) for item in (row.get("citations") or [])]
         gold_answers = [str(item) for item in (case.get("gold_answers") or [])]
         gold_evidence = [str(item) for item in (case.get("evidence") or [])]
-        faithfulness = (row.get("faithfulness") or {}).get("score")
+        faithfulness_result = row.get("faithfulness") or {}
+        faithfulness = faithfulness_result.get("score")
+        supported_claims = int(faithfulness_result.get("supportedClaims") or 0)
+        total_claims = int(faithfulness_result.get("totalClaims") or 0)
+        answer_evaluation = row.get("answerEvaluation") or {}
+        semantic_correct = answer_evaluation.get("correct")
+        semantic_score = answer_evaluation.get("score")
+        retrieval_gate = row.get("retrievalGate") or {}
+        gate_status = str(retrieval_gate.get("status") or "UNKNOWN").upper()
         numeric = numeric_match(answer, gold_answers) if case.get("has_numeric_answer") and answer else None
-        generated = bool(answer.strip()) and (number(row.get("generationMs")) or 0.0) > 0.0
+        generated = bool(answer.strip()) and (
+            (number(row.get("generationMs")) or 0.0) > 0.0 or gate_status == "REJECT"
+        )
         scored.append({
             "question_id": str(case.get("question_id", "")),
             "paper_id": str(case.get("paper_id", "")),
@@ -250,6 +308,13 @@ def summarize(mode: str,
             "numeric_accuracy": numeric,
             "abstention_correct": (is_abstention(answer) == (not case.get("answerable", True))) if generated else None,
             "faithfulness": float(faithfulness) if isinstance(faithfulness, (int, float)) else None,
+            "supported_claims": supported_claims,
+            "total_claims": total_claims,
+            "semantic_correct": semantic_correct if isinstance(semantic_correct, bool) else None,
+            "semantic_score": float(semantic_score) if isinstance(semantic_score, (int, float)) else None,
+            "gate_status": gate_status,
+            "gate_query_coverage": number(retrieval_gate.get("queryCoverage")),
+            "gate_reason": str(retrieval_gate.get("reason") or ""),
             "retrieval_ms": number(row.get("retrievalMs")),
             "generation_ms": number(row.get("generationMs")),
             "judge_ms": number(row.get("judgeMs")),
@@ -267,6 +332,12 @@ def summarize(mode: str,
     numeric_scored = [item for item in successful if item["numeric_accuracy"] is not None]
     abstention_scored = [item for item in successful if item["abstention_correct"] is not None]
     faithfulness_scored = [item for item in successful if item["faithfulness"] is not None]
+    semantic_scored = [item for item in successful if item["semantic_correct"] is not None]
+    total_supported_claims = sum(item["supported_claims"] for item in faithfulness_scored)
+    total_judged_claims = sum(item["total_claims"] for item in faithfulness_scored)
+    gate_pass = sum(item["gate_status"] == "PASS" for item in successful)
+    gate_caution = sum(item["gate_status"] == "CAUTION" for item in successful)
+    gate_reject = sum(item["gate_status"] == "REJECT" for item in successful)
     metrics = {
         "total": len(scored),
         "successful": len(successful),
@@ -277,12 +348,22 @@ def summarize(mode: str,
         "numeric_scored": len(numeric_scored),
         "abstention_scored": len(abstention_scored),
         "faithfulness_scored": len(faithfulness_scored),
+        "semantic_scored": len(semantic_scored),
+        "gate_pass": gate_pass,
+        "gate_caution": gate_caution,
+        "gate_reject": gate_reject,
+        "gate_rejection_rate": ratio(gate_reject, len(successful)),
+        "supported_claims": total_supported_claims,
+        "total_claims": total_judged_claims,
         "context_recall_at_k": mean(item["context_recall_at_k"] for item in successful),
         "evidence_f1": mean(item["evidence_f1"] for item in successful),
         "answer_f1": mean(item["answer_f1"] for item in answer_scored),
         "numeric_accuracy": mean(item["numeric_accuracy"] for item in numeric_scored),
         "abstention_accuracy": mean_bool(item["abstention_correct"] for item in abstention_scored),
-        "faithfulness": mean(item["faithfulness"] for item in faithfulness_scored),
+        "faithfulness": ratio(total_supported_claims, total_judged_claims),
+        "faithfulness_macro": mean(item["faithfulness"] for item in faithfulness_scored),
+        "semantic_accuracy": mean_bool(item["semantic_correct"] for item in semantic_scored),
+        "semantic_score": mean(item["semantic_score"] for item in semantic_scored),
         "retrieval_latency_p50_ms": percentile((item["retrieval_ms"] for item in successful), 50),
         "retrieval_latency_p95_ms": percentile((item["retrieval_ms"] for item in successful), 95),
         "answer_latency_p50_ms": percentile((item["answer_latency_ms"] for item in answer_scored), 50),
@@ -343,12 +424,15 @@ def markdown_report(report: dict[str, Any]) -> str:
         "",
         f"- Generated: {report['generated_at']}",
         f"- Cases: {report['selected_cases']}",
-        f"- Model: `{report['config']['model_id']}`",
+        f"- Generator: `{report['config']['model_id']}`",
+        f"- Judge: `{report['config']['judge_model_id']}`",
         f"- Top-K: {report['config']['top_k']}",
         f"- Context: `{report['config']['context_mode']}`",
+        f"- Cases SHA-256: `{report['config']['cases_sha256']}`",
+        f"- Server config: `{json.dumps(report['config']['server'], ensure_ascii=False, sort_keys=True)}`",
         "",
-        "| Mode | Success | Context Recall@K (N) | Evidence F1 | Answer F1 (N) | Numeric Acc. (N) | Abstention Acc. (N) | Faithfulness (N) | Retrieval P50/P95 ms | Answer P50/P95 ms | Reranker applied |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Mode | Success | Gold Evidence Recall@K (N) | Evidence F1 | Answer F1 (N) | Semantic Acc. (N) | Numeric Acc. (N) | Abstention Acc. (N) | Gate P/C/R | Claim Faithfulness (claims) | Retrieval P50/P95 ms | Answer P50/P95 ms | Reranker applied |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for mode, mode_report in report["modes"].items():
         metric = mode_report["metrics"]
@@ -358,17 +442,21 @@ def markdown_report(report: dict[str, Any]) -> str:
             f"{fmt(metric['context_recall_at_k'])} ({metric['context_scored']})",
             fmt(metric["evidence_f1"]),
             f"{fmt(metric['answer_f1'])} ({metric['answer_scored']})",
+            f"{fmt(metric['semantic_accuracy'])} ({metric['semantic_scored']})",
             f"{fmt(metric['numeric_accuracy'])} ({metric['numeric_scored']})",
             f"{fmt(metric['abstention_accuracy'])} ({metric['abstention_scored']})",
-            f"{fmt(metric['faithfulness'])} ({metric['faithfulness_scored']})",
+            f"{metric['gate_pass']}/{metric['gate_caution']}/{metric['gate_reject']}",
+            f"{fmt(metric['faithfulness'])} ({metric['supported_claims']}/{metric['total_claims']})",
             f"{fmt(metric['retrieval_latency_p50_ms'], percent=False)}/{fmt(metric['retrieval_latency_p95_ms'], percent=False)}",
             f"{fmt(metric['answer_latency_p50_ms'], percent=False)}/{fmt(metric['answer_latency_p95_ms'], percent=False)}",
             fmt(metric["reranker_applied_rate"]),
         ]) + " |")
     lines.extend([
         "",
-        "> Context Recall@K is token coverage of QASPER gold evidence by the returned Top-K citation text.",
-        "> Faithfulness is an optional LLM judge score. Always report judge model and sample size with this value.",
+        "> Gold Evidence Recall@K is token coverage of QASPER human evidence by returned Top-K citation text.",
+        "> Claim Faithfulness is supported atomic claims / all judged atomic claims. Always report judge model and claim count.",
+        "> Semantic Accuracy is judged against QASPER gold answers and is reported separately from token Answer F1.",
+        "> Gate P/C/R reports deterministic retrieval-quality PASS/CAUTION/REJECT counts.",
         "> A hybrid_rerank result is valid only when `reranker_applied_rate` is 100% or the fallback rate is disclosed.",
         "",
     ])
@@ -377,14 +465,17 @@ def markdown_report(report: dict[str, Any]) -> str:
 
 def run_signature(mode: str, config: RunConfig) -> dict[str, Any]:
     return {
-        "schema": 2,
+        "schema": 4,
         "endpoint": config.endpoint,
         "mode": mode,
         "model_id": config.model_id,
+        "judge_model_id": config.judge_model_id,
         "top_k": config.top_k,
         "context_mode": config.context_mode,
         "generate_answer": config.generate_answer,
         "judge": config.judge,
+        "cases_sha256": config.cases_sha256,
+        "server_config": config.server_config,
     }
 
 
@@ -394,9 +485,22 @@ def successful_rows(path: Path, signature: dict[str, Any]) -> dict[str, dict[str
     result: dict[str, dict[str, Any]] = {}
     for row in read_jsonl(path):
         question_id = str(row.get("question_id", ""))
-        if question_id and not row.get("error") and row.get("_run_config") == signature:
+        judge_required = bool(signature.get("judge"))
+        judgement_ok = not judge_required or valid_judgement(row)
+        if question_id and not row.get("error") and judgement_ok and row.get("_run_config") == signature:
             result[question_id] = row
     return result
+
+
+def valid_judgement(row: dict[str, Any]) -> bool:
+    faithfulness = row.get("faithfulness") or {}
+    answer_evaluation = row.get("answerEvaluation") or {}
+    return (
+        isinstance(faithfulness.get("score"), (int, float))
+        and int(faithfulness.get("totalClaims") or 0) > 0
+        and isinstance(answer_evaluation.get("score"), (int, float))
+        and isinstance(answer_evaluation.get("correct"), bool)
+    )
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:

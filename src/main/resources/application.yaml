@@ -95,6 +95,13 @@ app:
       options:
         model: gpt-5.5
         temperature: 0.4
+    model3:
+      base-url: https://nusapi.xyz/v1
+      completions-path: /v1/chat/completions
+      api-key: ${MINIMAX_KEY:}
+      options:
+        model: MINIMAX
+
   embedding:
     ollama:
       base-url: http://172.16.1.114:11434
@@ -102,8 +109,9 @@ app:
       #      model: nomic-embed-text-v2-moe:latest
       dimensions: 1024
   financial-rag:
-    table: multidoc_s2_full_chunks
-    fallback-table: multidoc_s2_medium_chunks
+    table: multidoc_full_chunks
+    fallback-table: multidoc_s2_full_chunks
+    legacy-fallback-table: multidoc_s2_medium_chunks
     top-k: 15
     hybrid-top-k: 60
     rerank:
@@ -114,8 +122,12 @@ app:
   paper-rag:
     table: qasper_paper_chunks
     top-k: 8
-    hybrid-top-k: 20
+    hybrid-top-k: 15
     judge-model-id: gpt
+    quality-gate:
+      enabled: true
+      min-query-coverage: 0.35
+      min-rerank-score: 0.05
     rerank:
       enabled: true
       url: http://127.0.0.1:8010

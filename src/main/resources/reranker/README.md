@@ -17,7 +17,7 @@ PyTorch/CUDA 应单独按本机环境安装；若 `python -c "import torch; prin
 
 ```powershell
 cd "D:\Kecore AI\src\main\resources\reranker"
-python qwen3_reranker_server.py --host 127.0.0.1 --port 8010 --device auto --max-length 2048 --batch-size 1
+python qwen3_reranker_server.py --host 127.0.0.1 --port 8010 --device auto --max-length 1024 --batch-size 2
 ```
 
 第一次启动会从 Hugging Face 下载 `Qwen/Qwen3-Reranker-0.6B`，下载和模型加载完成后才会开始监听 8010。不要关闭这个 PowerShell 窗口。
@@ -56,4 +56,4 @@ Invoke-RestMethod -Method Post `
 
 服务只计算最后一个 yes/no token 的 logits；论文评测默认将 Hybrid 候选控制为 20 个，再选出 Top-8，以降低本地 4GB 显卡的重排延迟。
 
-若 GTX 1650 出现 CUDA 显存不足，请保持 `--batch-size 1`，并把 `--max-length` 降为 `1024`；该设置会截断过长候选段落，正式评测时需要在报告中记录。
+当前 GTX 1650 建议从 `--max-length 1024 --batch-size 2` 开始；若出现 CUDA 显存不足，再改为 `--batch-size 1`。该设置会截断过长候选段落，运行器会通过 `/health` 把实际长度和 batch 写入正式报告。

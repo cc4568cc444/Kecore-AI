@@ -10,7 +10,6 @@ MEMORY.md
 !**/src/main/**/target/
 !**/src/test/**/target/
 memory/
-**/multi-doc-2025/
 src/main/resources/mcp/email/email_mcp_config.json
 src/main/resources/agent_test/reports/
 src/main/resources/agent_test/runs
@@ -56,3 +55,4 @@ build/
 src/main/resources/multi-doc-2025/**/original_doc/
 src/main/resources/multi-doc-2025/**/eval-results/
 datasets/qasper/
+datasets/multi-doc-2025/

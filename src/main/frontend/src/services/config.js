@@ -17,9 +17,9 @@ export const MODES = {
     generating: "正在生成"
   },
   finance: {
-    title: "金融年报问答",
-    emptyTitle: "查询 S2 10-K 年报知识库",
-    placeholder: "询问公司财务数据、表格内容或年度变化",
+    title: "多文档金融研究",
+    emptyTitle: "跨公司、跨年度年报分析",
+    placeholder: "询问财务指标、年度趋势或同行公司对比",
     sessionTitle: "金融问答",
     generating: "正在检索年报并生成答案"
   },
@@ -72,6 +72,6 @@ export const API_ENDPOINTS = Object.freeze({
 
 export function visibleMode(value) {
   const requestedMode = String(value || "chat");
-  const mode = requestedMode === "finance" || requestedMode === "game" ? "paper" : requestedMode;
+  const mode = requestedMode === "paper" || requestedMode === "game" ? "finance" : requestedMode;
   return Object.prototype.hasOwnProperty.call(MODES, mode) ? mode : "chat";
 }

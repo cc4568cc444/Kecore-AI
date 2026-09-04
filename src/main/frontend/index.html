@@ -9,7 +9,7 @@
       (function () {
         try {
           var mode = localStorage.getItem("spring-ai-mode") || "chat";
-          if (mode === "game") mode = "finance";
+          if (mode === "game" || mode === "paper") mode = "finance";
           if (!/^(chat|finance|agent)$/.test(mode)) mode = "chat";
           document.documentElement.setAttribute("data-initial-mode", mode);
         } catch (error) {

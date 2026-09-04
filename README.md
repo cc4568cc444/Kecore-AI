@@ -44,19 +44,21 @@ Agent 可用工具包括：
 - parent chunk 保存到数据库，用于召回后扩展上下文。
 - Agent 在回答已上传文档相关问题时，可以调用 `ragSearch` 工具检索文档片段。
 
-### 4. 金融年报问答
+### 4. 多文档金融研究与问答
 
 - 前端模式：`金融问答`
 - 接口：`/finance/chat`
-- 数据来源：Multi-Doc-2025 S2 10-K filings 数据集。
-- 默认查询表：`multidoc_s2_full_chunks`
-- 备用查询表：`multidoc_s2_medium_chunks`
+- 数据来源：Multi-Doc-2025 SEC 10-K filings 数据集。
+- 目标查询表：`multidoc_full_chunks`
+- 兼容查询表：`multidoc_s2_full_chunks`、`multidoc_s2_medium_chunks`
 
 金融 RAG 检索链路基本参考 `src/main/resources/multi-doc-2025/s2/evaluate_s2_rag.py`：
 
 ```text
 用户问题
--> 公司 / 年份 Metadata Filter
+-> Entity-Temporal Query Planner
+-> 公司 × 财年 × 指标 Typed Sub-tasks
+-> 子任务级 Metadata Filter
 -> Vector Search
 -> BM25 Keyword Search
 -> RRF Hybrid Fusion
@@ -81,9 +83,9 @@ MSFT 2024 年 net income 是多少？
 NVDA 2024 年 total assets 是多少？
 ```
 
-### 5. 科研论文问答
+### 5. 科研论文问答（保留代码，前端隐藏）
 
-- 前端模式：`论文问答`
+- 前端不再展示入口，已有论文模式会话会迁移到金融问答模式。
 - 流式接口：`/paper/chat/stream`
 - 数据来源：QASPER v0.3 科研论文问答数据集
 - 独立索引表：`qasper_paper_chunks`
@@ -341,14 +343,14 @@ http://localhost:8088/index.html
 
 点击左侧 `金融问答`：
 
-- 输入 S2 10-K 年报相关问题。
+- 输入跨公司、跨财年或文本/表格混合的 10-K 年报问题。
 - 后端调用 `/finance/chat`。
-- 系统会基于 PGVector 中的 `multidoc_s2_full_chunks` 进行检索。
+- 系统优先基于 PGVector 中的 `multidoc_full_chunks` 进行检索。
 
 注意：
 
-- 使用前需要先运行 `evaluate_s2_rag.py` 建立索引。
-- 如果没有完整索引，系统会尝试使用 `multidoc_s2_medium_chunks`。
+- 使用前先运行 `tools/multidoc/multidoc_pipeline.py` 准备 S1-S5 数据并建立统一索引。
+- 如果没有统一索引，系统会依次尝试 `multidoc_s2_full_chunks` 和 `multidoc_s2_medium_chunks`。
 - 如果 reranker 服务不可用，可在配置中关闭 rerank。
 
 ### 3. Agent 模式
@@ -375,13 +377,31 @@ Agent 支持附件上传，上传的文件会随请求提交给模型。
 
 ## 金融 RAG 索引与评测
 
+### 1. Multi-Doc-2025 S1-S5 数据准备
+
+先只下载 QA 元数据、读取官方 179 份文档清单：
+
+```powershell
+python tools/multidoc/multidoc_pipeline.py prepare
+```
+
+再按需下载原始 10-K 并构建统一索引：
+
+```powershell
+python tools/multidoc/multidoc_pipeline.py prepare --all-docs --download-docs
+python tools/multidoc/multidoc_pipeline.py verify
+python tools/multidoc/multidoc_pipeline.py index --all-docs --rebuild
+```
+
+完整说明见 `tools/multidoc/README.md`。以下 S2 脚本继续保留，用于旧基线复现和回归对比。
+
 脚本位置：
 
 ```text
 src/main/resources/multi-doc-2025/s2/evaluate_s2_rag.py
 ```
 
-### 1. medium 子集建索引
+### 2. S2 medium 子集建索引
 
 ```powershell
 cd src/main/resources/multi-doc-2025/s2
@@ -389,19 +409,19 @@ cd src/main/resources/multi-doc-2025/s2
 python evaluate_s2_rag.py --subset medium --rebuild --build-index --table-period-metadata --max-chunks-per-doc 0 --embedding-max-tokens 1024 --chunk-chars 3000 --chunk-overlap 300
 ```
 
-### 2. medium 子集评测
+### 3. S2 medium 子集评测
 
 ```powershell
 python evaluate_s2_rag.py --subset medium --eval --embedding-max-tokens 1024 --rerank --rerank-doc-chars 3000
 ```
 
-### 3. full 全量建索引并评测
+### 4. S2 full 建索引并评测
 
 ```powershell
 python evaluate_s2_rag.py --subset full --rebuild --build-index --table-period-metadata --max-chunks-per-doc 0 --embedding-max-tokens 1024 --chunk-chars 3000 --chunk-overlap 300; if ($LASTEXITCODE -eq 0) { python evaluate_s2_rag.py --subset full --eval --embedding-max-tokens 1024 --rerank --rerank-doc-chars 3000 }
 ```
 
-### 4. 表结构
+### 5. 表结构
 
 脚本会创建隔离表，避免和项目普通 PGVector 表冲突：
 
@@ -410,9 +430,11 @@ multidoc_s2_medium_chunks
 multidoc_s2_medium_eval_results
 multidoc_s2_full_chunks
 multidoc_s2_full_eval_results
+multidoc_full_chunks
+multidoc_full_eval_results
 ```
 
-### 5. 检索策略
+### 6. 检索策略
 
 索引构建：
 

@@ -1,0 +1,2 @@
+﻿question_id,paper_id,question,answer,answer_f1,evidence_f1,context_recall_at_k,numeric_accuracy,abstention_correct,faithfulness,supported_claims,total_claims,semantic_correct,semantic_score,retrieval_ms,generation_ms,judge_ms,answer_latency_ms,total_latency_ms,client_latency_ms,retrieved_count,reranker_applied,error
+b6f15fb6279b82e34a5bf4828b7b5ddabfdf1d54,1912.01214,which multilingual approaches do they compare with?,,,0.1945337620578778,1.0,,,,0,0,,,4687.0,0.0,0.0,,4688.0,4809.0,8,False,

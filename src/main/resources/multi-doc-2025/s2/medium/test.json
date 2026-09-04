@@ -1,0 +1,692 @@
+[
+  {
+    "id": "md2025_0810",
+    "question": "What is the net income for fiscal year 2023?",
+    "answer": "The provided content does not include any numerical data from the income statement.",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "NVDA",
+    "companies": [
+      "NVDA"
+    ],
+    "year": "2023",
+    "years_required": [
+      "2023"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements and Supplementary Data",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0815",
+    "question": "What is the ratio of the recorded basis of U.S. government securities (Level 1) to the total recorded basis of all debt investments?",
+    "answer": "77,547 / 95,357 ≈ 0.8132 (81.32%)",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MSFT",
+    "companies": [
+      "MSFT"
+    ],
+    "year": "2023",
+    "years_required": [
+      "2023"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0818",
+    "question": "Calculate the current ratio using the current assets and current liabilities from the balance sheet.",
+    "answer": "The provided content does not include any table data, so the current ratio cannot be calculated.",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "NVDA",
+    "companies": [
+      "NVDA"
+    ],
+    "year": "2023",
+    "years_required": [
+      "2023"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements and Supplementary Data",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0829",
+    "question": "What is the ratio of the number of audit procedures for internal control over financial reporting to the number of audit procedures for the consolidated financial statements?",
+    "answer": "0.8",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "AEP",
+    "companies": [
+      "AEP"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Utilities",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0833",
+    "question": "What is the difference in the number of fiscal years covered by the consolidated balance sheets compared to the consolidated statements of income?",
+    "answer": "1 year",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "VLO",
+    "companies": [
+      "VLO"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Energy",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0859",
+    "question": "What was the gross profit (Sales minus Cost of sales) for Merck in 2024?",
+    "answer": "$48,975 million",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MRK",
+    "companies": [
+      "MRK"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Healthcare",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0864",
+    "question": "Calculate AMD's gross profit margin for the fiscal year ended December 28, 2024. Express as a percentage to two decimal places.",
+    "answer": "49.35%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "AMD",
+    "companies": [
+      "AMD"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0909",
+    "question": "What was the O&M operating portfolio occupancy percentage at December 31, 2022?",
+    "answer": "98.2%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "PLD",
+    "companies": [
+      "PLD"
+    ],
+    "year": "2022",
+    "years_required": [
+      "2022"
+    ],
+    "sector": "Real Estate",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": false,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0916",
+    "question": "What percentage of total recorded basis for debt investments is represented by U.S. government securities?",
+    "answer": "77.36%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MSFT",
+    "companies": [
+      "MSFT"
+    ],
+    "year": "2022",
+    "years_required": [
+      "2022"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0918",
+    "question": "What is ComEd's 2024 net income minus BGE's 2023 net income?",
+    "answer": "581",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "EXC",
+    "companies": [
+      "EXC"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Utilities",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0939",
+    "question": "What was the operating income per average paying membership for the fiscal year 2023?",
+    "answer": "28.87 (computed as $6,954,003 operating income divided by 240,889 average paying memberships; exact quotient is 28.868, rounded to two decimals)",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "NFLX",
+    "companies": [
+      "NFLX"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Communication Services",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_0974",
+    "question": "For the year ended December 31, 2024, what is the effective tax rate (Income taxes divided by Income before income taxes) expressed as a percentage?",
+    "answer": "16.48% (2,090.4 / 12,680.4 = 0.1648).",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "LLY",
+    "companies": [
+      "LLY"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Healthcare",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements and Supplementary Data",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1026",
+    "question": "What is the percentage of process gases among all gases explicitly listed in the content?",
+    "answer": "Process gases: hydrogen, helium, carbon dioxide, carbon monoxide, specialty gases, acetylene (6). Total gases: atmospheric (6) + process (6) = 12. Percentage = 6/12 = 50%.",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "LIN",
+    "companies": [
+      "LIN"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Materials",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1032",
+    "question": "What percentage of total revenue for the fiscal year ended January 28, 2024 came from the Graphics segment?",
+    "answer": "22.2%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "NVDA",
+    "companies": [
+      "NVDA"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1034",
+    "question": "What is the average number of Prologis operational countries per continent?",
+    "answer": "5 countries per continent",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "PLD",
+    "companies": [
+      "PLD"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Real Estate",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1040",
+    "question": "What percentage of Meta's total revenue in 2022 came from advertising, based on the revenue table?",
+    "answer": "97.5%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "META",
+    "companies": [
+      "META"
+    ],
+    "year": "2022",
+    "years_required": [
+      "2022"
+    ],
+    "sector": "Communication Services",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1042",
+    "question": "What is the ratio of rare gases to total atmospheric gases listed in the content?",
+    "answer": "Rare gases: krypton, neon, xenon (3). Total atmospheric gases: oxygen, nitrogen, argon, krypton, neon, xenon (6). Ratio = 3:6 = 1:2 (50%).",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "LIN",
+    "companies": [
+      "LIN"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Materials",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1068",
+    "question": "What is the percentage of total recorded basis that is classified as equity investments?",
+    "answer": "4.39%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MSFT",
+    "companies": [
+      "MSFT"
+    ],
+    "year": "2022",
+    "years_required": [
+      "2022"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1084",
+    "question": "What is the percentage change in net earnings attributable to Starbucks from fiscal year 2022 to fiscal year 2024?",
+    "answer": "14.61%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "SBUX",
+    "companies": [
+      "SBUX"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Consumer Discretionary",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1089",
+    "question": "What is the difference in percentage points between the combined geographic segment sales (86%) and the Engineering segment sales (14%)?",
+    "answer": "72 percentage points",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "LIN",
+    "companies": [
+      "LIN"
+    ],
+    "year": "2022",
+    "years_required": [
+      "2022"
+    ],
+    "sector": "Materials",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1093",
+    "question": "What is the total amount paid in fiscal year 2021 for the settlement of IRS audits for tax years 2004-2013?",
+    "answer": "$1.7 billion",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MSFT",
+    "companies": [
+      "MSFT"
+    ],
+    "year": "2022",
+    "years_required": [
+      "2022"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": false,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1126",
+    "question": "What was the combined absolute increase in discount revenue and net card fees from 2022 to 2023?",
+    "answer": "$3,862 million (2677 + 1185)",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "AXP",
+    "companies": [
+      "AXP"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Financials",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A Table 2",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1140",
+    "question": "What was the total dollar amount of the severance, hardware-related impairment, and lease consolidation cost adjustments for gross margin and operating income combined in fiscal year 2023?",
+    "answer": "$1,323 million",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MSFT",
+    "companies": [
+      "MSFT"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7 MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1166",
+    "question": "Calculate the total net income contributed by the PHI subsidiaries (Pepco, DPL, and ACE) in 2024.",
+    "answer": "754",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "EXC",
+    "companies": [
+      "EXC"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Utilities",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1189",
+    "question": "Calculate the total unrealized losses as a percentage of adjusted cost basis for U.S. government securities.",
+    "answer": "5.93%",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MSFT",
+    "companies": [
+      "MSFT"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1214",
+    "question": "What was the total revenue for fiscal year 2024?",
+    "answer": "Data not available from provided content; no tables are present.",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "PFE",
+    "companies": [
+      "PFE"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Healthcare",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1238",
+    "question": "What is the ratio of cash and cash equivalents to total recorded basis for all debt investments?",
+    "answer": "0.197 (or 19.7%)",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "MSFT",
+    "companies": [
+      "MSFT"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Information Technology",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1245",
+    "question": "Calculate the product of the MD&A item number and the fiscal year.",
+    "answer": "14168",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "WELL",
+    "companies": [
+      "WELL"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Real Estate",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 7. MD&A",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1266",
+    "question": "What is the absolute difference in total costs, expenses, and other between 2022 and 2023 in millions of dollars?",
+    "answer": "5,834.5",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "LLY",
+    "companies": [
+      "LLY"
+    ],
+    "year": "2023",
+    "years_required": [
+      "2023"
+    ],
+    "sector": "Healthcare",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Consolidated Statements of Operations",
+    "split": "test"
+  },
+  {
+    "id": "md2025_1273",
+    "question": "What is the ratio of depreciation expense for 2024 to the beginning accumulated depreciation for 2024?",
+    "answer": "0.1807 (18.07%)",
+    "intent": "calculation",
+    "difficulty": "L1",
+    "subset": "S2",
+    "company": "PLD",
+    "companies": [
+      "PLD"
+    ],
+    "year": "2024",
+    "years_required": [
+      "2024"
+    ],
+    "sector": "Real Estate",
+    "is_cross_doc": false,
+    "is_cross_year": false,
+    "is_hybrid_modal": false,
+    "requires_calculation": true,
+    "evidence_section": "Item 8. Financial Statements",
+    "split": "test"
+  }
+]
