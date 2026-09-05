@@ -114,6 +114,10 @@ app:
     legacy-fallback-table: multidoc_s2_medium_chunks
     top-k: 15
     hybrid-top-k: 60
+    evidence-ledger:
+      enabled: true
+      max-documents: 15
+      max-content-chars: 6000
     rerank:
       enabled: true
       url: http://127.0.0.1:8010

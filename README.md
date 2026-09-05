@@ -63,8 +63,10 @@ Agent 可用工具包括：
 -> BM25 Keyword Search
 -> RRF Hybrid Fusion
 -> Qwen3-Reranker 可选重排
--> Top-8 上下文
--> LLM 生成简洁答案
+-> Top-K 原始证据
+-> Evidence Ledger 结构化事实抽取与原文校验
+-> BigDecimal 确定性计算（差值、增长率、比率、合计）
+-> 带 [E#] 原始证据引用的答案
 ```
 
 适合查询：
@@ -246,6 +248,18 @@ app:
   financial-rag:
     rerank:
       enabled: false
+```
+
+Evidence Ledger 默认开启。事实抽取阶段只允许复制检索片段中的原文，Java 会验证引用是否真实存在；
+未通过验证的数字不会进入计算器：
+
+```yaml
+app:
+  financial-rag:
+    evidence-ledger:
+      enabled: true
+      max-documents: 15
+      max-content-chars: 6000
 ```
 
 测试示例：

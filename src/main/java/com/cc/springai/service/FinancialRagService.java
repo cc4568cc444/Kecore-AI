@@ -88,6 +88,7 @@ public class FinancialRagService {
     private final ChatClient financeChatClient;
     private final ChatMemory chatMemory;
     private final ModelConfigService modelConfigService;
+    private final FinancialEvidenceLedger evidenceLedger;
 
     @Value("${app.financial-rag.table:multidoc_full_chunks}")
     private String tableName;
@@ -119,6 +120,15 @@ public class FinancialRagService {
     @Value("${app.financial-rag.retrieval-strategy:default}")
     private String retrievalStrategy;
 
+    @Value("${app.financial-rag.evidence-ledger.enabled:true}")
+    private boolean evidenceLedgerEnabled;
+
+    @Value("${app.financial-rag.evidence-ledger.max-documents:15}")
+    private int evidenceLedgerMaxDocuments;
+
+    @Value("${app.financial-rag.evidence-ledger.max-content-chars:6000}")
+    private int evidenceLedgerMaxContentChars;
+
     public FinancialRagService(EmbeddingModel embeddingModel,
                                JdbcTemplate jdbcTemplate,
                                ObjectMapper objectMapper,
@@ -131,6 +141,7 @@ public class FinancialRagService {
         this.financeChatClient = financeChatClient;
         this.chatMemory = chatMemory;
         this.modelConfigService = modelConfigService;
+        this.evidenceLedger = new FinancialEvidenceLedger(objectMapper);
     }
 
     public Flux<String> chat(String prompt, String conversationId, String modelId) {
@@ -149,17 +160,8 @@ public class FinancialRagService {
                 return Flux.just("未在 Multi-Doc-2025 年报知识库中检索到相关片段。请确认索引已构建，或在问题中补充公司和年份。");
             }
 
-            String context = retrievedContext(chunks, retrievalMode);
-            String userPrompt = """
-                    用户问题：
-                    %s
-
-                    检索上下文：
-                    %s
-
-                    请只基于检索上下文回答。优先直接给出数值或结论，最后解释依据；如果需要计算，给出详细计算公式；最后用一行列出依据来源。结论回答保持简洁，最后依据来源要详细，最后给出一行依据来源，依据来源格式为`[序号]：<必须逐字复制 Context 中的连续文本，以及前后上下文信息>`。如果没有来源依据不可以编造。
-                    """.formatted(prompt, context);
-            userPrompt = userPrompt + retrievalPlanPrompt(plan);
+            FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
+            String userPrompt = answerPrompt(prompt, plan, ledger);
 
             return financeChatClient(modelId).prompt()
                     .user(userPrompt)
@@ -195,23 +197,15 @@ public class FinancialRagService {
             long translationMs = elapsedMs(translationStartedAt);
             long retrievalStartedAt = System.currentTimeMillis();
             List<FinancialChunk> chunks = search(plan, retrievalMode);
-            long retrievalMs = elapsedMs(retrievalStartedAt);
             if (chunks.isEmpty()) {
+                long retrievalMs = elapsedMs(retrievalStartedAt);
                 return new FinancialAnswerStream(Flux.just(new ModelStreamEvent("token", "未在 Multi-Doc-2025 年报知识库中检索到相关片段。请确认索引已构建，或在问题中补充公司和年份。")),
                         translationMs, retrievalMs, false, retrievalQuery);
             }
 
-            String context = retrievedContext(chunks, retrievalMode);
-            String userPrompt = """
-                    用户问题：
-                    %s
-
-                    检索上下文：
-                    %s
-
-                    请只基于检索上下文回答。优先直接给出数值或结论，然后解释依据；如果需要计算，给出详细计算公式；最后用一行列出依据原文。如果没有来源依据不可以编造。
-                    """.formatted(prompt, context);
-            userPrompt = userPrompt + retrievalPlanPrompt(plan);
+            FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
+            long retrievalMs = elapsedMs(retrievalStartedAt);
+            String userPrompt = answerPrompt(prompt, plan, ledger);
 
             Flux<ModelStreamEvent> content = financeChatClient(modelId).prompt()
                     .user(userPrompt)
@@ -538,6 +532,73 @@ public class FinancialRagService {
                 """.formatted(plan.resolvedQuestion(), plan.intent(), plan.displayQuery(), plan.subTasks());
     }
 
+    private FinancialEvidenceLedger.Ledger buildEvidenceLedger(String prompt,
+                                                                FinancialRetrievalPlan plan,
+                                                                List<FinancialChunk> chunks,
+                                                                FinancialRetrievalMode retrievalMode,
+                                                                String modelId) {
+        List<FinancialEvidenceLedger.EvidenceDocument> documents = new ArrayList<>();
+        int documentLimit = Math.min(chunks.size(), Math.max(1, evidenceLedgerMaxDocuments));
+        for (int index = 0; index < documentLimit; index++) {
+            FinancialChunk chunk = chunks.get(index);
+            String company = chunk.metadataText("company");
+            String year = chunk.metadataText("year");
+            if ((company.isBlank() || year.isBlank()) && chunk.sourceFile().contains("_")) {
+                String stem = chunk.sourceFile().replaceFirst("(?i)\\.html$", "");
+                int separator = stem.lastIndexOf('_');
+                if (separator > 0) {
+                    company = company.isBlank() ? stem.substring(0, separator) : company;
+                    year = year.isBlank() ? stem.substring(separator + 1) : year;
+                }
+            }
+            documents.add(new FinancialEvidenceLedger.EvidenceDocument(
+                    "E" + (index + 1), chunk.chunkId(), chunk.sourceFile(), company, year,
+                    chunk.chunkType(), chunk.metadataText("item"), chunk.metadataText("section_title"),
+                    truncateEnd(retrievalContent(chunk, retrievalMode), Math.max(500, evidenceLedgerMaxContentChars))));
+        }
+        if (!evidenceLedgerEnabled) {
+            return evidenceLedger.evidenceOnly(documents);
+        }
+        try {
+            String extraction = ChatClient.builder(modelConfigService.chatModel(modelId))
+                    .defaultSystem("""
+                            You extract auditable numerical facts from SEC 10-K evidence.
+                            Never answer the question, calculate, estimate, or use outside knowledge.
+                            Every extracted fact must contain an exact quote from one supplied evidence block.
+                            Output strict JSON only.
+                            """)
+                    .build()
+                    .prompt()
+                    .user(evidenceLedger.extractionPrompt(plan.resolvedQuestion(), documents))
+                    .options(modelConfigService.chatOptions(modelId))
+                    .call()
+                    .content();
+            return evidenceLedger.build(prompt, documents, extraction);
+        } catch (Exception exception) {
+            log.warn("Financial evidence extraction failed: {}", exception.getMessage());
+            return evidenceLedger.evidenceOnly(documents);
+        }
+    }
+
+    private String answerPrompt(String prompt,
+                                FinancialRetrievalPlan plan,
+                                FinancialEvidenceLedger.Ledger ledger) {
+        return """
+                用户问题：
+                %s
+
+                %s
+
+                回答规则：
+                1. 只能使用 Evidence Ledger 中的信息，不能补充外部知识。
+                2. 直接数值优先使用已校验事实 [F#]；涉及运算时只能使用确定性计算 [C#]，不得自行心算或改写计算结果。
+                3. 如果缺少完成比较或计算所需的事实，明确指出缺少哪家公司、财年或指标，不得猜测。
+                4. 每项关键结论后引用原始证据编号 [E#]；引用必须与结论来自同一公司和财年。
+                5. 涉及跨公司或跨财年比较时，先按“公司—财年—指标”列出事实，再给出比较结论。
+                6. 结尾给出“来源”列表，格式为 `[E#] source_file — section`，不要伪造页码。
+                """.formatted(prompt, ledger.render()) + retrievalPlanPrompt(plan);
+    }
+
     private ChatClient financeChatClient(String modelId) {
         if (modelId == null || modelId.isBlank()) {
             return financeChatClient;
@@ -566,6 +627,7 @@ public class FinancialRagService {
         }
         int finalTopK = Math.max(1, topK);
         Map<String, FinancialChunk> merged = new LinkedHashMap<>();
+        Map<String, FinancialChunk> scopeAnchors = new LinkedHashMap<>();
         for (int index = 0; index < requests.size(); index++) {
             FinancialSearchRequest request = requests.get(index);
             String query = request.query();
@@ -573,17 +635,38 @@ public class FinancialRagService {
                 continue;
             }
             int limit = index == 0 ? Math.max(finalTopK, hybridTopK) : finalTopK;
-            for (FinancialChunk chunk : search(query, limit, retrievalMode, request.company(), request.year())) {
+            List<FinancialChunk> requestChunks = search(query, limit, retrievalMode, request.company(), request.year());
+            if ((!request.company().isBlank() || !request.year().isBlank()) && !requestChunks.isEmpty()) {
+                String scope = request.company().toUpperCase(Locale.ROOT) + "|" + request.year()
+                        + "|" + cleanLine(request.query()).toLowerCase(Locale.ROOT);
+                FinancialChunk anchor = requestChunks.get(0);
+                FinancialChunk existingAnchor = scopeAnchors.get(scope);
+                if (existingAnchor == null || anchor.finalScore() > existingAnchor.finalScore()) {
+                    scopeAnchors.put(scope, anchor);
+                }
+            }
+            for (FinancialChunk chunk : requestChunks) {
                 FinancialChunk existing = merged.get(chunk.chunkId());
                 if (existing == null || chunk.finalScore() > existing.finalScore()) {
                     merged.put(chunk.chunkId(), chunk);
                 }
             }
         }
-        return merged.values().stream()
+        List<FinancialChunk> scoreRanked = merged.values().stream()
+                .sorted(Comparator.comparingDouble(FinancialChunk::finalScore).reversed())
+                .toList();
+        Map<String, FinancialChunk> balanced = new LinkedHashMap<>();
+        scopeAnchors.values().stream()
                 .sorted(Comparator.comparingDouble(FinancialChunk::finalScore).reversed())
                 .limit(finalTopK)
-                .toList();
+                .forEach(chunk -> balanced.put(chunk.chunkId(), chunk));
+        for (FinancialChunk chunk : scoreRanked) {
+            if (balanced.size() >= finalTopK) {
+                break;
+            }
+            balanced.putIfAbsent(chunk.chunkId(), chunk);
+        }
+        return List.copyOf(balanced.values());
     }
 
     private List<FinancialSearchRequest> taskScopedRequests(FinancialRetrievalPlan plan) {
