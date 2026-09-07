@@ -25,7 +25,7 @@ class CalculationToolsTest {
     @Test
     void calculatesArbitraryPrecisionNumbersExactly() {
         assertThat(tools.calculateBigNumber(
-                "multiply", "12378901237890", "98765432109876543210", null))
+                "multiply", "12345678901234567890", "98765432109876543210", null))
                 .isEqualTo("1219326311370217952237463801111263526900");
         assertThat(tools.calculateBigNumber("divide", "1", "3", 10))
                 .isEqualTo("0.3333333333");

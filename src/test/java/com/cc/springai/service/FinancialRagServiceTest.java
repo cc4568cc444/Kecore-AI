@@ -76,4 +76,19 @@ class FinancialRagServiceTest {
         assertThat(String.join(" ", plan.queries())).contains("net sales");
         assertThat(plan.subTasks()).hasSize(1);
     }
+
+    @Test
+    void metadataFilterIncludesRequestedDocumentModality() {
+        FinancialRagService.SqlWhere where = service.whereClause(
+                new FinancialRagService.RetrievalFilters("AAPL_2024.html", "AAPL", "2024", "table"));
+
+        assertThat(where.sql()).contains("source_file = ?", "company = ?", "year = ?", "chunk_type = ?");
+        assertThat(where.params()).containsExactly("AAPL_2024.html", "AAPL", "2024", "table");
+    }
+
+    @Test
+    void buildsSafeOrQueryForFullCorpusLexicalRecall() {
+        assertThat(service.lexicalTsQuery("Apple 2024 revenue / net sales?"))
+                .isEqualTo("apple | 2024 | revenue | net | sales");
+    }
 }

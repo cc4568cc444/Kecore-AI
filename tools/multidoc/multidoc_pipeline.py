@@ -10,6 +10,7 @@ adds S1-S5 document discovery, metadata aggregation, and the unified
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import hashlib
 import importlib.util
 import json
@@ -196,10 +197,15 @@ def command_prepare(args: argparse.Namespace) -> int:
 
     if args.download_docs:
         selected = docs[: args.limit_docs] if args.limit_docs else docs
-        for index, document in enumerate(selected, start=1):
+        def fetch(document: RemoteDocument) -> tuple[RemoteDocument, str]:
             target = data_dir / document.path
-            status = download_file(resolve_url(document.path), target, document.size)
-            print(f"[{status}] {index}/{len(selected)} {document.name}")
+            return document, download_file(resolve_url(document.path), target, document.size)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.download_workers)) as executor:
+            futures = [executor.submit(fetch, document) for document in selected]
+            for index, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+                document, status = future.result()
+                print(f"[{status}] {index}/{len(selected)} {document.name}", flush=True)
     else:
         print("[next] Add --download-docs to fetch the selected 10-K HTML files.")
     return 0
@@ -233,6 +239,39 @@ def command_verify(args: argparse.Namespace) -> int:
             print(f"[ok] {item['name']} sha256={sha256(path)}")
     print(f"[verify] present={checked}, missing={missing}, invalid={invalid}")
     return 1 if invalid else 0
+
+
+def command_status(args: argparse.Namespace) -> int:
+    manifest_path = args.data_dir / "document-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {"documents": []}
+    documents = manifest.get("documents") or []
+    present = sum(1 for item in documents if (args.data_dir / item["path"]).exists())
+    print(f"[data] documents={present}/{len(documents)}")
+    if args.skip_database:
+        return 0
+    module = load_s2_module()
+    module.load_dotenv(PROJECT_ROOT / ".env")
+    config = module.load_project_config(module.APPLICATION_YAML)
+    with module.connect_postgres(config) as connection:
+        table_rows = module.fetch_all(connection, "SELECT to_regclass('public.multidoc_full_chunks') AS table_name")
+        if not table_rows or table_rows[0].get("table_name") is None:
+            print("[database] multidoc_full_chunks=missing")
+            return 0
+        counts = module.fetch_all(connection, """
+            SELECT COUNT(*) AS chunks, COUNT(DISTINCT source_file) AS documents,
+                   COUNT(*) FILTER (WHERE chunk_type = 'text') AS text_chunks,
+                   COUNT(*) FILTER (WHERE chunk_type = 'table') AS table_chunks
+            FROM multidoc_full_chunks
+        """)[0]
+        index_rows = module.fetch_all(connection,
+                                      "SELECT to_regclass('public.idx_multidoc_full_chunks_embedding') AS index_name")
+        has_index = bool(index_rows and index_rows[0].get("index_name") is not None)
+        print("[database] " + ", ".join([
+            f"documents={counts['documents']}", f"chunks={counts['chunks']}",
+            f"text={counts['text_chunks']}", f"table={counts['table_chunks']}",
+            f"hnsw={has_index}",
+        ]))
+    return 0
 
 
 def load_s2_module() -> ModuleType:
@@ -302,6 +341,8 @@ def command_index(args: argparse.Namespace) -> int:
         max_chunks_per_doc=args.max_chunks_per_doc,
         embedding_max_tokens=args.embedding_max_tokens,
         batch_size=args.batch_size,
+        embedding_workers=args.embedding_workers,
+        embedding_batch_size=args.embedding_batch_size,
     )
     if args.dry_run:
         names = existing_names[: args.limit_docs] if args.limit_docs else existing_names
@@ -328,8 +369,40 @@ def command_index(args: argparse.Namespace) -> int:
     config = module.load_project_config(module.APPLICATION_YAML)
     tables = {"chunks": "multidoc_full_chunks", "results": "multidoc_full_eval_results"}
     with module.connect_postgres(config) as connection:
-        module.ensure_schema(connection, tables, config.embedding_dimensions, args.rebuild)
+        module.ensure_schema(connection, tables, config.embedding_dimensions, args.rebuild,
+                             create_vector_index=not args.defer_vector_index)
+        if args.defer_vector_index:
+            module.drop_vector_index(connection, tables["chunks"])
         module.build_index(connection, tables, config, existing_names, metadata_rows, build_args)
+        if args.defer_vector_index:
+            print("[index] building HNSW vector index after chunk insertion")
+            module.ensure_vector_index(connection, tables["chunks"])
+    return 0
+
+
+def command_finalize_index(args: argparse.Namespace) -> int:
+    """Create the lexical/vector indexes after an interrupted or deferred bulk load."""
+    module = load_s2_module()
+    module.load_dotenv(PROJECT_ROOT / ".env")
+    module.load_dotenv(S2_SCRIPT.parent / ".env")
+    config = module.load_project_config(module.APPLICATION_YAML)
+    tables = {"chunks": "multidoc_full_chunks", "results": "multidoc_full_eval_results"}
+    with module.connect_postgres(config) as connection:
+        rows = module.fetch_all(
+            connection,
+            "SELECT to_regclass('public.multidoc_full_chunks') AS table_name",
+        )
+        if not rows or rows[0].get("table_name") is None:
+            raise RuntimeError("multidoc_full_chunks does not exist. Run the index command first.")
+        print("[finalize] creating metadata, full-text and HNSW indexes")
+        module.ensure_schema(
+            connection,
+            tables,
+            config.embedding_dimensions,
+            rebuild=False,
+            create_vector_index=True,
+        )
+    print("[finalize] indexes ready")
     return 0
 
 
@@ -344,11 +417,16 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--download-docs", action="store_true")
     prepare.add_argument("--all-docs", action="store_true", help="select all 179 official 10-K files")
     prepare.add_argument("--limit-docs", type=int, default=0)
+    prepare.add_argument("--download-workers", type=int, default=4)
     prepare.set_defaults(handler=command_prepare)
 
     verify = subparsers.add_parser("verify", help="verify locally downloaded documents against official sizes")
     verify.add_argument("--sha256", action="store_true")
     verify.set_defaults(handler=command_verify)
+
+    status = subparsers.add_parser("status", help="show local document and unified index progress")
+    status.add_argument("--skip-database", action="store_true")
+    status.set_defaults(handler=command_status)
 
     index = subparsers.add_parser("index", help="build the unified multidoc_full_chunks pgvector index")
     index.add_argument("--splits", type=lambda value: parse_csv(value, ALL_SPLITS, "split"), default=list(ALL_SPLITS))
@@ -366,7 +444,17 @@ def build_parser() -> argparse.ArgumentParser:
     index.add_argument("--whole-table-markdown", action="store_true")
     index.add_argument("--table-context-tokens", type=int, default=200)
     index.add_argument("--batch-size", type=int, default=10)
+    index.add_argument("--embedding-workers", type=int, default=1)
+    index.add_argument("--embedding-batch-size", type=int, default=64)
+    index.add_argument("--defer-vector-index", action=argparse.BooleanOptionalAction, default=True,
+                       help="build HNSW after inserting chunks for faster full indexing")
     index.set_defaults(handler=command_index)
+
+    finalize = subparsers.add_parser(
+        "finalize-index",
+        help="create metadata, full-text and HNSW indexes after a deferred or interrupted bulk load",
+    )
+    finalize.set_defaults(handler=command_finalize_index)
     return parser
 
 

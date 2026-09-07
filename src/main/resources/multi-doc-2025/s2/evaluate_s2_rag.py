@@ -5,7 +5,7 @@ Evaluate a medium-sized RAG subset for Multi-Doc-2025 S2.
 The script is intentionally self-contained and reads the current project
 configuration from src/main/resources/application.yaml:
 
-- Embedding: app.embedding.ollama.* using Ollama /api/embeddings
+- Embedding: app.embedding.ollama.* using Ollama batch /api/embed with legacy fallback
 - LLM: spring.ai.openai.chat.* using an OpenAI-compatible chat endpoint
 - Database: spring.datasource.* storing vectors in isolated pgvector tables
 - Evaluation: the configured chat model judges answer correctness, context recall, and grounding
@@ -19,6 +19,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import csv
 import hashlib
 import html
@@ -271,6 +272,8 @@ def parse_args() -> argparse.Namespace:
         help="when --whole-table-markdown is enabled, include this many surrounding tokens before and after each table",
     )
     parser.add_argument("--batch-size", type=int, default=10)
+    parser.add_argument("--embedding-workers", type=int, default=1, help="parallel embedding requests; database writes stay serial")
+    parser.add_argument("--embedding-batch-size", type=int, default=16, help="texts per Ollama /api/embed request")
     parser.add_argument("--no-metadata-filter", action="store_true", help="disable company/year/sector metadata filtering during retrieval")
     parser.add_argument("--rerank", action="store_true", help="rerank hybrid candidates with a local reranker")
     parser.add_argument("--rerank-url", default="http://127.0.0.1:8010", help="local reranker base URL")
@@ -369,6 +372,8 @@ def build_index(
     total_parsed_chunks = 0
     total_selected_chunks = 0
     selected_type_counts: dict[str, int] = {}
+    embedding_workers = max(1, int(getattr(args, "embedding_workers", 1)))
+    embedding_batch_size = max(1, int(getattr(args, "embedding_batch_size", 16)))
 
     for doc_index, source_file in enumerate(docs, start=1):
         source_file = normalize_source_file(source_file)
@@ -400,12 +405,38 @@ def build_index(
             print(f"[index] {doc_index}/{len(docs)} {source_file}: {len(chunks)} chunks")
         else:
             print(f"[index] {doc_index}/{len(docs)} {source_file}: {len(chunks)}/{len(parsed_chunks)} chunks")
+        pending_chunks: list[Chunk] = []
+        existing_ids = existing_chunk_ids(conn, tables["chunks"], source_file)
         for chunk in chunks:
-            if chunk_exists(conn, tables["chunks"], chunk.chunk_id):
+            if chunk.chunk_id in existing_ids:
                 existing_chunks += 1
                 continue
-            embedding_max_tokens = 0 if args.whole_table_markdown and chunk.chunk_type == "table" else args.embedding_max_tokens
-            embedding = embed_text(config, chunk.content, embedding_max_tokens)
+            pending_chunks.append(chunk)
+
+        chunk_batches = [
+            pending_chunks[index:index + embedding_batch_size]
+            for index in range(0, len(pending_chunks), embedding_batch_size)
+        ]
+
+        def embed_batch(batch: list[Chunk]) -> list[list[float]]:
+            prepared = []
+            for chunk in batch:
+                max_tokens = 0 if args.whole_table_markdown and chunk.chunk_type == "table" else args.embedding_max_tokens
+                prepared.append(trim_for_embedding(chunk.content, max_tokens) if max_tokens > 0 else normalize_text(chunk.content))
+            try:
+                return embed_texts(config, prepared)
+            except RuntimeError as exc:
+                print(f"[embedding-fallback] batch endpoint failed: {exc}")
+                return [embed_text(config, text, 0) for text in prepared]
+
+        if embedding_workers == 1:
+            embedded_batches = [embed_batch(batch) for batch in chunk_batches]
+        else:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=embedding_workers) as executor:
+                embedded_batches = list(executor.map(embed_batch, chunk_batches))
+        embeddings = [embedding for batch in embedded_batches for embedding in batch]
+
+        for chunk, embedding in zip(pending_chunks, embeddings):
             insert_chunk(conn, tables["chunks"], chunk, embedding)
             inserted_chunks += 1
             if inserted_chunks % args.batch_size == 0:
@@ -1736,6 +1767,37 @@ def embed_text(config: ProjectConfig, text: str, max_tokens: int = DEFAULT_EMBED
     return [float(value) for value in embedding]
 
 
+def embed_texts(config: ProjectConfig, texts: list[str]) -> list[list[float]]:
+    if not texts:
+        return []
+    response: dict[str, Any] | None = None
+    last_error: RuntimeError | None = None
+    for attempt in range(1, 4):
+        try:
+            response = http_json(
+                join_url(config.embedding_base_url, "/api/embed"),
+                {"model": config.embedding_model, "input": texts, "truncate": True},
+                timeout=300,
+            )
+            break
+        except RuntimeError as exc:
+            last_error = exc
+            if attempt < 3:
+                time.sleep(attempt)
+    if response is None:
+        raise RuntimeError(str(last_error or "Ollama batch embedding request failed"))
+    embeddings = response.get("embeddings")
+    if not isinstance(embeddings, list) or len(embeddings) != len(texts):
+        raise RuntimeError(f"Ollama batch embedding count mismatch: expected {len(texts)}, got {len(embeddings or [])}")
+    normalized: list[list[float]] = []
+    for embedding in embeddings:
+        if not isinstance(embedding, list) or len(embedding) != config.embedding_dimensions:
+            actual = len(embedding) if isinstance(embedding, list) else 0
+            raise RuntimeError(f"Embedding dimension mismatch: expected {config.embedding_dimensions}, got {actual}")
+        normalized.append([float(value) for value in embedding])
+    return normalized
+
+
 def trim_for_embedding(text: str, max_tokens: int) -> str:
     text = normalize_text(text)
     if max_tokens <= 0:
@@ -1789,7 +1851,8 @@ def http_json(url: str, body: dict[str, Any], headers: Optional[dict[str, str]] 
         raise RuntimeError(f"HTTP {exc.code} calling {url}: {error_body}") from exc
 
 
-def ensure_schema(conn: Any, tables: dict[str, str], dimensions: int, rebuild: bool) -> None:
+def ensure_schema(conn: Any, tables: dict[str, str], dimensions: int, rebuild: bool,
+                  create_vector_index: bool = True) -> None:
     if rebuild:
         execute(conn, f"DROP TABLE IF EXISTS {tables['results']}")
         execute(conn, f"DROP TABLE IF EXISTS {tables['chunks']}")
@@ -1851,19 +1914,36 @@ def ensure_schema(conn: Any, tables: dict[str, str], dimensions: int, rebuild: b
     execute(conn, f"CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_source ON {tables['chunks']} (source_file)")
     execute(conn, f"CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_company_year ON {tables['chunks']} (company, year)")
     execute(conn, f"CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_type ON {tables['chunks']} (chunk_type)")
+    execute(conn, f"CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_content_fts ON {tables['chunks']} USING gin (to_tsvector('english', content))")
     execute(conn, f"CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_metadata_gin ON {tables['chunks']} USING gin (metadata)")
     execute(conn, f"CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_sector ON {tables['chunks']} ((metadata->>'sector'))")
     execute(conn, f"CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_item ON {tables['chunks']} ((metadata->>'item'))")
+    if create_vector_index:
+        ensure_vector_index(conn, tables["chunks"])
+    conn.commit()
+
+
+def ensure_vector_index(conn: Any, chunks_table: str) -> None:
     execute(conn, f"""
-        CREATE INDEX IF NOT EXISTS idx_{tables['chunks']}_embedding
-        ON {tables['chunks']} USING hnsw (embedding vector_cosine_ops)
+        CREATE INDEX IF NOT EXISTS idx_{chunks_table}_embedding
+        ON {chunks_table} USING hnsw (embedding vector_cosine_ops)
     """)
+    conn.commit()
+
+
+def drop_vector_index(conn: Any, chunks_table: str) -> None:
+    execute(conn, f"DROP INDEX IF EXISTS idx_{chunks_table}_embedding")
     conn.commit()
 
 
 def chunk_exists(conn: Any, table: str, chunk_id: str) -> bool:
     rows = fetch_all(conn, f"SELECT 1 AS exists FROM {table} WHERE chunk_id = %s LIMIT 1", (chunk_id,))
     return bool(rows)
+
+
+def existing_chunk_ids(conn: Any, table: str, source_file: str) -> set[str]:
+    rows = fetch_all(conn, f"SELECT chunk_id FROM {table} WHERE source_file = %s", (source_file,))
+    return {str(row["chunk_id"]) for row in rows}
 
 
 def insert_chunk(conn: Any, table: str, chunk: Chunk, embedding: list[float]) -> None:

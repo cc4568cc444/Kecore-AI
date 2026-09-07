@@ -118,11 +118,15 @@ app:
       enabled: true
       max-documents: 15
       max-content-chars: 6000
+    citation-verifier:
+      enabled: true
+      strict: true
     rerank:
       enabled: true
       url: http://127.0.0.1:8010
       model: Qwen3-Reranker-0.6B
       doc-chars: 3000
+      candidate-limit: 24
   paper-rag:
     table: qasper_paper_chunks
     top-k: 8

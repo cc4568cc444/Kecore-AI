@@ -155,12 +155,13 @@ final class FinancialEvidenceLedger {
         List<VerifiedCalculation> calculations = new ArrayList<>();
         FinancialFact first = operands.get(0);
         FinancialFact last = operands.get(operands.size() - 1);
-        BigDecimal difference = last.value().subtract(first.value(), MATH_CONTEXT);
+        BigDecimal differenceBase = baseValue(last).subtract(baseValue(first), MATH_CONTEXT);
+        BigDecimal difference = displayedValue(differenceBase, last.scale());
         calculations.add(new VerifiedCalculation("C1", "difference",
-                last.factId() + " - " + first.factId(), difference, first.unit(), first.scale(),
+                last.factId() + " - " + first.factId(), difference, first.unit(), last.scale(),
                 List.of(first.factId(), last.factId())));
         if (includePercentage && first.value().compareTo(BigDecimal.ZERO) != 0) {
-            BigDecimal percentage = difference.divide(first.value(), MATH_CONTEXT).multiply(BigDecimal.valueOf(100));
+            BigDecimal percentage = differenceBase.divide(baseValue(first), MATH_CONTEXT).multiply(BigDecimal.valueOf(100));
             calculations.add(new VerifiedCalculation("C2", "percentage_change",
                     "(" + last.factId() + " - " + first.factId() + ") / " + first.factId() + " × 100",
                     percentage, "percent", "unit", List.of(first.factId(), last.factId())));
@@ -171,11 +172,12 @@ final class FinancialEvidenceLedger {
     private List<VerifiedCalculation> percentageChange(List<FinancialFact> operands) {
         FinancialFact first = operands.get(0);
         FinancialFact last = operands.get(operands.size() - 1);
-        if (first.value().compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal firstBase = baseValue(first);
+        if (firstBase.compareTo(BigDecimal.ZERO) == 0) {
             return List.of();
         }
-        BigDecimal result = last.value().subtract(first.value(), MATH_CONTEXT)
-                .divide(first.value(), MATH_CONTEXT).multiply(BigDecimal.valueOf(100));
+        BigDecimal result = baseValue(last).subtract(firstBase, MATH_CONTEXT)
+                .divide(firstBase, MATH_CONTEXT).multiply(BigDecimal.valueOf(100));
         return List.of(new VerifiedCalculation("C1", "percentage_change",
                 "(" + last.factId() + " - " + first.factId() + ") / " + first.factId() + " × 100",
                 result, "percent", "unit", List.of(first.factId(), last.factId())));
@@ -184,10 +186,11 @@ final class FinancialEvidenceLedger {
     private List<VerifiedCalculation> ratio(List<FinancialFact> operands) {
         FinancialFact numerator = operands.get(0);
         FinancialFact denominator = operands.get(1);
-        if (denominator.value().compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal denominatorBase = baseValue(denominator);
+        if (denominatorBase.compareTo(BigDecimal.ZERO) == 0) {
             return List.of();
         }
-        BigDecimal result = numerator.value().divide(denominator.value(), MATH_CONTEXT)
+        BigDecimal result = baseValue(numerator).divide(denominatorBase, MATH_CONTEXT)
                 .multiply(BigDecimal.valueOf(100));
         return List.of(new VerifiedCalculation("C1", "ratio",
                 numerator.factId() + " / " + denominator.factId() + " × 100",
@@ -195,19 +198,22 @@ final class FinancialEvidenceLedger {
     }
 
     private List<VerifiedCalculation> sum(List<FinancialFact> operands) {
-        BigDecimal result = operands.stream().map(FinancialFact::value)
+        String outputScale = operands.stream().map(FinancialFact::scale)
+                .max((left, right) -> scaleMultiplier(left).compareTo(scaleMultiplier(right))).orElse("unit");
+        BigDecimal baseResult = operands.stream().map(this::baseValue)
                 .reduce(BigDecimal.ZERO, (left, right) -> left.add(right, MATH_CONTEXT));
+        BigDecimal result = displayedValue(baseResult, outputScale);
         return List.of(new VerifiedCalculation("C1", "sum",
                 String.join(" + ", operands.stream().map(FinancialFact::factId).toList()),
-                result, operands.get(0).unit(), operands.get(0).scale(),
+                result, operands.get(0).unit(), outputScale,
                 operands.stream().map(FinancialFact::factId).toList()));
     }
 
     private List<FinancialFact> bestCompatibleGroup(List<FinancialFact> facts, boolean requireSameMetric) {
         Map<String, List<FinancialFact>> groups = new LinkedHashMap<>();
         for (FinancialFact fact : facts) {
-            String metricKey = requireSameMetric ? normalize(fact.metric()).toLowerCase(Locale.ROOT) + "|" : "";
-            String key = metricKey + fact.unit() + "|" + fact.scale();
+            String metricKey = requireSameMetric ? canonicalMetric(fact.metric()) + "|" : "";
+            String key = metricKey + fact.unit();
             groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(fact);
         }
         return groups.values().stream().filter(group -> group.size() >= 2)
@@ -269,9 +275,55 @@ final class FinancialEvidenceLedger {
         }
     }
 
+    private BigDecimal baseValue(FinancialFact fact) {
+        return fact.value().multiply(scaleMultiplier(fact.scale()), MATH_CONTEXT);
+    }
+
+    private BigDecimal displayedValue(BigDecimal baseValue, String scale) {
+        return baseValue.divide(scaleMultiplier(scale), MATH_CONTEXT);
+    }
+
+    private BigDecimal scaleMultiplier(String scale) {
+        return switch (normalizeScale(scale)) {
+            case "thousand" -> BigDecimal.valueOf(1_000L);
+            case "million" -> BigDecimal.valueOf(1_000_000L);
+            case "billion" -> BigDecimal.valueOf(1_000_000_000L);
+            default -> BigDecimal.ONE;
+        };
+    }
+
     private String normalizeUnit(String value) {
         String normalized = normalize(value).toLowerCase(Locale.ROOT);
-        return normalized.isBlank() ? "other" : normalized;
+        return switch (normalized) {
+            case "$", "usd", "dollar", "dollars", "us dollar", "us dollars", "u.s. dollars" -> "usd";
+            case "%", "percentage" -> "percent";
+            case "", "other" -> "other";
+            default -> normalized;
+        };
+    }
+
+    private String canonicalMetric(String value) {
+        String normalized = normalize(value).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9 ]", " ")
+                .replaceAll("\\s+", " ").strip();
+        if (containsAny(normalized, "net sales", "total sales", "sales revenue", "revenues", "revenue")) {
+            return "revenue";
+        }
+        if (containsAny(normalized, "net earnings", "net profit", "net income")) {
+            return "net income";
+        }
+        if (containsAny(normalized, "income from operations", "operating profit", "operating income")) {
+            return "operating income";
+        }
+        if (containsAny(normalized, "total assets", "assets total")) {
+            return "total assets";
+        }
+        if (containsAny(normalized, "income before income taxes", "pre tax income", "pretax income")) {
+            return "income before tax";
+        }
+        if (containsAny(normalized, "income tax expense", "income taxes")) {
+            return "income taxes";
+        }
+        return normalized;
     }
 
     private String normalizeScale(String value) {
@@ -307,7 +359,8 @@ final class FinancialEvidenceLedger {
     }
 
     record EvidenceDocument(String evidenceId, String chunkId, String sourceFile, String company, String fiscalYear,
-                            String modality, String item, String sectionTitle, String content) {
+                            String modality, String item, String sectionTitle, String content,
+                            List<String> matchedTaskIds) {
     }
 
     record FinancialFact(String factId, String evidenceId, String company, String fiscalYear, String metric,
@@ -337,6 +390,9 @@ final class FinancialEvidenceLedger {
                 }
                 if (!document.sectionTitle().isBlank()) {
                     builder.append(" | section=").append(document.sectionTitle());
+                }
+                if (!document.matchedTaskIds().isEmpty()) {
+                    builder.append(" | tasks=").append(document.matchedTaskIds());
                 }
                 builder.append('\n').append(document.content()).append("\n\n");
             }

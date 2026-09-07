@@ -110,6 +110,16 @@ public class FinancialRagController {
         return emitter;
     }
 
+    @GetMapping(value = "/analyze", produces = MediaType.APPLICATION_JSON_VALUE)
+    public FinancialRagService.FinancialAnalysisResult analyze(
+            @RequestParam String prompt,
+            @RequestParam(defaultValue = "default") String conv_id,
+            @RequestParam(required = false) String modelId,
+            @RequestParam(required = false) String retrievalStrategy) {
+        return financialRagService.analyze(prompt, normalizeConversationId(conv_id), modelId,
+                FinancialRagService.FinancialRetrievalMode.fromValue(retrievalStrategy));
+    }
+
     private boolean sendEvent(SseEmitter emitter, AtomicBoolean open, String eventName, Object data) {
         if (!open.get()) {
             return false;

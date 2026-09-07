@@ -141,6 +141,10 @@ export const useModelStore = defineStore("model", {
       };
     },
     payloadFromForm() {
+      const modelId = this.form.id.trim().toLowerCase();
+      if (modelId && !/^[a-z0-9][a-z0-9_-]{0,63}$/.test(modelId)) {
+        throw new Error("模型 ID 只能包含小写字母、数字、短横线和下划线，且最长 64 位");
+      }
       const extraBody = this.form.extraBody.trim();
       if (extraBody) {
         const parsed = JSON.parse(extraBody);
@@ -149,7 +153,7 @@ export const useModelStore = defineStore("model", {
         }
       }
       return {
-        id: this.form.id || null,
+        id: modelId || null,
         name: this.form.name.trim(),
         provider: this.form.provider.trim() || "OpenAI Compatible",
         baseUrl: this.form.baseUrl.trim(),
@@ -166,13 +170,25 @@ export const useModelStore = defineStore("model", {
     async saveModel() {
       this.busy = true;
       try {
-        const saved = await api.saveModel(this.payloadFromForm());
+        const originalId = this.selectedModelId;
+        const payload = this.payloadFromForm();
+        this.status = originalId && originalId !== payload.id
+          ? `正在校验并修改模型 ID：${originalId} → ${payload.id}`
+          : "正在保存模型配置…";
+        const saved = await api.saveModel(payload, originalId);
+        if (this.activeModelId === originalId && originalId !== saved.id) {
+          this.setActiveModel(saved.id);
+        }
         this.selectedModelId = saved.id;
         if (saved.enabled) {
           this.setActiveModel(saved.id);
         }
         await this.loadModels();
-        this.status = "模型已保存";
+        this.status = originalId && originalId !== saved.id
+          ? `模型 ID 已修改为 ${saved.id}`
+          : "模型已保存";
+      } catch (error) {
+        this.status = error?.message || "模型保存失败";
       } finally {
         this.busy = false;
       }

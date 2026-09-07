@@ -53,12 +53,16 @@ class FinancialEvidenceLedgerTest {
     }
 
     @Test
-    void doesNotCalculateAcrossDifferentScales() {
+    void convertsCompatibleValuesAcrossDifferentScales() {
         List<FinancialEvidenceLedger.FinancialFact> facts = List.of(
                 fact("F1", "100", "million"),
                 fact("F2", "1.2", "billion"));
 
-        assertThat(ledger.calculate("Compare the change", facts)).isEmpty();
+        List<FinancialEvidenceLedger.VerifiedCalculation> calculations = ledger.calculate("Compare the change", facts);
+
+        assertThat(calculations).hasSize(1);
+        assertThat(calculations.get(0).displayResult()).isEqualTo("1.1");
+        assertThat(calculations.get(0).scale()).isEqualTo("billion");
     }
 
     @Test
@@ -79,10 +83,27 @@ class FinancialEvidenceLedgerTest {
         assertThat(calculations.get(0).displayResult()).isEqualTo("14.33");
     }
 
+    @Test
+    void treatsRevenueAndNetSalesAsTheSameMetricForTrends() {
+        List<FinancialEvidenceLedger.FinancialFact> facts = List.of(
+                new FinancialEvidenceLedger.FinancialFact(
+                        "F1", "E1", "AAPL", "2023", "revenue", "$100 million",
+                        new java.math.BigDecimal("100"), "usd", "million", "$100 million"),
+                new FinancialEvidenceLedger.FinancialFact(
+                        "F2", "E2", "AAPL", "2024", "net sales", "$110 million",
+                        new java.math.BigDecimal("110"), "usd", "million", "$110 million"));
+
+        List<FinancialEvidenceLedger.VerifiedCalculation> calculations =
+                ledger.calculate("percentage change from 2023 to 2024", facts);
+
+        assertThat(calculations).hasSize(1);
+        assertThat(calculations.get(0).displayResult()).isEqualTo("10");
+    }
+
     private FinancialEvidenceLedger.EvidenceDocument document(String id, String source, String company,
                                                                 String year, String content) {
         return new FinancialEvidenceLedger.EvidenceDocument(
-                id, "chunk-" + id, source, company, year, "table", "Item 8", "Statements", content);
+                id, "chunk-" + id, source, company, year, "table", "Item 8", "Statements", content, List.of());
     }
 
     private FinancialEvidenceLedger.FinancialFact fact(String id, String value, String scale) {

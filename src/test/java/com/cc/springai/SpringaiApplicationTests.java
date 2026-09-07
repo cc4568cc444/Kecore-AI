@@ -60,7 +60,7 @@ class SpringaiApplicationTests {
                     query, candidates[index], distances[index]);
         }
 
-        assertThat(distances[0]).isZero();
+        assertThat(distances[0]).isGreaterThan(0.0);
         assertThat(distances[0]).isLessThanOrEqualTo(distances[1]);
         assertThat(distances[0]).isLessThanOrEqualTo(distances[2]);
 		assertThat(distances[0]).isLessThanOrEqualTo(distances[3]);

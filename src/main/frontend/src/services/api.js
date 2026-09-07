@@ -24,7 +24,16 @@ async function requireOkPromise(responsePromise, fallbackMessage = "HTTP") {
 
 async function json(responsePromise, fallbackMessage) {
   const response = await responsePromise;
-  requireOk(response, fallbackMessage);
+  if (!response.ok) {
+    let message = "";
+    try {
+      const error = await response.json();
+      message = error?.message || error?.error || "";
+    } catch {
+      // Keep the generic status message when the server did not return JSON.
+    }
+    throw new Error(message || `${fallbackMessage || "HTTP"} ${response.status}`);
+  }
   return response.json();
 }
 
@@ -65,9 +74,9 @@ export const api = Object.freeze({
     }), "HTTP");
   },
 
-  saveModel(payload) {
-    const method = payload?.id ? "PUT" : "POST";
-    const endpoint = payload?.id ? API_ENDPOINTS.model(payload.id) : API_ENDPOINTS.models;
+  saveModel(payload, originalId = "") {
+    const method = originalId ? "PUT" : "POST";
+    const endpoint = originalId ? API_ENDPOINTS.model(originalId) : API_ENDPOINTS.models;
     return json(fetch(endpoint, {
       method,
       headers: JSON_HEADERS,

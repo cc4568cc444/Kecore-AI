@@ -16,14 +16,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ModelConfigService {
 
     private static final String DEFAULT_ID = "gpt";
+    private static final Set<String> BUILT_IN_IDS = Set.of("gpt", "deepseek");
     private static final String DEFAULT_COMPLETIONS_PATH = "/v1/chat/completions";
+    private static final Pattern MODEL_ID_PATTERN = Pattern.compile("[a-z0-9][a-z0-9_-]{0,63}");
     private static final TypeReference<Map<String, Object>> EXTRA_BODY_TYPE = new TypeReference<>() {
     };
 
@@ -162,6 +168,7 @@ public class ModelConfigService {
         if (creating) {
             id = UUID.randomUUID().toString();
         }
+        validateModelId(id);
         ResolvedModelConfig current = find(id);
         long now = System.currentTimeMillis();
         long createdAt = current == null ? now : current.createdAt();
@@ -212,10 +219,67 @@ public class ModelConfigService {
         return toView(config);
     }
 
+    @Transactional
+    public ModelConfigView update(String existingId, ModelConfigRequest request) {
+        String sourceId = normalizeId(existingId);
+        ResolvedModelConfig current = find(sourceId);
+        if (current == null) {
+            throw new IllegalArgumentException("要修改的模型不存在：" + sourceId);
+        }
+        String targetId = normalizeId(request.id());
+        if (!hasText(targetId)) {
+            targetId = sourceId;
+        }
+        validateModelId(targetId);
+        if (BUILT_IN_IDS.contains(sourceId) && !sourceId.equals(targetId)) {
+            throw new IllegalArgumentException("系统内置模型 " + sourceId + " 的 ID 不可修改");
+        }
+        if (!sourceId.equals(targetId) && find(targetId) != null) {
+            throw new IllegalArgumentException("模型 ID 已存在：" + targetId);
+        }
+
+        long now = System.currentTimeMillis();
+        String apiKey = hasText(request.apiKey()) ? request.apiKey().strip() : current.apiKey();
+        ResolvedModelConfig config = new ResolvedModelConfig(
+                targetId,
+                required(request.name(), "name"),
+                defaultText(request.provider(), "OpenAI Compatible"),
+                trimTrailingSlash(required(request.baseUrl(), "baseUrl")),
+                normalizeCompletionsPath(defaultText(request.completionsPath(), DEFAULT_COMPLETIONS_PATH)),
+                apiKey,
+                required(request.model(), "model"),
+                request.temperature(),
+                normalizeReasoningEffort(request.reasoningEffort()),
+                normalizeThinkingType(request.thinkingType()),
+                normalizeExtraBody(request.extraBody()),
+                request.enabled() == null || request.enabled(),
+                current.createdAt(),
+                now);
+        int updated = jdbcTemplate.update("""
+                UPDATE app_model_configs SET
+                    id = ?, name = ?, provider = ?, base_url = ?, completions_path = ?, api_key = ?,
+                    model = ?, temperature = ?, reasoning_effort = ?, thinking_type = ?, extra_body = ?,
+                    enabled = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                config.id(), config.name(), config.provider(), config.baseUrl(), config.completionsPath(),
+                config.apiKey(), config.model(), config.temperature(), config.reasoningEffort(),
+                config.thinkingType(), config.extraBody(), config.enabled(), config.updatedAt(), sourceId);
+        if (updated != 1) {
+            throw new IllegalArgumentException("模型 ID 修改失败，旧配置已保留");
+        }
+        ResolvedModelConfig persisted = find(targetId);
+        if (persisted == null || (!sourceId.equals(targetId) && find(sourceId) != null)) {
+            throw new IllegalArgumentException("模型 ID 修改后校验失败，事务已回滚");
+        }
+        modelCache.clear();
+        return toView(persisted);
+    }
+
     public void delete(String id) {
         String normalized = normalizeId(id);
-        if (DEFAULT_ID.equals(normalized)) {
-            throw new IllegalArgumentException("默认模型不能删除，可以编辑或禁用其它模型。");
+        if (BUILT_IN_IDS.contains(normalized)) {
+            throw new IllegalArgumentException("系统内置模型不能删除，可以编辑或禁用。");
         }
         jdbcTemplate.update("DELETE FROM app_model_configs WHERE id = ?", normalized);
         modelCache.clear();
@@ -399,6 +463,12 @@ public class ModelConfigService {
 
     private String normalizeId(String value) {
         return value == null ? "" : value.strip().toLowerCase(Locale.ROOT);
+    }
+
+    private void validateModelId(String id) {
+        if (!MODEL_ID_PATTERN.matcher(id).matches()) {
+            throw new IllegalArgumentException("模型 ID 必须以字母或数字开头，且只能包含小写字母、数字、-、_，长度不超过 64 位");
+        }
     }
 
     private String required(String value, String field) {

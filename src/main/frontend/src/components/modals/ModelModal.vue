@@ -59,7 +59,6 @@ const thinkingOptions = [
           </nav>
         </aside>
         <form class="model-form" id="modelForm" @submit.prevent="models.saveModel">
-          <input id="modelIdInput" v-model="models.form.id" type="hidden">
           <div class="model-form-grid">
             <label>
               <span>名称</span>
@@ -92,6 +91,19 @@ const thinkingOptions = [
             <label>
               <span>思考模式</span>
               <FloatingSelect id="modelThinkingTypeInput" v-model="models.form.thinkingType" :options="thinkingOptions" />
+            </label>
+            <label>
+              <span>模型 ID</span>
+              <input
+                id="modelIdInput"
+                v-model="models.form.id"
+                type="text"
+                maxlength="64"
+                :readonly="models.selectedModelId === 'gpt' || models.selectedModelId === 'deepseek'"
+                :placeholder="models.selectedModelId ? '' : '留空则自动生成'"
+                pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}"
+                title="只能包含字母、数字、短横线和下划线，最长 64 位"
+              >
             </label>
             <label class="wide">
               <span>API Key</span>

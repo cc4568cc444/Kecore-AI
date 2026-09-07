@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-开发入口为 `http://localhost:5173/vue/`。接口通过 Vite proxy 转发到 `http://localhost:8088`。
+开发入口为 `http://localhost:5173/vue/`。接口通过 Vite proxy 转发到 `http://localhost:8080`。
 
 ## 构建入口
 

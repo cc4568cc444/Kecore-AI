@@ -89,6 +89,7 @@ public class FinancialRagService {
     private final ChatMemory chatMemory;
     private final ModelConfigService modelConfigService;
     private final FinancialEvidenceLedger evidenceLedger;
+    private final FinancialCitationVerifier citationVerifier;
 
     @Value("${app.financial-rag.table:multidoc_full_chunks}")
     private String tableName;
@@ -117,6 +118,9 @@ public class FinancialRagService {
     @Value("${app.financial-rag.rerank.doc-chars:3000}")
     private int rerankDocChars;
 
+    @Value("${app.financial-rag.rerank.candidate-limit:24}")
+    private int rerankCandidateLimit;
+
     @Value("${app.financial-rag.retrieval-strategy:default}")
     private String retrievalStrategy;
 
@@ -128,6 +132,12 @@ public class FinancialRagService {
 
     @Value("${app.financial-rag.evidence-ledger.max-content-chars:6000}")
     private int evidenceLedgerMaxContentChars;
+
+    @Value("${app.financial-rag.citation-verifier.enabled:true}")
+    private boolean citationVerifierEnabled;
+
+    @Value("${app.financial-rag.citation-verifier.strict:true}")
+    private boolean citationVerifierStrict;
 
     public FinancialRagService(EmbeddingModel embeddingModel,
                                JdbcTemplate jdbcTemplate,
@@ -142,6 +152,7 @@ public class FinancialRagService {
         this.chatMemory = chatMemory;
         this.modelConfigService = modelConfigService;
         this.evidenceLedger = new FinancialEvidenceLedger(objectMapper);
+        this.citationVerifier = new FinancialCitationVerifier();
     }
 
     public Flux<String> chat(String prompt, String conversationId, String modelId) {
@@ -163,12 +174,13 @@ public class FinancialRagService {
             FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
             String userPrompt = answerPrompt(prompt, plan, ledger);
 
-            return financeChatClient(modelId).prompt()
+            Flux<String> answer = financeChatClient(modelId).prompt()
                     .user(userPrompt)
                     .options(modelConfigService.chatOptions(modelId))
                     .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                     .stream()
                     .content();
+            return verifyAnswer(answer, ledger);
         } catch (Exception ex) {
             return Flux.just("金融问答检索失败：" + ex.getMessage());
         }
@@ -214,12 +226,82 @@ public class FinancialRagService {
                     .stream()
                     .chatResponse()
                     .flatMapIterable(this::eventsFromResponse);
+            content = verifyAnswerEvents(content, ledger);
             return new FinancialAnswerStream(content, translationMs, retrievalMs, true, retrievalQuery);
         } catch (Exception ex) {
             long translationMs = elapsedMs(translationStartedAt);
             return new FinancialAnswerStream(Flux.just(new ModelStreamEvent("token", "金融问答检索失败：" + ex.getMessage())),
                     translationMs, 0L, false, "");
         }
+    }
+
+    public FinancialAnalysisResult analyze(String prompt, String conversationId, String modelId,
+                                           FinancialRetrievalMode retrievalMode) {
+        if (prompt == null || prompt.isBlank()) {
+            return FinancialAnalysisResult.failed("请输入要查询的金融年报问题。");
+        }
+        long startedAt = System.currentTimeMillis();
+        try {
+            long planningStartedAt = System.currentTimeMillis();
+            FinancialRetrievalPlan plan = planRetrieval(prompt, conversationId, modelId);
+            long planningMs = elapsedMs(planningStartedAt);
+
+            long retrievalStartedAt = System.currentTimeMillis();
+            List<FinancialChunk> chunks = search(plan, retrievalMode);
+            if (chunks.isEmpty()) {
+                return new FinancialAnalysisResult("", plan.resolvedQuestion(), plan.intent(),
+                        analysisTasks(plan), List.of(), List.of(), List.of(),
+                        new CitationAudit(false, List.of("没有检索到证据")), planningMs,
+                        elapsedMs(retrievalStartedAt), 0L, elapsedMs(startedAt), "没有检索到证据");
+            }
+            FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
+            long retrievalMs = elapsedMs(retrievalStartedAt);
+
+            long generationStartedAt = System.currentTimeMillis();
+            String generated = financeChatClient(modelId).prompt()
+                    .user(answerPrompt(prompt, plan, ledger))
+                    .options(modelConfigService.chatOptions(modelId))
+                    .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
+                    .call()
+                    .content();
+            long generationMs = elapsedMs(generationStartedAt);
+            String answer = citationVerifierEnabled
+                    ? citationVerifier.enforce(generated, ledger, citationVerifierStrict)
+                    : generated;
+            FinancialCitationVerifier.Audit audit = citationVerifier.verify(answer, ledger);
+            return new FinancialAnalysisResult(answer, plan.resolvedQuestion(), plan.intent(),
+                    analysisTasks(plan), analysisEvidence(ledger), analysisFacts(ledger), analysisCalculations(ledger),
+                    new CitationAudit(audit.valid(), audit.issues().stream().map(FinancialCitationVerifier.Issue::message).toList()),
+                    planningMs, retrievalMs, generationMs, elapsedMs(startedAt), "");
+        } catch (Exception exception) {
+            log.warn("Financial structured analysis failed: {}", exception.getMessage());
+            return FinancialAnalysisResult.failed(exception.getMessage());
+        }
+    }
+
+    private List<AnalysisTask> analysisTasks(FinancialRetrievalPlan plan) {
+        return plan.subTasks().stream().map(task -> new AnalysisTask(
+                task.id(), task.query(), task.companies(), task.years(), task.metric(),
+                task.operation(), task.modality(), task.dependsOn())).toList();
+    }
+
+    private List<AnalysisEvidence> analysisEvidence(FinancialEvidenceLedger.Ledger ledger) {
+        return ledger.evidence().stream().map(document -> new AnalysisEvidence(
+                document.evidenceId(), document.chunkId(), document.sourceFile(), document.company(),
+                document.fiscalYear(), document.modality(), document.item(), document.sectionTitle(),
+                document.matchedTaskIds())).toList();
+    }
+
+    private List<AnalysisFact> analysisFacts(FinancialEvidenceLedger.Ledger ledger) {
+        return ledger.facts().stream().map(fact -> new AnalysisFact(
+                fact.factId(), fact.evidenceId(), fact.company(), fact.fiscalYear(), fact.metric(),
+                fact.rawValue(), fact.value().toPlainString(), fact.unit(), fact.scale(), fact.quote())).toList();
+    }
+
+    private List<AnalysisCalculation> analysisCalculations(FinancialEvidenceLedger.Ledger ledger) {
+        return ledger.calculations().stream().map(calculation -> new AnalysisCalculation(
+                calculation.calculationId(), calculation.type(), calculation.expression(),
+                calculation.displayResult(), calculation.unit(), calculation.scale(), calculation.sourceFactIds())).toList();
     }
 
     private FinancialRetrievalPlan planRetrieval(String prompt, String conversationId, String modelId) {
@@ -554,7 +636,8 @@ public class FinancialRagService {
             documents.add(new FinancialEvidenceLedger.EvidenceDocument(
                     "E" + (index + 1), chunk.chunkId(), chunk.sourceFile(), company, year,
                     chunk.chunkType(), chunk.metadataText("item"), chunk.metadataText("section_title"),
-                    truncateEnd(retrievalContent(chunk, retrievalMode), Math.max(500, evidenceLedgerMaxContentChars))));
+                    truncateEnd(retrievalContent(chunk, retrievalMode), Math.max(500, evidenceLedgerMaxContentChars)),
+                    List.copyOf(chunk.matchedTaskIds)));
         }
         if (!evidenceLedgerEnabled) {
             return evidenceLedger.evidenceOnly(documents);
@@ -591,12 +674,35 @@ public class FinancialRagService {
 
                 回答规则：
                 1. 只能使用 Evidence Ledger 中的信息，不能补充外部知识。
-                2. 直接数值优先使用已校验事实 [F#]；涉及运算时只能使用确定性计算 [C#]，不得自行心算或改写计算结果。
+                2. 直接数值优先使用已校验事实 [F#]；涉及运算时只能使用确定性计算 [C#]，不得自行心算或改写计算结果，并在计算结论后明确标记对应 [C#]。
                 3. 如果缺少完成比较或计算所需的事实，明确指出缺少哪家公司、财年或指标，不得猜测。
-                4. 每项关键结论后引用原始证据编号 [E#]；引用必须与结论来自同一公司和财年。
+                4. 每项关键结论后引用原始证据编号 [E#]；引用必须与结论来自同一公司和财年。每个引用必须使用独立方括号，例如 [F1][E2]，不要写成 [F1；E2]。
                 5. 涉及跨公司或跨财年比较时，先按“公司—财年—指标”列出事实，再给出比较结论。
                 6. 结尾给出“来源”列表，格式为 `[E#] source_file — section`，不要伪造页码。
                 """.formatted(prompt, ledger.render()) + retrievalPlanPrompt(plan);
+    }
+
+    private Flux<String> verifyAnswer(Flux<String> answer, FinancialEvidenceLedger.Ledger ledger) {
+        if (!citationVerifierEnabled) {
+            return answer;
+        }
+        return answer.collectList().flatMapMany(parts -> Flux.just(
+                citationVerifier.enforce(String.join("", parts), ledger, citationVerifierStrict)));
+    }
+
+    private Flux<ModelStreamEvent> verifyAnswerEvents(Flux<ModelStreamEvent> events,
+                                                       FinancialEvidenceLedger.Ledger ledger) {
+        if (!citationVerifierEnabled) {
+            return events;
+        }
+        return events.collectList().flatMapMany(parts -> {
+            List<ModelStreamEvent> verified = new ArrayList<>();
+            parts.stream().filter(event -> "reasoning".equals(event.type())).forEach(verified::add);
+            String answer = parts.stream().filter(event -> "token".equals(event.type()))
+                    .map(ModelStreamEvent::content).collect(java.util.stream.Collectors.joining());
+            verified.add(new ModelStreamEvent("token", citationVerifier.enforce(answer, ledger, citationVerifierStrict)));
+            return Flux.fromIterable(verified);
+        });
     }
 
     private ChatClient financeChatClient(String modelId) {
@@ -623,7 +729,7 @@ public class FinancialRagService {
     private List<FinancialChunk> search(FinancialRetrievalPlan plan, FinancialRetrievalMode retrievalMode) {
         List<FinancialSearchRequest> requests = taskScopedRequests(plan);
         if (requests.isEmpty()) {
-            requests = List.of(new FinancialSearchRequest(plan.displayQuery(), "", ""));
+            requests = List.of(new FinancialSearchRequest(plan.displayQuery(), "", "", "hybrid", ""));
         }
         int finalTopK = Math.max(1, topK);
         Map<String, FinancialChunk> merged = new LinkedHashMap<>();
@@ -635,10 +741,13 @@ public class FinancialRagService {
                 continue;
             }
             int limit = index == 0 ? Math.max(finalTopK, hybridTopK) : finalTopK;
-            List<FinancialChunk> requestChunks = search(query, limit, retrievalMode, request.company(), request.year());
+            List<FinancialChunk> requestChunks = search(query, limit, retrievalMode, request.company(), request.year(),
+                    request.modality(), false).stream().map(chunk -> chunk.withMatchedTask(request.taskId())).toList();
             if ((!request.company().isBlank() || !request.year().isBlank()) && !requestChunks.isEmpty()) {
-                String scope = request.company().toUpperCase(Locale.ROOT) + "|" + request.year()
-                        + "|" + cleanLine(request.query()).toLowerCase(Locale.ROOT);
+                String scope = request.taskId().isBlank()
+                        ? request.company().toUpperCase(Locale.ROOT) + "|" + request.year() + "|"
+                        + cleanLine(request.query()).toLowerCase(Locale.ROOT)
+                        : request.taskId();
                 FinancialChunk anchor = requestChunks.get(0);
                 FinancialChunk existingAnchor = scopeAnchors.get(scope);
                 if (existingAnchor == null || anchor.finalScore() > existingAnchor.finalScore()) {
@@ -648,25 +757,58 @@ public class FinancialRagService {
             for (FinancialChunk chunk : requestChunks) {
                 FinancialChunk existing = merged.get(chunk.chunkId());
                 if (existing == null || chunk.finalScore() > existing.finalScore()) {
+                    if (existing != null) {
+                        chunk.matchedTaskIds.addAll(existing.matchedTaskIds);
+                    }
                     merged.put(chunk.chunkId(), chunk);
+                } else {
+                    existing.matchedTaskIds.addAll(chunk.matchedTaskIds);
                 }
             }
         }
         List<FinancialChunk> scoreRanked = merged.values().stream()
                 .sorted(Comparator.comparingDouble(FinancialChunk::finalScore).reversed())
                 .toList();
-        Map<String, FinancialChunk> balanced = new LinkedHashMap<>();
+        int candidateLimit = Math.max(finalTopK, Math.min(hybridTopK, Math.max(finalTopK, rerankCandidateLimit)));
+        Map<String, FinancialChunk> candidates = new LinkedHashMap<>();
         scopeAnchors.values().stream()
                 .sorted(Comparator.comparingDouble(FinancialChunk::finalScore).reversed())
-                .limit(finalTopK)
-                .forEach(chunk -> balanced.put(chunk.chunkId(), chunk));
+                .limit(candidateLimit)
+                .forEach(chunk -> candidates.put(chunk.chunkId(), chunk));
         for (FinancialChunk chunk : scoreRanked) {
-            if (balanced.size() >= finalTopK) {
+            if (candidates.size() >= candidateLimit) {
                 break;
             }
-            balanced.putIfAbsent(chunk.chunkId(), chunk);
+            candidates.putIfAbsent(chunk.chunkId(), chunk);
         }
-        return List.copyOf(balanced.values());
+        List<FinancialChunk> globallyRanked = List.copyOf(candidates.values());
+        if (rerankEnabled && !globallyRanked.isEmpty()) {
+            globallyRanked = rerank(plan.resolvedQuestion(), globallyRanked, candidateLimit, retrievalMode);
+        }
+        return taskBalancedTopK(globallyRanked, plan.subTasks(), finalTopK);
+    }
+
+    private List<FinancialChunk> taskBalancedTopK(List<FinancialChunk> ranked,
+                                                   List<FinancialRetrievalTask> tasks,
+                                                   int limit) {
+        Map<String, FinancialChunk> selected = new LinkedHashMap<>();
+        for (FinancialRetrievalTask task : tasks) {
+            if (!"retrieve".equalsIgnoreCase(task.operation())) {
+                continue;
+            }
+            ranked.stream().filter(chunk -> chunk.matchedTaskIds.contains(task.id())).findFirst()
+                    .ifPresent(chunk -> selected.putIfAbsent(chunk.chunkId(), chunk));
+            if (selected.size() >= limit) {
+                return List.copyOf(selected.values());
+            }
+        }
+        for (FinancialChunk chunk : ranked) {
+            selected.putIfAbsent(chunk.chunkId(), chunk);
+            if (selected.size() >= limit) {
+                break;
+            }
+        }
+        return List.copyOf(selected.values());
     }
 
     private List<FinancialSearchRequest> taskScopedRequests(FinancialRetrievalPlan plan) {
@@ -681,12 +823,12 @@ public class FinancialRagService {
                 for (String year : years) {
                     addSearchRequest(requests, new FinancialSearchRequest(
                             String.join(" ", List.of(task.query(), task.metric())).strip(),
-                            company.toUpperCase(Locale.ROOT), year));
+                            company.toUpperCase(Locale.ROOT), year, task.modality(), task.id()));
                 }
             }
         }
         for (String query : plan.queries()) {
-            addSearchRequest(requests, new FinancialSearchRequest(query, "", ""));
+            addSearchRequest(requests, new FinancialSearchRequest(query, "", "", "hybrid", ""));
         }
         return List.copyOf(requests);
     }
@@ -697,11 +839,13 @@ public class FinancialRagService {
             return;
         }
         FinancialSearchRequest normalized = new FinancialSearchRequest(query, cleanLine(candidate.company()),
-                cleanLine(candidate.year()));
+                cleanLine(candidate.year()), normalizeModality(candidate.modality()), cleanLine(candidate.taskId()));
         boolean duplicate = requests.stream().anyMatch(existing ->
                 existing.query().equalsIgnoreCase(normalized.query())
                         && existing.company().equalsIgnoreCase(normalized.company())
-                        && existing.year().equalsIgnoreCase(normalized.year()));
+                        && existing.year().equalsIgnoreCase(normalized.year())
+                        && existing.modality().equalsIgnoreCase(normalized.modality())
+                        && existing.taskId().equalsIgnoreCase(normalized.taskId()));
         if (!duplicate) {
             requests.add(normalized);
         }
@@ -722,23 +866,40 @@ public class FinancialRagService {
 
     private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode,
                                         String company, String year) {
+        return search(query, resultLimit, retrievalMode, company, year, "hybrid");
+    }
+
+    private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode,
+                                        String company, String year, String modality) {
+        return search(query, resultLimit, retrievalMode, company, year, modality, true);
+    }
+
+    private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode,
+                                        String company, String year, String modality, boolean applyRerank) {
         String table = resolveTableName();
-        RetrievalFilters filters = explicitFilters(table, company, year);
+        RetrievalFilters filters = explicitFilters(table, company, year, modality);
         if (filters.isEmpty()) {
             filters = inferFilters(query, table);
         }
-        return search(query, resultLimit, retrievalMode, table, filters);
+        return search(query, resultLimit, retrievalMode, table, filters, applyRerank);
     }
 
     private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode,
                                         String table, RetrievalFilters filters) {
+        return search(query, resultLimit, retrievalMode, table, filters, true);
+    }
+
+    private List<FinancialChunk> search(String query, int resultLimit, FinancialRetrievalMode retrievalMode,
+                                        String table, RetrievalFilters filters, boolean applyRerank) {
         float[] embedding = embeddingModel.embed(query);
         String vector = vectorLiteral(embedding);
         int finalTopK = Math.max(1, resultLimit);
         int finalHybridTopK = Math.max(hybridTopK, finalTopK);
         int vectorLimit = Math.max(finalHybridTopK * 3, finalTopK);
         List<FinancialChunk> vectorRows = fetchVectorCandidates(table, vector, filters, vectorLimit);
-        List<FinancialChunk> candidateRows = fetchMetadataCandidates(table, filters);
+        List<FinancialChunk> candidateRows = filters.hasNarrowScope()
+                ? fetchMetadataCandidates(table, filters)
+                : fetchLexicalCandidates(table, filters, query, Math.max(finalHybridTopK * 20, 500));
         if (candidateRows.isEmpty() && filters.hasCompanyOrYear()) {
             RetrievalFilters fallbackFilters = filters.withoutSourceFile();
             vectorRows = fetchVectorCandidates(table, vector, fallbackFilters, vectorLimit);
@@ -754,13 +915,13 @@ public class FinancialRagService {
         if (retrievalMode == FinancialRetrievalMode.PARENT_CHILD) {
             ranked = collapseParentChildRows(ranked, finalHybridTopK);
         }
-        if (rerankEnabled) {
+        if (applyRerank && rerankEnabled) {
             ranked = rerank(query, ranked, finalTopK, retrievalMode);
         }
         return ranked.stream().limit(finalTopK).toList();
     }
 
-    private RetrievalFilters explicitFilters(String table, String company, String year) {
+    private RetrievalFilters explicitFilters(String table, String company, String year, String modality) {
         String normalizedCompany = cleanLine(company).toUpperCase(Locale.ROOT);
         String normalizedYear = cleanLine(year);
         String sourceFile = "";
@@ -770,7 +931,12 @@ public class FinancialRagService {
                 sourceFile = candidate;
             }
         }
-        return new RetrievalFilters(sourceFile, normalizedCompany, normalizedYear);
+        String chunkType = switch (normalizeModality(modality)) {
+            case "text" -> "text";
+            case "table" -> "table";
+            default -> "";
+        };
+        return new RetrievalFilters(sourceFile, normalizedCompany, normalizedYear, chunkType);
     }
 
     private String resolveTableName() {
@@ -809,7 +975,7 @@ public class FinancialRagService {
                 sourceFile = candidate;
             }
         }
-        return new RetrievalFilters(sourceFile, company, year);
+        return new RetrievalFilters(sourceFile, company, year, "");
     }
 
     private Optional<String> inferCompany(String query, String normalized, String table) {
@@ -886,7 +1052,40 @@ public class FinancialRagService {
         return jdbcTemplate.query(sql, this::mapChunk, params.toArray());
     }
 
-    private SqlWhere whereClause(RetrievalFilters filters) {
+    private List<FinancialChunk> fetchLexicalCandidates(String table, RetrievalFilters filters,
+                                                         String query, int limit) {
+        String tsQuery = lexicalTsQuery(query);
+        if (tsQuery.isBlank()) {
+            return fetchMetadataCandidates(table, filters);
+        }
+        SqlWhere where = whereClause(filters);
+        String prefix = where.sql().isBlank() ? "WHERE " : where.sql() + " AND ";
+        String sql = """
+                SELECT chunk_id, source_file, chunk_type, content, metadata::text AS metadata,
+                       ts_rank_cd(to_tsvector('english', content), to_tsquery('english', ?)) AS score
+                FROM %s
+                %s to_tsvector('english', content) @@ to_tsquery('english', ?)
+                ORDER BY score DESC
+                LIMIT ?
+                """.formatted(safeTableName(table), prefix);
+        List<Object> params = new ArrayList<>();
+        params.add(tsQuery);
+        params.addAll(where.params());
+        params.add(tsQuery);
+        params.add(Math.max(1, limit));
+        return jdbcTemplate.query(sql, this::mapChunk, params.toArray());
+    }
+
+    String lexicalTsQuery(String query) {
+        return tokenize(query).stream()
+                .map(token -> token.replaceAll("[^a-z0-9]", ""))
+                .filter(token -> !token.isBlank())
+                .distinct()
+                .limit(16)
+                .collect(java.util.stream.Collectors.joining(" | "));
+    }
+
+    SqlWhere whereClause(RetrievalFilters filters) {
         List<String> conditions = new ArrayList<>();
         List<Object> params = new ArrayList<>();
         if (!filters.sourceFile().isBlank()) {
@@ -900,6 +1099,10 @@ public class FinancialRagService {
         if (!filters.year().isBlank()) {
             conditions.add("year = ?");
             params.add(filters.year());
+        }
+        if (!filters.chunkType().isBlank()) {
+            conditions.add("chunk_type = ?");
+            params.add(filters.chunkType());
         }
         return new SqlWhere(conditions.isEmpty() ? "" : "WHERE " + String.join(" AND ", conditions), params);
     }
@@ -1259,6 +1462,14 @@ public class FinancialRagService {
         return value == null ? "" : value.strip().replaceAll("\\R+", " ").replaceAll("\\s+", " ");
     }
 
+    private String normalizeModality(String value) {
+        String normalized = cleanLine(value).toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "text", "table" -> normalized;
+            default -> "hybrid";
+        };
+    }
+
     private String truncateEnd(String value, int maxChars) {
         if (value == null || value.length() <= maxChars) {
             return value == null ? "" : value;
@@ -1266,24 +1477,28 @@ public class FinancialRagService {
         return value.substring(0, Math.max(0, maxChars - 24)).strip() + " ...";
     }
 
-    private record RetrievalFilters(String sourceFile, String company, String year) {
+    record RetrievalFilters(String sourceFile, String company, String year, String chunkType) {
         boolean isEmpty() {
-            return sourceFile.isBlank() && company.isBlank() && year.isBlank();
+            return sourceFile.isBlank() && company.isBlank() && year.isBlank() && chunkType.isBlank();
         }
 
         boolean hasCompanyOrYear() {
             return !company.isBlank() || !year.isBlank();
         }
 
+        boolean hasNarrowScope() {
+            return !sourceFile.isBlank() || !company.isBlank() || !year.isBlank();
+        }
+
         RetrievalFilters withoutSourceFile() {
-            return new RetrievalFilters("", company, year);
+            return new RetrievalFilters("", company, year, chunkType);
         }
     }
 
-    private record SqlWhere(String sql, List<Object> params) {
+    record SqlWhere(String sql, List<Object> params) {
     }
 
-    private record FinancialSearchRequest(String query, String company, String year) {
+    private record FinancialSearchRequest(String query, String company, String year, String modality, String taskId) {
     }
 
     record FinancialRetrievalPlan(String translatedQuestion,
@@ -1311,6 +1526,38 @@ public class FinancialRagService {
 
     public record FinancialAnswerStream(Flux<ModelStreamEvent> content, long translationMs, long retrievalMs,
                                         boolean modelRequested, String retrievalQuery) {
+    }
+
+    public record AnalysisTask(String id, String query, List<String> companies, List<String> years,
+                               String metric, String operation, String modality, List<String> dependsOn) {
+    }
+
+    public record AnalysisEvidence(String evidenceId, String chunkId, String sourceFile, String company,
+                                   String fiscalYear, String modality, String item, String sectionTitle,
+                                   List<String> matchedTaskIds) {
+    }
+
+    public record AnalysisFact(String factId, String evidenceId, String company, String fiscalYear, String metric,
+                               String rawValue, String value, String unit, String scale, String quote) {
+    }
+
+    public record AnalysisCalculation(String calculationId, String type, String expression, String result,
+                                      String unit, String scale, List<String> sourceFactIds) {
+    }
+
+    public record CitationAudit(boolean valid, List<String> issues) {
+    }
+
+    public record FinancialAnalysisResult(String answer, String resolvedQuestion, String intent,
+                                          List<AnalysisTask> tasks, List<AnalysisEvidence> evidence,
+                                          List<AnalysisFact> facts, List<AnalysisCalculation> calculations,
+                                          CitationAudit citationAudit, long planningMs, long retrievalMs,
+                                          long generationMs, long totalMs, String error) {
+        static FinancialAnalysisResult failed(String error) {
+            return new FinancialAnalysisResult("", "", "unknown", List.of(), List.of(), List.of(), List.of(),
+                    new CitationAudit(false, List.of(error == null ? "unknown error" : error)),
+                    0L, 0L, 0L, 0L, error == null ? "unknown error" : error);
+        }
     }
 
     public enum FinancialRetrievalMode {
@@ -1347,6 +1594,7 @@ public class FinancialRagService {
         private double hybridScore;
         private double rerankScore;
         private double finalScore;
+        private final Set<String> matchedTaskIds = new LinkedHashSet<>();
 
         private FinancialChunk(String chunkId,
                                String sourceFile,
@@ -1371,6 +1619,15 @@ public class FinancialRagService {
             copy.hybridScore = hybridScore;
             copy.rerankScore = rerankScore;
             copy.finalScore = finalScore;
+            copy.matchedTaskIds.addAll(matchedTaskIds);
+            return copy;
+        }
+
+        private FinancialChunk withMatchedTask(String taskId) {
+            FinancialChunk copy = copy();
+            if (taskId != null && !taskId.isBlank()) {
+                copy.matchedTaskIds.add(taskId);
+            }
             return copy;
         }
 

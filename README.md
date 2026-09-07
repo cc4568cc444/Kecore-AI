@@ -48,6 +48,7 @@ Agent 可用工具包括：
 
 - 前端模式：`金融问答`
 - 接口：`/finance/chat`
+- 结构化分析与评测接口：`/finance/analyze`
 - 数据来源：Multi-Doc-2025 SEC 10-K filings 数据集。
 - 目标查询表：`multidoc_full_chunks`
 - 兼容查询表：`multidoc_s2_full_chunks`、`multidoc_s2_medium_chunks`
@@ -203,6 +204,21 @@ spring:
 $env:MIMO_KEY="你的模型 API Key"
 ```
 
+通过前端“模型管理”新增的配置保存在 PostgreSQL 表 `app_model_configs` 中，模型 ID 对应
+该表主键 `id`。模型管理表单会显示“模型 ID”：新增时可留空自动生成，也可填写便于命令行
+使用的短 ID；编辑已有非默认模型时可以直接修改。ID 会统一转为小写，并校验以下格式：
+
+```text
+[a-z0-9][a-z0-9_-]{0,63}
+```
+
+保存重命名时，后端会在同一数据库事务中校验原模型存在、目标 ID 未被占用以及格式合法；
+失败时保留旧 ID 和 API Key。系统内置的 `gpt`、`deepseek` ID 不允许修改，其他配置均可修改。
+
+不建议直接执行 SQL 修改主键，因为这会绕过格式、重名、缓存和前端当前选中模型的同步。
+如需通过接口修改，可向旧 ID 发送 `PUT /api/models/{旧ID}`，并在请求体的 `id` 字段中
+填写新 ID。
+
 ### 4. Embedding 配置
 
 项目当前使用局域网 Ollama embedding 服务：
@@ -239,6 +255,7 @@ app:
       url: http://127.0.0.1:8010
       model: Qwen3-Reranker-0.6B
       doc-chars: 3000
+      candidate-limit: 24
 ```
 
 如果本地 reranker 未启动，可以临时关闭：
@@ -260,7 +277,13 @@ app:
       enabled: true
       max-documents: 15
       max-content-chars: 6000
+    citation-verifier:
+      enabled: true
+      strict: true
 ```
+
+严格引用校验会检查未知 `[E/F/C]`、无来源数值、计算结果是否来自 `[C#]`，以及引用与公司、
+财年是否一致；校验失败时不输出未经证实的原答案。由于需要验证完整答案，开启严格模式后答案正文会在模型生成完成后一次性发送。
 
 测试示例：
 
@@ -334,13 +357,13 @@ mvn spring-boot:run
 默认端口：
 
 ```text
-http://localhost:8088
+http://localhost:8080
 ```
 
 访问前端：
 
 ```text
-http://localhost:8088/index.html
+http://localhost:8080/vue/
 ```
 
 ## 前端使用手册
@@ -402,9 +425,10 @@ python tools/multidoc/multidoc_pipeline.py prepare
 再按需下载原始 10-K 并构建统一索引：
 
 ```powershell
-python tools/multidoc/multidoc_pipeline.py prepare --all-docs --download-docs
+python tools/multidoc/multidoc_pipeline.py prepare --all-docs --download-docs --download-workers 4
 python tools/multidoc/multidoc_pipeline.py verify
-python tools/multidoc/multidoc_pipeline.py index --all-docs --rebuild
+python tools/multidoc/multidoc_pipeline.py index --all-docs --rebuild --embedding-workers 1 --embedding-batch-size 64 --defer-vector-index
+python tools/multidoc/multidoc_pipeline.py status
 ```
 
 完整说明见 `tools/multidoc/README.md`。以下 S2 脚本继续保留，用于旧基线复现和回归对比。
@@ -462,10 +486,19 @@ multidoc_full_eval_results
 
 检索流程：
 
-- Metadata Filter：公司、年份、行业、source file。
+- Metadata Filter：公司、年份、模态、行业、source file。
 - Vector Search：向量召回语义相关片段。
 - BM25：强化公司名、指标名、年份、表头、数字关键词。
 - RRF：融合向量和 BM25 排名。
+- Task-balanced Merge：每个检索子任务至少保留一条候选并记录 task provenance。
+- Evidence Ledger：校验事实原文、统一数量级并执行确定性计算。
+- Citation Verifier：验证 `[E/F/C]` 引用，严格模式下拦截未验证答案。
+
+按 S3/S4/S5 运行均衡抽样评测：
+
+```powershell
+python tools/multidoc/evaluate_multidoc.py --subsets S3,S4,S5 --limit 30 --workers 2
+```
 - Rerank：本地 Qwen3-Reranker 对候选片段重排。
 - Top-8：最终交给 LLM 回答。
 
@@ -476,6 +509,7 @@ multidoc_full_eval_results
 | `/ai/chat` | GET | 普通对话 |
 | `/game/chat` | GET | 保留的模拟器接口，前端默认隐藏 |
 | `/finance/chat` | GET | 金融年报 RAG 问答 |
+| `/finance/analyze` | GET | 返回查询计划、证据、事实、计算、引用审计及分阶段耗时 |
 | `/paper/chat` | GET | 科研论文 RAG 问答 |
 | `/paper/chat/stream` | GET | 科研论文 RAG 流式问答 |
 | `/agent/chat` | POST | Agent 非流式接口 |

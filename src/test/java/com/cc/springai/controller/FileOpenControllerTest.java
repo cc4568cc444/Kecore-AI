@@ -36,7 +36,7 @@ class FileOpenControllerTest {
     }
 
     @Test
-    void windowsOpenCommandSelectsFileOrDirectoryForegroundFriendly() throws Exception {
+    void windowsOpenCommandUsesExplorerForDirectoriesAndDefaultApplicationForFiles() throws Exception {
         FileOpenController controller = new FileOpenController();
         Path tempDirectory = Files.createTempDirectory("file-open-controller-dir");
         Path tempFile = Files.createTempFile("file-open-controller-file", ".txt");
@@ -47,7 +47,7 @@ class FileOpenControllerTest {
             List<String> fileCommand = ReflectionTestUtils.invokeMethod(controller, "buildWindowsOpenCommand", tempFile);
 
             assertThat(directoryCommand).containsExactly("explorer.exe", tempDirectory.toString());
-            assertThat(fileCommand).containsExactly("explorer.exe", "/select,", tempFile.toString());
+            assertThat(fileCommand).containsExactly("cmd.exe", "/c", "start", "", tempFile.toString());
         } finally {
             Files.deleteIfExists(tempFile);
             Files.deleteIfExists(tempDirectory);

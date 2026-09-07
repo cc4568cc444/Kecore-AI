@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const springBootTarget = process.env.VITE_SPRING_BOOT_TARGET || "http://localhost:8088";
+const springBootTarget = process.env.VITE_SPRING_BOOT_TARGET || "http://localhost:8080";
 const frontendRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const localStaticFiles = new Map([
