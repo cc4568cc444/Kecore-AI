@@ -288,7 +288,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--model-id", default="")
     parser.add_argument("--retrieval-strategy", choices=("default", "parent-child"), default="parent-child")
-    parser.add_argument("--timeout", type=int, default=300)
+    parser.add_argument("--timeout", type=int, default=600,
+                        help="per-question HTTP timeout in seconds; complex S5 requests can exceed five minutes")
     parser.add_argument("--workers", type=int, default=2, help="parallel evaluation requests")
     parser.add_argument("--run-id", default="", help="isolates evaluation conversations; defaults to a timestamp")
     parser.add_argument("--dry-run", action="store_true")

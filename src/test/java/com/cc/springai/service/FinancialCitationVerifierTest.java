@@ -60,6 +60,32 @@ class FinancialCitationVerifierTest {
     }
 
     @Test
+    void doesNotTreatFilingIdentifiersAsNumericClaims() {
+        FinancialEvidenceLedger.Ledger qualitativeLedger = new FinancialEvidenceLedger.Ledger(
+                ledger().evidence(), List.of(), List.of());
+
+        FinancialCitationVerifier.Audit audit = verifier.verify(
+                "AEP's FY2024 Item 7 disclaimer enumerates risks [E1]. "
+                        + "ED relies on a broader 10-K description [E2].",
+                qualitativeLedger);
+
+        assertThat(audit.valid()).isTrue();
+        assertThat(audit.issues()).isEmpty();
+    }
+
+    @Test
+    void stillTreatsARealNumberNearFilingIdentifiersAsNumericClaim() {
+        FinancialEvidenceLedger.Ledger qualitativeLedger = new FinancialEvidenceLedger.Ledger(
+                ledger().evidence(), List.of(), List.of());
+
+        FinancialCitationVerifier.Audit audit = verifier.verify(
+                "In FY2024 Item 7, the disclosed age was 59.", qualitativeLedger);
+
+        assertThat(audit.issues()).extracting(FinancialCitationVerifier.Issue::code)
+                .contains("uncited_numeric_claim", "missing_evidence");
+    }
+
+    @Test
     void acceptsPriorYearColumnFromCurrentYearEvidence() {
         FinancialEvidenceLedger.EvidenceDocument document = new FinancialEvidenceLedger.EvidenceDocument(
                 "E1", "c1", "AAPL_2024.html", "AAPL", "2024", "table", "Item 8", "Statements",

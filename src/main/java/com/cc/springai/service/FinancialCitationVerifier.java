@@ -19,6 +19,11 @@ final class FinancialCitationVerifier {
             "(?i)(?<![A-Z0-9])(E|F|C)(\\d+)(?![A-Z0-9])");
     private static final Pattern YEAR = Pattern.compile("\\b20\\d{2}\\b");
     private static final Pattern NUMERIC_CLAIM = Pattern.compile("(?:[$€£¥]|\\b\\d[\\d,.]*%?\\b)");
+    // Filing identifiers describe where a claim appears; they are not financial/numeric claims themselves.
+    // Removing them before NUMERIC_CLAIM matching avoids treating "FY2024", "Item 7" and "10-K"
+    // as uncited amounts while year/company consistency is still checked separately below.
+    private static final Pattern FILING_IDENTIFIER = Pattern.compile(
+            "(?i)\\b(?:FY\\s*)?20\\d{2}\\b|\\b(?:Item|Part|Section|Note)\\s+\\d+[A-Z]?(?:\\.\\d+)?\\b|\\b10-[KQ]\\b");
     private static final Pattern DERIVED_CALCULATION = Pattern.compile(
             "(?i)(?:计算得出|按.+计算|calculated|computed|\\([^\\n)]*[-+*/×÷][^\\n)]*\\))");
 
@@ -235,6 +240,7 @@ final class FinancialCitationVerifier {
     private boolean hasNumericClaim(String sentence) {
         String withoutReferences = REFERENCE.matcher(sentence).replaceAll("")
                 .replaceFirst("^\\s*\\d+[.)、]\\s*", "");
+        withoutReferences = FILING_IDENTIFIER.matcher(withoutReferences).replaceAll("");
         return NUMERIC_CLAIM.matcher(withoutReferences).find();
     }
 

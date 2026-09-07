@@ -64,7 +64,7 @@ python tools/multidoc/multidoc_pipeline.py status
 
 ```powershell
 python tools/multidoc/evaluate_multidoc.py --dry-run
-python tools/multidoc/evaluate_multidoc.py --subsets S3,S4,S5 --limit 10 --model-id deepseek
+python tools/multidoc/evaluate_multidoc.py --subsets S3,S4,S5 --limit 10 --workers 1 --timeout 600 --model-id deepseek
 ```
 
 评测脚本调用 `/finance/analyze`，结果写入 `evaluation-results/multidoc`。除 Exact Match、
