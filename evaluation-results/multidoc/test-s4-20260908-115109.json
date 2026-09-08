@@ -1,0 +1,266 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "split": "test",
+  "subsets": [
+    "S4"
+  ],
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-08T11:51:09.397095+00:00",
+  "summary": {
+    "overall": {
+      "count": 1,
+      "successful": 1,
+      "exact_match": 0.0,
+      "token_f1": 0.23076923076923075,
+      "numeric_accuracy": null,
+      "numeric_question_count": 0,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "fact_extraction_rate": null,
+      "fact_extraction_question_count": 0,
+      "calculation_production_rate": null,
+      "calculation_question_count": 0,
+      "refusal_rate": 0.0,
+      "average_latency_ms": 106319.0
+    },
+    "by_subset": {
+      "S4": {
+        "task_type": "cross-company",
+        "count": 1,
+        "successful": 1,
+        "exact_match": 0.0,
+        "token_f1": 0.23076923076923075,
+        "numeric_accuracy": null,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "fact_extraction_rate": null,
+        "fact_extraction_question_count": 0,
+        "calculation_production_rate": null,
+        "calculation_question_count": 0,
+        "refusal_rate": 0.0,
+        "average_latency_ms": 106319.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1562",
+      "subset": "S4",
+      "task_type": "cross-company",
+      "question": "What are the key differences in how AEP and ED address the competitive landscape in their FY2024 filings?",
+      "expected_answer": "AEP's filing does not directly address competition; it mentions risks from 'Changes in economic conditions, electric market demand and demographic patterns.' ED specifically discusses competition: 'The Utilities' gas delivery customers and CECONY's steam delivery customers have alternatives, such as electricity and oil. Distributed energy resources, and demand reduction and energy efficiency investments, provide ways for the energy consumers within the Utilities’ service areas to manage their energy usage.' Thus, ED provides explicit competitive analysis, while AEP does not.",
+      "predicted_answer": "Based on the retrieved Item 7 evidence, the key difference is that ED’s FY2024 Item 7 discussion frames competition as a strategic risk driven by policy and customer choice, whereas AEP’s retrieved Item 7 content does not contain a substantive competitive-landscape narrative; AEP’s competition discussion appears outside Item 7 (in Item 1/Item 2).\n\n**Con Edison (ED) FY2024 – Item 7**\n- ED discusses the competitive landscape as a risk to its strategy: “Changes to the competitive landscape, public policy, laws or regulations (or interpretations thereof), customer behavior or technology could significantly impact the value of the Utilities’ energy delivery facilities and Con Edison Transmission's investment” [E2].\n- ED identifies specific competitive substitutes: “The Utilities' gas delivery customers and CECONY's steam delivery customers have alternatives, such as electricity and oil,” and notes that distributed energy resources and energy-efficiency investments allow customers to manage usage [E2].\n- ED expects structural demand shifts: “The Companies expect distributed energy resources and electric alternatives to gas and steam to increase, and for gas and steam usage to decrease” under the CLCPA and Climate Mobilization Act [E2].\n- ED’s approach is strategy-focused: shareholder value through dividend growth supported by regulated utilities and transmission earnings, with competition treated as an external factor that could affect investment returns [E2].\n\n**AEP FY2024 – Item 7**\n- The retrieved AEP Item 7 sections contain only forward-looking risk factor lists (e.g., “Shifting demand for electricity”), MD&A incorporation references, and segment earnings tables — no dedicated competitive landscape discussion appears in the supplied Item 7 evidence [E3][E4][E6].\n- AEP’s actual competition description (in the retrieved evidence) is located in the Business/Properties sections, not Item 7: AEP’s vertically integrated utilities face competition from “self-generation and with distributors of other energy sources, such as natural gas, fuel oil, renewables and coal” [E13], and its Generation & Marketing segment competes on “electricity and fuel prices, new market entrants…and technological advances in power generation” [E5]. However, these are outside the requested Item 7 scope.\n\n**Conclusion:** For FY2024 Item 7 specifically, ED explicitly addresses the competitive landscape as a strategic risk tied to policy-driven substitution and distributed energy resources, while AEP’s Item 7 evidence does not provide a comparable competitive-landscape discussion — the supplied AEP Item 7 content focuses on forward-looking risks and segment financial results. Evidence for AEP’s Item 7 competitive narrative is therefore insufficient.\n\n**Sources:**\n[E2] ED_2024.html — Item 7\n[E3] AEP_2024.html — Item 7\n[E4] AEP_2024.html — Item 7\n[E5] AEP_2024.html — Item 2\n[E6] AEP_2024.html — Item 7\n[E13] AEP_2024.html — Item 1",
+      "exact_match": false,
+      "token_f1": 0.23076923076923075,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 3,
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "fact_count": 0,
+      "calculation_count": 0,
+      "requires_calculation": false,
+      "expected_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "retrieved_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-ad634451b6fd32c833cb6d31",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-a478701e0a398c9852a2d6b4",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "The Companies’ Strategies May Not Be Effective To Address Changes In The External Business Environment. The failure to id",
+          "matchedTaskIds": [
+            "retrieve_ed_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-3cd998fe2fc9ecbfec0629d2",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,"
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-a4e354b8c466698cfd2bfccf",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-c1e318a560ee72b54b2d813a",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 2",
+          "sectionTitle": "Properties, for more information regarding the transmission and distribution lines.",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-67ed89c44104f27c0c64d910",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-f3539a404b758a9a58474b6b",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-808ee33aa9fc5fe72e937105",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-287a9f375c5fb850dbd412f4",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-9a992424fce0e48c6e004cb2",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-2a598a5e6ef297e689c35f49",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "text"
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-42e0c2548690cbc590322300",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 16",
+          "sectionTitle": "FORM 10-K SUMMARY",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-848ff4d37515d16a2dff6c93",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 1",
+          "sectionTitle": "Business",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-dcfd32bc14a9db937eef8762",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_ed_2024_competition"
+          ]
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-c07421e4c3d48035f014f38f",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_ed_2024_competition"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 3647,
+      "retrieval_ms": 96479,
+      "generation_ms": 6082,
+      "latency_ms": 106319,
+      "error": ""
+    }
+  ]
+}

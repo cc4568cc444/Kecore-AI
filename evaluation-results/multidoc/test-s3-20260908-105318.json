@@ -1,0 +1,97 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "split": "test",
+  "subsets": [
+    "S3"
+  ],
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-08T10:53:18.832994+00:00",
+  "summary": {
+    "overall": {
+      "count": 1,
+      "successful": 1,
+      "exact_match": 0.0,
+      "token_f1": 0.0886426592797784,
+      "numeric_accuracy": 0.0,
+      "numeric_question_count": 0,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "fact_extraction_rate": 0.0,
+      "calculation_production_rate": 0.0,
+      "refusal_rate": 0.0,
+      "average_latency_ms": 134731.0
+    },
+    "by_subset": {
+      "S3": {
+        "task_type": "cross-year",
+        "count": 1,
+        "successful": 1,
+        "exact_match": 0.0,
+        "token_f1": 0.0886426592797784,
+        "numeric_accuracy": 0.0,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "fact_extraction_rate": 0.0,
+        "calculation_production_rate": 0.0,
+        "refusal_rate": 0.0,
+        "average_latency_ms": 134731.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1428",
+      "subset": "S3",
+      "task_type": "cross-year",
+      "question": "Which fiscal years' Item 7 MD&A included a section titled 'Available Information' with details about accessing reports on the company's and SEC's websites?",
+      "expected_answer": "The 'Available Information' section appeared in the FY2022 and FY2023 MD&A. The FY2024 MD&A excerpt does not contain that section.",
+      "predicted_answer": "Based on the evidence ledger provided, I cannot identify which fiscal years' Item 7 MD&A included a section titled 'Available Information' with details about accessing reports on the company's and SEC's websites. The evidence does not contain sufficient information to answer this question.\n\n**Findings by fiscal year:**\n\n- **Fiscal Year 2022:** Evidence [E1] for LIN includes cover page and table of contents material, but no Item 7 \"Available Information\" section content is present. In fact, the evidence shows Item 7 starts at page 18 of the 10-K, and no \"Available Information\" heading under Item 7 is shown.\n- **Fiscal Year 2023:** Evidence [E2] related to LIN 2023 is drawn from Item 5, not Item 7. Evidence [E5]–[E6] from LIN 2023 Item 7 show MD&A content about \"2024 Outlook\" and consolidated results, but no \"Available Information\" section is present in the supplied excerpts.\n- **Fiscal Year 2024:** Evidence [E3] from LIN 2024 is drawn from Item 8, not Item 7. Evidence [E7], [E10], and [E11] from LIN 2024 Item 7 show MD&A content, but no \"Available Information\" section is present.\n\n**Additional note:** Evidence [E4] shows a company \"MO\" (Altria) with an Item 7 \"Available Information\" section in fiscal year 2024, but this is not Linde plc and is outside the requested company scope.\n\n**Conclusion:** None of the supplied evidence for LIN fiscal years 2022, 2023, or 2024 contains an \"Available Information\" section within Item 7 MD&A. The evidence is insufficient to confirm the presence of such a section in any of these filings.\n\nSources:\n[E1] LIN_2022.html — Cover page and table of contents\n[E2] LIN_2023.html — Item 5\n[E3] LIN_2024.html — Item 8\n[E5] LIN_2023.html — Item 7\n[E6] LIN_2023.html — Item 7\n[E7] LIN_2024.html — Item 7\n[E8] LIN_2022.html — Item 7\n[E9] LIN_2022.html — Item 7\n[E10] LIN_2024.html — Item 7\n[E11] LIN_2024.html — Item 7\n[E12] LIN_2022.html — Item 7\n[E4] MO_2024.html — Item 7 (out of scope company MO)",
+      "exact_match": false,
+      "token_f1": 0.0886426592797784,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "source_lookup",
+      "task_count": 4,
+      "retrieval_task_count": 3,
+      "matched_task_count": 3,
+      "task_coverage": 1.0,
+      "fact_count": 0,
+      "calculation_count": 0,
+      "requires_calculation": false,
+      "expected_sources": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_sources": [
+        "ECL_2022.html",
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html",
+        "MO_2024.html"
+      ],
+      "retrieved_source_hits": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 5749,
+      "retrieval_ms": 124933,
+      "generation_ms": 3946,
+      "latency_ms": 134731,
+      "error": ""
+    }
+  ]
+}

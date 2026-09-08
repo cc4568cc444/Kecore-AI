@@ -3,6 +3,7 @@ import { createPinia } from "pinia";
 import "./styles/app.css";
 import "./styles/migration.css";
 import "./styles/theme.css";
+import "./styles/chat-layout.css";
 import App from "./App.vue";
 import { useModelStore } from "./stores/model";
 import { useSessionStore } from "./stores/session";

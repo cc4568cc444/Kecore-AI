@@ -1,0 +1,157 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "split": "test",
+  "subsets": [
+    "S3",
+    "S5"
+  ],
+  "generated_at": "2026-09-08T08:42:08.920237+00:00",
+  "summary": {
+    "overall": {
+      "count": 2,
+      "successful": 2,
+      "exact_match": 0.0,
+      "token_f1": 0.17662337662337663,
+      "numeric_accuracy": 1.0,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 0.75,
+      "fact_extraction_rate": 1.0,
+      "calculation_production_rate": 1.0,
+      "refusal_rate": 0.0,
+      "average_latency_ms": 145355.5
+    },
+    "by_subset": {
+      "S3": {
+        "task_type": "cross-year",
+        "count": 1,
+        "successful": 1,
+        "exact_match": 0.0,
+        "token_f1": 0.18181818181818182,
+        "numeric_accuracy": 1.0,
+        "numeric_question_count": 1,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 0.5,
+        "fact_extraction_rate": 1.0,
+        "calculation_production_rate": 1.0,
+        "refusal_rate": 0.0,
+        "average_latency_ms": 189281.0
+      },
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "count": 1,
+        "successful": 1,
+        "exact_match": 0.0,
+        "token_f1": 0.17142857142857143,
+        "numeric_accuracy": 0.0,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "fact_extraction_rate": 1.0,
+        "calculation_production_rate": 0.0,
+        "refusal_rate": 0.0,
+        "average_latency_ms": 101430.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1427",
+      "subset": "S3",
+      "task_type": "cross-year",
+      "question": "How did the age of Guillermo Bichara change from FY2022 to FY2023, and is his age given in FY2024?",
+      "expected_answer": "In the FY2022 content, Guillermo Bichara was 48 years old. In FY2023, he was 49 years old. The FY2024 content does not include his age.",
+      "predicted_answer": "已核验事实：\n- LIN FY2022 | age of Guillermo Bichara = 48 [F1][E1]\n- LIN FY2023 | age of Guillermo Bichara = 49 [F2][E8]\n- LIN FY2024 | age of Guillermo Bichara = 50 [F3][E3]\n\n确定性计算：\n- difference: F3 - F1 = 2 unit other [C1][E1][E3]\n\n来源：\n[E1] LIN_2022.html — BUSINESS\n[E8] LIN_2023.html — BUSINESS\n[E3] LIN_2024.html — BUSINESS",
+      "exact_match": false,
+      "token_f1": 0.18181818181818182,
+      "numeric_accuracy": 1.0,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 7,
+      "retrieval_task_count": 6,
+      "matched_task_count": 3,
+      "task_coverage": 0.5,
+      "fact_count": 3,
+      "calculation_count": 1,
+      "requires_calculation": true,
+      "expected_sources": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_sources": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html",
+        "SLB_2024.html",
+        "TMO_2024.html"
+      ],
+      "retrieved_source_hits": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 4684,
+      "retrieval_ms": 181437,
+      "generation_ms": 3103,
+      "latency_ms": 189281,
+      "error": ""
+    },
+    {
+      "id": "md2025_2283",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Compare the language used by LIN in FY2024 and ECL in FY2022 regarding the provision of quantitative sales driver information. Does LIN's FY2024 Item 7 mention quantitative sales drivers at all, or does it rely solely on references to financial tables? Support your answer with exact quotes from both filings and indicate which fiscal years are represented.",
+      "expected_answer": "ECL's FY2022 Item 7 states: 'We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency at the corporate and reportable segment level.' LIN's FY2024 Item 7 does not contain any mention of quantitative sales drivers; it only states: 'Item 7, Management's Discussion and Analysis, for a discussion of consolidated sales and Note 18 to the consolidated financial statements for additional information related to Linde’s reportable segments.' Thus, LIN relies entirely on referencing the financial tables (Note 18) rather than providing quantitative descriptions in the text.",
+      "predicted_answer": "Conclusion: LIN's FY2024 Item 7 **does** mention quantitative sales drivers extensively—not only in tables but also in the narrative discussion. LIN does **not** rely solely on references to financial tables. The provision of quantitative sales driver information differs sharply from ECL's FY2022 Item 7, which explicitly describes its methodology for providing such quantitative data.\n\n---\n\n## LIN — Fiscal Year 2024 (Item 7)\n\nLIN's FY2024 Item 7 provides quantitative sales drivers at both the consolidated and segment levels, using tables and narrative discussion. LIN's FY2024 Item 7 discussion compares FY2024 to FY2023 (i.e., the fiscal years presented are 2024 and 2023 — not 2022).\n\n**Consolidated results — quantitative table (FY2024 vs FY2023):**  \n> \"Factors Contributing to Changes - Sales  \n> Volume —%  \n> Acquisitions/Divestitures —%  \n> Engineering —%  \n> —%\" [E5][E14]\n\n**Consolidated narrative (FY2024 vs FY2023):**  \n> \"Linde sales were flat for the 2024 year versus 2023. Sales grew 2% from higher price attainment. Volumes were flat, as new project start-ups were largely offset by base volume declines. Cost pass-through, representing the contractual billing of energy cost variances primarily to onsite customers decreased sales by 1%, with minimal impact on operating profit. Currency translation decreased sales by 1%, primarily due to the weakening of the Brazilian real, Chinese yuan, and Mexican peso against the U.S. dollar.\" [E5][E14]\n\n**Segment-level quantitative drivers (FY2024 vs FY2023):**\n\n*Americas:*  \n> Table: \"Factors Contributing to Changes - Sales | Volume —% | Price/Mix 3% | Cost pass-through (1)% | Currency (2)% | Acquisitions/Divestitures 1% | 1%\" [E3]  \n> Narrative: \"Sales for the Americas segment increased $138 million, or 1%, in 2024 versus 2023. Higher pricing contributed 3% to sales. The impact of net acquisitions increased sales by 1%. Cost past-through decreased sales by 1%... Currency translation decreased sales by 2%... Volumes remained flat due base volume declines largely offset by project start-ups.\" [E3]\n\n*EMEA:*  \n> Table: \"Volume (1)% | Price/Mix 3% | Cost pass-through (4)% | Currency —% | Acquisitions/Divestitures —% | (2)%\" [E3]  \n> Narrative: \"Higher price attainment increased sales by 3%. Volumes decreased sales by 1% led by the manufacturing end market. Currency translation was flat.\" [E3]\n\n*APAC:*  \n> Table: \"Volume 2% | Price/Mix —% | Cost pass-through 1% | Currency (2)% | Acquisitions/Divestitures —% | 1%\" [E3]  \n> Narrative: \"Volumes increased 2% including project start-ups in the electronics end market. Currency translation decreased sales by 2%... Cost pass-through increased sales by 1%... Pricing was flat.\" [E3]\n\n*Engineering:*  \n> Table: \"Currency —% | Other 8% | 8%\" [E3]  \n> Narrative: \"Engineering segment sales increased $162 million, or 8%, in 2024 versus 2023 driven by project timing.\" [E3]\n\n*Other:*  \n> Table: \"Volume/Price (2)% | Currency —% | Acquisitions/Divestitures —% | (2)%\" [E3]  \n> Narrative: \"Underlying sales decreased 2% in 2024 versus 2023 primarily due to lower volumes in global helium and LAMT.\" [E3]\n\n**Conclusion for LIN FY2024:** LIN's Item 7 **does** mention quantitative sales drivers (volume, price/mix, cost pass-through, currency, acquisitions) both in tables and in narrative discussion — it does not rely solely on references to financial tables.\n\n---\n\n## ECL — Fiscal Year 2022 (Item 7)\n\nECL's FY2022 Item 7 **explicitly discloses its policy** of providing quantitative sales driver information. The fiscal years represented in ECL's FY2022 Item 7 are 2022, 2021, and 2020.\n\n**Explicit policy statement on quantitative drivers:**  \n> \"We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency at the corporate and reportable segment level. We also provide quantitative information regarding special (gains) and charges, discrete tax items and other significant factors we believe are useful for understanding our results. Such quantitative drivers are supported by comments meant to be qualitative in nature. Qualitative factors are generally ordered based on estimated significance.\" [E2]\n\n**Example of quantitative driver disclosure (Global Institutional & Specialty segment, FY2022 vs FY2021 vs FY2020):**  \n> Table showing: \"Volume 6% | Price changes 8% | Acquisition adjusted fixed currency sales change 15% | Acquisitions and divestitures -% | Fixed currency sales change 15% | Foreign currency translation (3)% | Public currency sales change 12%\" [E15]\n\n**Example of operating segment narrative (FY2022 vs FY2021):**  \n> \"At an operating segment level, Institutional fixed currency sales increased 18% in 2022, driven by accelerating pricing and new business wins.\" [E15]  \n> \"Specialty fixed currency sales increased 7% in 2022 driven by strong quick service sales and modest growth in food retail sales.\" [E15]\n\n---\n\n## Comparison Summary\n\n| Aspect | LIN FY2024 | ECL FY2022 |\n|---|---|---|\n| Fiscal years presented in Item 7 | 2024 and 2023 | 2022, 2021, and 2020 |\n| Has quantitative sales drivers in tables | Yes (Volume, Price/Mix, Cost pass-through, Currency, Acquisitions) | Yes (Volume, Price changes, Acquisitions/divestitures, FX translation) |\n| Explicit methodology statement about providing quantitative drivers | Not found in the supplied evidence | Yes — ECL explicitly states: \"We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing...\" |\n\nBoth LIN FY2024 and ECL FY2022 provide quantitative sales driver information in both tabular and narrative form. Neither relies solely on references to financial tables. The distinguishing feature is that **ECL FY2022 explicitly discloses its methodology** for providing quantitative sales drivers at the outset of its MD&A, whereas the LIN FY2024 evidence supplied does not contain an equivalent methodological statement — LIN simply provides the quantitative drivers in its results-of-operations discussion.\n\n---\n\n## Sources\n\n[E2] ECL_2022.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations.  \n[E3] LIN_2024.html — Item 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS  \n[E5] LIN_2024.html — Item 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS  \n[E14] LIN_2024.html — Item 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS  \n[E15] ECL_2022.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations.",
+      "exact_match": false,
+      "token_f1": 0.17142857142857143,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 3,
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "fact_count": 4,
+      "calculation_count": 0,
+      "requires_calculation": false,
+      "expected_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_source_hits": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 4360,
+      "retrieval_ms": 86177,
+      "generation_ms": 10788,
+      "latency_ms": 101430,
+      "error": ""
+    }
+  ]
+}

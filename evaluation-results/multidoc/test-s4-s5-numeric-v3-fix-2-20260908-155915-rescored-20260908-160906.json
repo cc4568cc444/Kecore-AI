@@ -1,0 +1,624 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "metric_version": "deterministic-v3",
+  "split": "test",
+  "subsets": [
+    "S4",
+    "S5"
+  ],
+  "run_id": "numeric-v3-fix-2",
+  "execution_id": "20260908155550561243-04645e3f",
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-08T15:59:15.537875+00:00",
+  "summary": {
+    "overall": {
+      "count": 2,
+      "successful": 2,
+      "strict_exact_match": 0.0,
+      "exact_match": 0.0,
+      "contains_expected_rate": 0.0,
+      "token_precision": 0.29323529411764704,
+      "token_recall": 0.5722222222222222,
+      "token_f1": 0.37784928935371415,
+      "rouge_l_f1": 0.36015017430946633,
+      "answer_overlap_score": 0.37784928935371415,
+      "numeric_precision": 0.5833333333333333,
+      "numeric_recall": 0.75,
+      "numeric_f1": 0.65,
+      "numeric_accuracy": 0.75,
+      "numeric_question_count": 2,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "answer_task_coverage": 1.0,
+      "fact_extraction_rate": 0.5,
+      "fact_extraction_question_count": 2,
+      "fact_value_recall": 0.25,
+      "fact_value_question_count": 1,
+      "calculation_production_rate": 0.5,
+      "calculation_question_count": 2,
+      "calculation_result_match": 1.0,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.825,
+      "average_latency_ms": 102472.5
+    },
+    "clean_overall": {
+      "count": 2,
+      "successful": 2,
+      "strict_exact_match": 0.0,
+      "exact_match": 0.0,
+      "contains_expected_rate": 0.0,
+      "token_precision": 0.29323529411764704,
+      "token_recall": 0.5722222222222222,
+      "token_f1": 0.37784928935371415,
+      "rouge_l_f1": 0.36015017430946633,
+      "answer_overlap_score": 0.37784928935371415,
+      "numeric_precision": 0.5833333333333333,
+      "numeric_recall": 0.75,
+      "numeric_f1": 0.65,
+      "numeric_accuracy": 0.75,
+      "numeric_question_count": 2,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "answer_task_coverage": 1.0,
+      "fact_extraction_rate": 0.5,
+      "fact_extraction_question_count": 2,
+      "fact_value_recall": 0.25,
+      "fact_value_question_count": 1,
+      "calculation_production_rate": 0.5,
+      "calculation_question_count": 2,
+      "calculation_result_match": 1.0,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.825,
+      "average_latency_ms": 102472.5
+    },
+    "known_issue_count": 0,
+    "by_subset": {
+      "S4": {
+        "task_type": "cross-company",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "strict_exact_match": 0.0,
+        "exact_match": 0.0,
+        "contains_expected_rate": 0.0,
+        "token_precision": 0.4264705882352941,
+        "token_recall": 0.6444444444444445,
+        "token_f1": 0.5132743362831859,
+        "rouge_l_f1": 0.47787610619469023,
+        "answer_overlap_score": 0.5132743362831859,
+        "numeric_precision": 0.6666666666666666,
+        "numeric_recall": 1.0,
+        "numeric_f1": 0.8,
+        "numeric_accuracy": 1.0,
+        "numeric_question_count": 1,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "answer_task_coverage": 1.0,
+        "fact_extraction_rate": 1.0,
+        "fact_extraction_question_count": 1,
+        "fact_value_recall": 0.25,
+        "fact_value_question_count": 1,
+        "calculation_production_rate": 0.0,
+        "calculation_question_count": 1,
+        "calculation_result_match": null,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.8999999999999999,
+        "average_latency_ms": 92480.0
+      },
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "strict_exact_match": 0.0,
+        "exact_match": 0.0,
+        "contains_expected_rate": 0.0,
+        "token_precision": 0.16,
+        "token_recall": 0.5,
+        "token_f1": 0.24242424242424243,
+        "rouge_l_f1": 0.24242424242424243,
+        "answer_overlap_score": 0.24242424242424243,
+        "numeric_precision": 0.5,
+        "numeric_recall": 0.5,
+        "numeric_f1": 0.5,
+        "numeric_accuracy": 0.5,
+        "numeric_question_count": 1,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "answer_task_coverage": 1.0,
+        "fact_extraction_rate": 0.0,
+        "fact_extraction_question_count": 1,
+        "fact_value_recall": null,
+        "fact_value_question_count": 0,
+        "calculation_production_rate": 1.0,
+        "calculation_question_count": 1,
+        "calculation_result_match": 1.0,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.75,
+        "average_latency_ms": 112465.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1574",
+      "subset": "S4",
+      "task_type": "cross-company",
+      "question": "Compare the total cash, cash equivalents, and short-term investments of AMD and Microsoft as of their respective fiscal year ends.",
+      "expected_answer": "As of December 28, 2024, AMD had cash and cash equivalents of $3,787 million and short-term investments of $1,345 million, totaling $5,132 million. As of June 30, 2024, Microsoft had cash, cash equivalents, and short-term investments totaling $75.5 billion.",
+      "predicted_answer": "AMD’s and Microsoft’s cash positions are not directly comparable because they use different reporting metrics and fiscal calendars.\n\n- Cash and cash equivalents: $3,787 million [E8][E11]\n- Short-term investments: $1,345 million [E8][E11]\n- **Total: $5,132 million** (calculation derived from E8 for cash, equivalents, and short-term investments combined)\n\n- Cash, cash equivalents, and short-term investments totaled **$75.5 billion** [E2][F1]\n- Cash and cash equivalents alone: $18,315 million [E9][E12]\n\n**Sources:**\n[E2] MSFT_2024.html — Item 7, Management’s Discussion and Analysis\n[E8] AMD_2024.html — Item 8, Consolidated Balance Sheets\n[E9] MSFT_2024.html — Item 8, Cash Flows Statements\n[E11] AMD_2024.html — Item 8, Consolidated Balance Sheets\n[E12] MSFT_2024.html — Item 8, Cash Flows Statements",
+      "strict_exact_match": false,
+      "exact_match": false,
+      "contains_expected": false,
+      "token_precision": 0.4264705882352941,
+      "token_recall": 0.6444444444444445,
+      "token_f1": 0.5132743362831859,
+      "rouge_l_f1": 0.47787610619469023,
+      "answer_overlap_score": 0.5132743362831859,
+      "numeric_precision": 0.6666666666666666,
+      "numeric_recall": 1.0,
+      "numeric_f1": 0.8,
+      "numeric_accuracy": 1.0,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 3,
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 1,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E2",
+          "company": "MSFT",
+          "fiscalYear": "2024",
+          "metric": "Cash, cash equivalents, and short-term investments",
+          "rawValue": "$75.5 billion",
+          "value": "75.5",
+          "unit": "usd",
+          "scale": "billion"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.25,
+      "calculation_count": 0,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": true,
+      "expected_sources": [
+        "AMD_2024.html",
+        "MSFT_2024.html"
+      ],
+      "retrieved_sources": [
+        "AMD_2024.html",
+        "MSFT_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-5bd7620957ec927524d8f335",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-c4c3e295af3b04acc04bb5df",
+          "sourceFile": "MSFT_2024.html",
+          "company": "MSFT",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_msft_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-3d28810e0e9c0bbe69d332e4",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-a2b6d0d3d949d0331afb7afd",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-bc2414d98dbd7857f9f0f74c",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-e4bc77f479dd8729bf42efd2",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-4fca8ab65ce0bc32f937b9c1",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-f88cbe8c5ae7fa0f9d2eb969",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-32ffad02eb9e4e0cebc4f654",
+          "sourceFile": "MSFT_2024.html",
+          "company": "MSFT",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_msft_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-63556a0553a15faff5632ed9",
+          "sourceFile": "MSFT_2024.html",
+          "company": "MSFT",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_msft_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-1bfa00ce193a8567b6bfa6cd",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-8d77495504b7670d197cf1e8",
+          "sourceFile": "MSFT_2024.html",
+          "company": "MSFT",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_msft_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-170a75019c88b2e7cf9e9928",
+          "sourceFile": "MSFT_2024.html",
+          "company": "MSFT",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_msft_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-ce30bff608fb123068212250",
+          "sourceFile": "MSFT_2024.html",
+          "company": "MSFT",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_msft_2024_cash"
+          ]
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-f704bce7ceb5f3f77c9956dd",
+          "sourceFile": "AMD_2024.html",
+          "company": "AMD",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_amd_2024_cash"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "AMD_2024.html",
+        "MSFT_2024.html"
+      ],
+      "document_recall": 1.0,
+      "rag_quality_score": 0.8999999999999999,
+      "planning_ms": 6190,
+      "retrieval_ms": 83124,
+      "generation_ms": 3037,
+      "latency_ms": 92480,
+      "error": "",
+      "known_issue": null
+    },
+    {
+      "id": "md2025_2290",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "From DIS FY2024, net income for fiscal 2024 is $5.0 billion, an increase of $2.6 billion from the prior year. What was the net income for fiscal 2023? Additionally, based on the NFLX FY2022 header, the table includes years 2022, 2021, and 2020. How many fiscal years are covered in that Netflix table?",
+      "expected_answer": "$2.4 billion; three years (2022, 2021, 2020).",
+      "predicted_answer": "**DIS fiscal 2023 net income:** $3,390 million (net income) [E1][E7][E10].  \n**NFLX table fiscal years covered:** 3 fiscal years (2022, 2021, 2020) [C1], confirmed by table headers [E2][E11][E15].",
+      "strict_exact_match": false,
+      "exact_match": false,
+      "contains_expected": false,
+      "token_precision": 0.16,
+      "token_recall": 0.5,
+      "token_f1": 0.24242424242424243,
+      "rouge_l_f1": 0.24242424242424243,
+      "answer_overlap_score": 0.24242424242424243,
+      "numeric_precision": 0.5,
+      "numeric_recall": 0.5,
+      "numeric_f1": 0.5,
+      "numeric_accuracy": 0.5,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "calculation",
+      "task_count": 3,
+      "retrieval_task_count": 3,
+      "matched_task_count": 3,
+      "task_coverage": 1.0,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_trace": [],
+      "fact_extracted": false,
+      "fact_value_recall": null,
+      "calculation_count": 1,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "count",
+          "expression": "count(2022, 2021, 2020)",
+          "result": "3",
+          "unit": "count",
+          "scale": "unit"
+        }
+      ],
+      "calculation_result_match": 1.0,
+      "requires_calculation": true,
+      "expected_sources": [
+        "DIS_2024.html",
+        "NFLX_2022.html"
+      ],
+      "retrieved_sources": [
+        "DIS_2023.html",
+        "DIS_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2023.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-d762ebe9515140371d4cba81",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-909e314db909a2daf1349a1d",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_table_years"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-ad038db5be6f082a00316992",
+          "sourceFile": "DIS_2024.html",
+          "company": "DIS",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_explicit_dis_2024"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-f05e70e5e2d5a4eb05d78317",
+          "sourceFile": "NFLX_2023.html",
+          "company": "NFLX",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "item": "Item 16",
+          "sectionTitle": "Form 10"
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-c7416796a36f35bbcda7d574",
+          "sourceFile": "NFLX_2023.html",
+          "company": "NFLX",
+          "fiscalYear": "2023",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-0950fad237a9fd5f1a44135b",
+          "sourceFile": "NFLX_2023.html",
+          "company": "NFLX",
+          "fiscalYear": "2023",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-88940d97d24c6fca79961704",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-31524f468cd0a5d649312434",
+          "sourceFile": "NFLX_2023.html",
+          "company": "NFLX",
+          "fiscalYear": "2023",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-3f6851cb55cb11dcce231ce5",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-6f522733c8951da1011c9952",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-edf5d4c4d3523e3d6113bacd",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_table_years"
+          ]
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-2c5c5fe4dffcdf588fbbbc51",
+          "sourceFile": "NFLX_2023.html",
+          "company": "NFLX",
+          "fiscalYear": "2023",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-983f04d8aba907e327097fbc",
+          "sourceFile": "NFLX_2023.html",
+          "company": "NFLX",
+          "fiscalYear": "2023",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-31a52170a3eb01a79ad52581",
+          "sourceFile": "DIS_2024.html",
+          "company": "DIS",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_explicit_dis_2024"
+          ]
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-07d334da55f6e65f44368935",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_table_years"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "DIS_2024.html",
+        "NFLX_2022.html"
+      ],
+      "document_recall": 1.0,
+      "rag_quality_score": 0.75,
+      "planning_ms": 2923,
+      "retrieval_ms": 104219,
+      "generation_ms": 5276,
+      "latency_ms": 112465,
+      "error": "",
+      "known_issue": null
+    }
+  ],
+  "rescored_from": "D:\\Kecore AI\\evaluation-results\\multidoc\\test-s4-s5-numeric-v3-fix-2-20260908-155915.json",
+  "rescored_at": "2026-09-08T16:09:06.985952+00:00"
+}

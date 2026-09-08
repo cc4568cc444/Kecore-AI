@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 final class FinancialEvidenceLedger {
@@ -19,6 +20,16 @@ final class FinancialEvidenceLedger {
     private static final int MAX_FACTS = 40;
     private static final MathContext MATH_CONTEXT = new MathContext(16, RoundingMode.HALF_UP);
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+    private static final Pattern CALCULATION_YEAR_PAIR = Pattern.compile(
+            "(?i)\\b(?:from|between)\\s+(?:FY\\s*)?(20\\d{2})\\s+(?:to|and)\\s+(?:FY\\s*)?(20\\d{2})\\b");
+    private static final Pattern NUMERIC_VALUE = Pattern.compile("[-+]?\\d[\\d,]*(?:\\.\\d+)?");
+    private static final Pattern INCLUDED_YEAR_LIST = Pattern.compile(
+            "(?i)(?:includes?|included)\\s+(?:fiscal\\s+)?years?\\s+((?:20\\d{2}\\D{0,12}){2,}20\\d{2})");
+    private static final Pattern FOUR_DIGIT_YEAR = Pattern.compile("\\b20\\d{2}\\b");
+    private static final Pattern TABLE_ROW = Pattern.compile("(?m)^\\|\\s*([^|]+?)\\s*\\|([^\\r\\n]+)$");
+    private static final Pattern ROW_NUMBER = Pattern.compile("\\(?\\d[\\d,]*(?:\\.\\d+)?\\)?");
+    private static final Pattern NET_INCOME_PREMISE = Pattern.compile(
+            "(?i)net income for fiscal(?: year)?\\s*(20\\d{2})\\s+is\\s+\\$?([\\d,.]+)\\s+(million|billion)");
 
     private final ObjectMapper objectMapper;
 
@@ -27,8 +38,134 @@ final class FinancialEvidenceLedger {
     }
 
     Ledger build(String question, List<EvidenceDocument> documents, String extractionJson) {
-        List<FinancialFact> facts = parseVerifiedFacts(documents, extractionJson);
-        return new Ledger(List.copyOf(documents), facts, calculate(question, facts));
+        List<FinancialFact> facts = mergeFacts(
+                deterministicFacts(question, documents), parseVerifiedFacts(documents, extractionJson));
+        List<EvidenceDocument> evidence = List.copyOf(documents);
+        return new Ledger(evidence, facts, calculateAll(question, facts, evidence));
+    }
+
+    Ledger augment(String question, Ledger existing, String extractionJson) {
+        List<FinancialFact> merged = mergeFacts(
+                deterministicFacts(question, existing.evidence()),
+                mergeFacts(existing.facts(), parseVerifiedFacts(existing.evidence(), extractionJson)));
+        List<FinancialFact> renumbered = new ArrayList<>();
+        for (FinancialFact fact : merged) {
+            renumbered.add(new FinancialFact(
+                    "F" + (renumbered.size() + 1), fact.evidenceId(), fact.company(), fact.fiscalYear(), fact.metric(),
+                    fact.rawValue(), fact.value(), fact.unit(), fact.scale(), fact.quote()));
+        }
+        List<FinancialFact> facts = List.copyOf(renumbered);
+        return new Ledger(existing.evidence(), facts, calculateAll(question, facts, existing.evidence()));
+    }
+
+    private List<FinancialFact> mergeFacts(List<FinancialFact> preferred, List<FinancialFact> additional) {
+        List<FinancialFact> merged = new ArrayList<>(preferred);
+        for (FinancialFact candidate : additional) {
+            boolean conflictsWithPreferred = preferred.stream().anyMatch(fact ->
+                    fact.company().equalsIgnoreCase(candidate.company())
+                            && fact.fiscalYear().equals(candidate.fiscalYear())
+                            && canonicalMetric(fact.metric()).equals(canonicalMetric(candidate.metric()))
+                            && fact.value().compareTo(candidate.value()) != 0);
+            if (!conflictsWithPreferred && merged.stream().noneMatch(fact -> sameFact(fact, candidate))) {
+                merged.add(candidate);
+            }
+        }
+        List<FinancialFact> renumbered = new ArrayList<>();
+        for (FinancialFact fact : merged) {
+            renumbered.add(new FinancialFact(
+                    "F" + (renumbered.size() + 1), fact.evidenceId(), fact.company(), fact.fiscalYear(), fact.metric(),
+                    fact.rawValue(), fact.value(), fact.unit(), fact.scale(), fact.quote()));
+        }
+        return List.copyOf(renumbered);
+    }
+
+    private List<FinancialFact> deterministicFacts(String question, List<EvidenceDocument> documents) {
+        List<FinancialFact> facts = new ArrayList<>();
+        String lower = normalize(question).toLowerCase(Locale.ROOT);
+        if (lower.contains("total cash") && lower.contains("short-term investments")) {
+            for (EvidenceDocument document : documents) {
+                addFirstTableRowFact(facts, document, "cash and cash equivalents");
+                addFirstTableRowFact(facts, document, "short-term investments");
+                addFirstTableRowFact(facts, document, "total cash, cash equivalents, and short-term investments");
+            }
+        }
+        Matcher premise = NET_INCOME_PREMISE.matcher(question);
+        if (premise.find()) {
+            String currentYear = premise.group(1);
+            BigDecimal stated = parseDecimal(premise.group(2));
+            BigDecimal statedBase = stated == null ? null : stated.multiply(scaleMultiplier(premise.group(3)), MATH_CONTEXT);
+            RowCandidate best = null;
+            for (EvidenceDocument document : documents) {
+                Matcher rows = TABLE_ROW.matcher(document.content());
+                while (rows.find()) {
+                    String metric = normalize(rows.group(1));
+                    if (!canonicalMetric(metric).equals("net income") || metric.toLowerCase(Locale.ROOT).contains("noncontrolling")) {
+                        continue;
+                    }
+                    List<BigDecimal> values = rowValues(rows.group(2));
+                    if (values.size() < 2 || statedBase == null) {
+                        continue;
+                    }
+                    String scale = inferScale(document.content());
+                    BigDecimal distance = values.get(0).multiply(scaleMultiplier(scale), MATH_CONTEXT)
+                            .subtract(statedBase, MATH_CONTEXT).abs();
+                    if (best == null || distance.compareTo(best.distance()) < 0) {
+                        best = new RowCandidate(document, metric, rows.group(), values, scale, distance);
+                    }
+                }
+            }
+            if (best != null && best.distance().compareTo(statedBase.multiply(new BigDecimal("0.20"))) <= 0) {
+                facts.add(tableFact(best.document(), best.metric(), currentYear, best.values().get(0), best.scale(), best.quote()));
+                facts.add(tableFact(best.document(), best.metric(), Integer.toString(Integer.parseInt(currentYear) - 1),
+                        best.values().get(1), best.scale(), best.quote()));
+            }
+        }
+        return mergeFacts(List.of(), facts);
+    }
+
+    private void addFirstTableRowFact(List<FinancialFact> facts, EvidenceDocument document, String requestedMetric) {
+        Matcher rows = TABLE_ROW.matcher(document.content());
+        while (rows.find()) {
+            String metric = normalize(rows.group(1));
+            if (!metric.equalsIgnoreCase(requestedMetric)) {
+                continue;
+            }
+            List<BigDecimal> values = rowValues(rows.group(2));
+            if (!values.isEmpty()) {
+                facts.add(tableFact(document, metric, document.fiscalYear(), values.get(0),
+                        inferScale(document.content()), rows.group()));
+            }
+            return;
+        }
+    }
+
+    private FinancialFact tableFact(EvidenceDocument document, String metric, String fiscalYear,
+                                    BigDecimal value, String scale, String quote) {
+        return new FinancialFact("", document.evidenceId(), document.company(), fiscalYear, metric,
+                "$" + value.toPlainString() + " " + scale, value, "usd", scale, quote);
+    }
+
+    private List<BigDecimal> rowValues(String rowTail) {
+        List<BigDecimal> values = new ArrayList<>();
+        Matcher matcher = ROW_NUMBER.matcher(rowTail);
+        while (matcher.find()) {
+            BigDecimal value = parseDecimal(matcher.group());
+            if (value != null) {
+                values.add(value);
+            }
+        }
+        return values;
+    }
+
+    private String inferScale(String content) {
+        String lower = content.toLowerCase(Locale.ROOT);
+        if (lower.contains("in billions") || lower.contains("$ in billions")) {
+            return "billion";
+        }
+        if (lower.contains("in thousands") || lower.contains("$ in thousands")) {
+            return "thousand";
+        }
+        return "million";
     }
 
     Ledger evidenceOnly(List<EvidenceDocument> documents) {
@@ -73,8 +210,14 @@ final class FinancialEvidenceLedger {
                 - Do not calculate and do not infer missing values.
                 - value is the decimal in the displayed scale: $12.3 million => value 12.3, scale million.
                 - Parenthesized financial values are negative.
-                - quote must be copied exactly from the selected evidence and must contain rawValue.
+                - quote must be copied exactly from the selected evidence and contain the rawValue number; currency
+                  and scale may come from the same table's header when they are not repeated in the selected row.
                 - Include only facts whose company, fiscal year, metric and period can be determined from the evidence.
+                - Extract every operand needed by every numerical clause, not merely the first matching or latest value.
+                - When a table row contains values for multiple requested fiscal years, emit one fact per requested
+                  year, reuse the exact row quote, and set fiscalYear to the column period rather than the filing year.
+                - For a requested total, emit the directly reported total when present; otherwise emit every named
+                  component needed to calculate it. Never emit only one component of a requested total.
                 - For a trend/change, emit facts in chronological order. For a ratio, emit numerator before denominator.
                 - Return {"facts":[]} when the evidence is insufficient.
                 """.formatted(question, evidence.toString().trim());
@@ -99,14 +242,14 @@ final class FinancialEvidenceLedger {
                 String metric = text(node, "metric");
                 String quote = text(node, "quote");
                 String rawValue = text(node, "rawValue");
-                BigDecimal value = parseDecimal(text(node, "value"));
+                BigDecimal value = parseRawDecimal(rawValue);
                 if (document == null || metric.isBlank() || quote.isBlank() || rawValue.isBlank() || value == null) {
                     continue;
                 }
                 String normalizedDocument = normalize(document.content());
                 String normalizedQuote = normalize(quote);
                 if (normalizedQuote.isBlank() || !normalizedDocument.contains(normalizedQuote)
-                        || !normalize(quote).contains(normalize(rawValue))) {
+                        || !rawValueSupportedByQuote(rawValue, quote)) {
                     continue;
                 }
                 String company = defaultIfBlank(text(node, "company"), document.company());
@@ -139,6 +282,9 @@ final class FinancialEvidenceLedger {
         }
         boolean requireSameMetric = kind == CalculationKind.DIFFERENCE || kind == CalculationKind.PERCENTAGE_CHANGE;
         List<FinancialFact> operands = bestCompatibleGroup(facts, requireSameMetric);
+        operands = selectRequestedYearPair(normalizedQuestion, operands).stream()
+                .sorted((left, right) -> left.fiscalYear().compareTo(right.fiscalYear()))
+                .toList();
         if (operands.size() < 2) {
             return List.of();
         }
@@ -149,6 +295,49 @@ final class FinancialEvidenceLedger {
             case SUM -> sum(operands);
             case NONE -> List.of();
         };
+    }
+
+    private List<VerifiedCalculation> calculateAll(String question, List<FinancialFact> facts,
+                                                   List<EvidenceDocument> documents) {
+        List<VerifiedCalculation> calculations = new ArrayList<>(calculate(question, facts));
+        yearCountCalculation(question, documents, calculations.size() + 1).ifPresent(calculations::add);
+        return List.copyOf(calculations);
+    }
+
+    private java.util.Optional<VerifiedCalculation> yearCountCalculation(
+            String question, List<EvidenceDocument> documents, int calculationNumber) {
+        String normalized = normalize(question);
+        if (!normalized.toLowerCase(Locale.ROOT).matches("(?s).*how many(?: fiscal)? years.*")) {
+            return java.util.Optional.empty();
+        }
+        Matcher listMatcher = INCLUDED_YEAR_LIST.matcher(normalized);
+        if (!listMatcher.find()) {
+            return java.util.Optional.empty();
+        }
+        LinkedHashMap<String, Boolean> years = new LinkedHashMap<>();
+        Matcher yearMatcher = FOUR_DIGIT_YEAR.matcher(listMatcher.group(1));
+        while (yearMatcher.find()) {
+            years.put(yearMatcher.group(), Boolean.TRUE);
+        }
+        if (years.size() < 2 || documents.stream().noneMatch(document ->
+                years.keySet().stream().allMatch(year -> document.content().contains(year)))) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(new VerifiedCalculation(
+                "C" + calculationNumber, "count", "count(" + String.join(", ", years.keySet()) + ")",
+                BigDecimal.valueOf(years.size()), "count", "unit", List.of()));
+    }
+
+    private List<FinancialFact> selectRequestedYearPair(String question, List<FinancialFact> operands) {
+        Matcher matcher = CALCULATION_YEAR_PAIR.matcher(question);
+        if (!matcher.find()) {
+            return operands;
+        }
+        String firstYear = matcher.group(1);
+        String secondYear = matcher.group(2);
+        FinancialFact first = operands.stream().filter(fact -> firstYear.equals(fact.fiscalYear())).findFirst().orElse(null);
+        FinancialFact second = operands.stream().filter(fact -> secondYear.equals(fact.fiscalYear())).findFirst().orElse(null);
+        return first == null || second == null ? operands : List.of(first, second);
     }
 
     private List<VerifiedCalculation> differenceCalculations(List<FinancialFact> operands, boolean includePercentage) {
@@ -198,15 +387,26 @@ final class FinancialEvidenceLedger {
     }
 
     private List<VerifiedCalculation> sum(List<FinancialFact> operands) {
-        String outputScale = operands.stream().map(FinancialFact::scale)
-                .max((left, right) -> scaleMultiplier(left).compareTo(scaleMultiplier(right))).orElse("unit");
-        BigDecimal baseResult = operands.stream().map(this::baseValue)
-                .reduce(BigDecimal.ZERO, (left, right) -> left.add(right, MATH_CONTEXT));
-        BigDecimal result = displayedValue(baseResult, outputScale);
-        return List.of(new VerifiedCalculation("C1", "sum",
-                String.join(" + ", operands.stream().map(FinancialFact::factId).toList()),
-                result, operands.get(0).unit(), outputScale,
-                operands.stream().map(FinancialFact::factId).toList()));
+        Map<String, List<FinancialFact>> groups = new LinkedHashMap<>();
+        for (FinancialFact fact : operands) {
+            String key = normalize(fact.company()).toUpperCase(Locale.ROOT) + "|" + fact.fiscalYear() + "|" + fact.unit();
+            groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(fact);
+        }
+        List<VerifiedCalculation> results = new ArrayList<>();
+        for (List<FinancialFact> group : groups.values()) {
+            if (group.size() < 2 || group.stream().anyMatch(fact -> canonicalMetric(fact.metric()).startsWith("total "))) {
+                continue;
+            }
+            String outputScale = group.stream().map(FinancialFact::scale)
+                    .max((left, right) -> scaleMultiplier(left).compareTo(scaleMultiplier(right))).orElse("unit");
+            BigDecimal baseResult = group.stream().map(this::baseValue)
+                    .reduce(BigDecimal.ZERO, (left, right) -> left.add(right, MATH_CONTEXT));
+            List<String> sourceFactIds = group.stream().map(FinancialFact::factId).toList();
+            results.add(new VerifiedCalculation("C" + (results.size() + 1), "sum",
+                    String.join(" + ", sourceFactIds), displayedValue(baseResult, outputScale),
+                    group.get(0).unit(), outputScale, sourceFactIds));
+        }
+        return List.copyOf(results);
     }
 
     private List<FinancialFact> bestCompatibleGroup(List<FinancialFact> facts, boolean requireSameMetric) {
@@ -228,7 +428,7 @@ final class FinancialEvidenceLedger {
         if (containsAny(question, "divided by", "ratio of", "占比", "比率")) {
             return CalculationKind.RATIO;
         }
-        if (containsAny(question, "combined", "sum of", "total of", "合计", "总和")) {
+        if (containsAny(question, "combined", "sum of", "total of", "total cash", "合计", "总和")) {
             return CalculationKind.SUM;
         }
         if (containsAny(question, "difference", "change", "increase", "decrease", "compare", "变化", "增加", "减少", "相比", "差额", "对比")) {
@@ -251,10 +451,40 @@ final class FinancialEvidenceLedger {
     }
 
     private boolean sameFact(FinancialFact left, FinancialFact right) {
-        return left.evidenceId().equals(right.evidenceId())
-                && normalize(left.metric()).equalsIgnoreCase(normalize(right.metric()))
+        return canonicalMetric(left.metric()).equals(canonicalMetric(right.metric()))
                 && left.value().compareTo(right.value()) == 0
+                && left.company().equalsIgnoreCase(right.company())
                 && left.fiscalYear().equals(right.fiscalYear());
+    }
+
+    private BigDecimal parseRawDecimal(String rawValue) {
+        Matcher matcher = NUMERIC_VALUE.matcher(rawValue == null ? "" : rawValue);
+        if (!matcher.find()) {
+            return null;
+        }
+        BigDecimal value = parseDecimal(matcher.group());
+        String normalized = normalize(rawValue);
+        return normalized.startsWith("(") && normalized.endsWith(")") && value != null && value.signum() > 0
+                ? value.negate() : value;
+    }
+
+    private boolean rawValueSupportedByQuote(String rawValue, String quote) {
+        Matcher rawMatcher = NUMERIC_VALUE.matcher(rawValue);
+        if (!rawMatcher.find()) {
+            return false;
+        }
+        BigDecimal rawNumber = parseDecimal(rawMatcher.group());
+        if (rawNumber == null) {
+            return false;
+        }
+        Matcher quoteMatcher = NUMERIC_VALUE.matcher(quote);
+        while (quoteMatcher.find()) {
+            BigDecimal quoteNumber = parseDecimal(quoteMatcher.group());
+            if (quoteNumber != null && quoteNumber.compareTo(rawNumber) == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private BigDecimal parseDecimal(String value) {
@@ -373,6 +603,10 @@ final class FinancialEvidenceLedger {
             return result.setScale(Math.min(Math.max(result.scale(), 0), 4), RoundingMode.HALF_UP)
                     .stripTrailingZeros().toPlainString();
         }
+    }
+
+    private record RowCandidate(EvidenceDocument document, String metric, String quote,
+                                List<BigDecimal> values, String scale, BigDecimal distance) {
     }
 
     record Ledger(List<EvidenceDocument> evidence, List<FinancialFact> facts,

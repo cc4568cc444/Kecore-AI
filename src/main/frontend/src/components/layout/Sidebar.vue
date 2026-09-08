@@ -1,5 +1,8 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useShellStore } from "../../stores/shell";
+import { useModelStore } from "../../stores/model";
+import { useMigrationStore } from "../../stores/migration";
 import AppIcon from "../common/AppIcon.vue";
 import { useKnowledgeStore } from "../../stores/knowledge";
 import { useSessionStore } from "../../stores/session";
@@ -7,7 +10,11 @@ import { useSessionStore } from "../../stores/session";
 const sessions = useSessionStore();
 const knowledge = useKnowledgeStore();
 
-const history = computed(() => sessions.sessionsForMode);
+const shell = useShellStore();
+const models = useModelStore();
+const migration = useMigrationStore();
+const search = ref("");
+const history = computed(() => sessions.sessionsForMode.filter(item => sessionPreview(item).toLowerCase().includes(search.value.trim().toLowerCase())));
 
 function sessionPreview(session) {
   const firstPrompt = (session.messages || [])
@@ -20,16 +27,17 @@ function sessionPreview(session) {
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside v-show="shell.sidebarOpen" class="sidebar" id="appSidebar" aria-label="对话导航">
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">K</div>
       <div class="brand-title">Kecore AI</div>
     </div>
 
-    <button class="new-chat" id="newChatButton" type="button" title="新建对话" @click="sessions.requestNewSession">
-      <span><AppIcon name="plus" :size="16" />新建</span>
+    <button class="new-chat" id="newChatButton" type="button" title="新建对话" @click="sessions.requestNewSession(); shell.closeMobileSidebar()">
+      <span><AppIcon name="plus" :size="16" />新对话</span>
     </button>
 
+    <div class="nav-caption">对话模式</div>
     <div class="mode-switch" role="tablist" aria-label="对话模式">
       <button
         class="mode-button"
@@ -39,7 +47,7 @@ function sessionPreview(session) {
         role="tab"
         :data-active="sessions.mode === 'chat' ? 'true' : null"
         :aria-selected="sessions.mode === 'chat' ? 'true' : 'false'"
-        @click="sessions.changeMode('chat')"
+        @click="sessions.changeMode('chat'); shell.closeMobileSidebar()"
       >
         <AppIcon name="messageCircle" :size="15" />
         <span>对话</span>
@@ -52,7 +60,7 @@ function sessionPreview(session) {
         role="tab"
         :data-active="sessions.mode === 'finance' ? 'true' : null"
         :aria-selected="sessions.mode === 'finance' ? 'true' : 'false'"
-        @click="sessions.changeMode('finance')"
+        @click="sessions.changeMode('finance'); shell.closeMobileSidebar()"
       >
         <AppIcon name="database" :size="15" />
         <span>金融问答</span>
@@ -80,22 +88,24 @@ function sessionPreview(session) {
         role="tab"
         :data-active="sessions.mode === 'agent' ? 'true' : null"
         :aria-selected="sessions.mode === 'agent' ? 'true' : 'false'"
-        @click="sessions.changeMode('agent')"
+        @click="sessions.changeMode('agent'); shell.closeMobileSidebar()"
       >
         <AppIcon name="bot" :size="15" />
         <span>Agent</span>
       </button>
     </div>
 
+    <label class="history-search"><AppIcon name="search" :size="16" /><input v-model="search" placeholder="搜索对话" aria-label="搜索对话" /></label>
     <div class="history-label">最近对话</div>
     <div class="history-list" id="historyList">
+      <p v-if="!history.length" class="history-empty">{{ search ? '没有找到相关对话' : '你的对话会显示在这里' }}</p>
       <div v-for="session in history" :key="session.id" class="history-row">
         <button
           class="history-item"
           type="button"
           :title="sessionPreview(session)"
           :data-active="sessions.activeSession?.id === session.id ? 'true' : null"
-          @click="sessions.switchSession(session.id)"
+          @click="sessions.switchSession(session.id); shell.closeMobileSidebar()"
         >
           <span>{{ sessionPreview(session) }}</span>
         </button>
@@ -119,6 +129,10 @@ function sessionPreview(session) {
           <AppIcon name="trash2" :size="15" />
         </button>
       </div>
+    </div>
+    <div class="sidebar-utilities">
+      <button class="ghost-button icon-text-button" id="modelManageButton" type="button" @click="models.openModal(); shell.closeMobileSidebar()"><AppIcon name="settings" :size="16" />模型管理</button>
+      <button class="ghost-button icon-text-button" id="vueMigrationButton" type="button" @click="migration.show(); shell.closeMobileSidebar()"><AppIcon name="download" :size="16" />数据迁移</button>
     </div>
   </aside>
 </template>

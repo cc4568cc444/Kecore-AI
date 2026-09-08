@@ -67,6 +67,22 @@ python tools/multidoc/evaluate_multidoc.py --dry-run
 python tools/multidoc/evaluate_multidoc.py --subsets S3,S4,S5 --limit 10 --workers 1 --timeout 600 --model-id deepseek
 ```
 
+只复测失败题可使用 `--question-ids`，避免重复消耗已通过题目的模型额度：
+
+```powershell
+python tools/multidoc/evaluate_multidoc.py --subsets S3,S4,S5 --question-ids md2025_1427,md2025_1559 --workers 1 --timeout 600 --model-id deepseek
+```
+
+See [`METRICS.md`](METRICS.md) for deterministic-v3 metric definitions and `known_issues.json` for audited dataset-label conflicts.
+
+评测器默认把 Multi-Doc-2025 样本中的 `companies`、`years_required` 和 `evidence_section`
+作为检索范围附加到问题中。部分 S3/S4 问题会在正文中省略公司或年份；若丢弃这些数据集
+元数据，单题独立评测会退化成无范围的全库搜索。该范围不包含标准答案或证据文本。
+需要做无范围消融时，显式增加 `--no-dataset-scope`。
+
+`--run-id` 是写入报告和文件名的实验标签。评测器每次启动都会另外生成唯一
+`execution_id` 作为对话 ID 的一部分，因此重复使用同一 run-id 也不会继承旧评测对话。
+
 评测脚本调用 `/finance/analyze`，结果写入 `evaluation-results/multidoc`。除 Exact Match、
 Token F1、数值准确率、引用有效率、引用拦截率和拒答率外，还会根据数据集中的
 公司—财年关系统计文档召回率，并记录 planner、检索和生成各阶段耗时；最终同时输出

@@ -20,6 +20,8 @@ function toggleTheme() {
 </script>
 
 <template>
+  <div class="appearance-footer">
+    <div class="appearance-caption"><span class="appearance-dot" aria-hidden="true"></span><div>让想法，向前一步<small>THINK · CREATE · EXPLORE</small></div></div>
   <button
     class="theme-toggle"
     type="button"
@@ -37,4 +39,5 @@ function toggleTheme() {
       <AppIcon name="moon" :size="16" :stroke-width="1.9" />
     </span>
   </button>
+  </div>
 </template>

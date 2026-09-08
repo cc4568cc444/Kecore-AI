@@ -1,0 +1,205 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "split": "test",
+  "subsets": [
+    "S3",
+    "S5"
+  ],
+  "generated_at": "2026-09-08T06:08:48.048268+00:00",
+  "summary": {
+    "overall": {
+      "count": 3,
+      "successful": 3,
+      "exact_match": 0.0,
+      "token_f1": 0.17658942364824717,
+      "numeric_accuracy": 0.5,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 0.6666666666666666,
+      "citation_valid_rate": 0.6666666666666666,
+      "citation_block_rate": 0.3333333333333333,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 0.9523809523809524,
+      "fact_extraction_rate": 0.3333333333333333,
+      "calculation_production_rate": 1.0,
+      "refusal_rate": 0.3333333333333333,
+      "average_latency_ms": 142790.0
+    },
+    "by_subset": {
+      "S3": {
+        "task_type": "cross-year",
+        "count": 1,
+        "successful": 1,
+        "exact_match": 0.0,
+        "token_f1": 0.11764705882352942,
+        "numeric_accuracy": 0.5,
+        "numeric_question_count": 1,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 0.8571428571428571,
+        "fact_extraction_rate": 1.0,
+        "calculation_production_rate": 1.0,
+        "refusal_rate": 0.0,
+        "average_latency_ms": 240490.0
+      },
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "count": 2,
+        "successful": 2,
+        "exact_match": 0.0,
+        "token_f1": 0.20606060606060606,
+        "numeric_accuracy": 0.0,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 0.5,
+        "citation_valid_rate": 0.5,
+        "citation_block_rate": 0.5,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "fact_extraction_rate": 0.0,
+        "calculation_production_rate": 0.0,
+        "refusal_rate": 0.5,
+        "average_latency_ms": 93940.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1427",
+      "subset": "S3",
+      "task_type": "cross-year",
+      "question": "How did the age of Guillermo Bichara change from FY2022 to FY2023, and is his age given in FY2024?",
+      "expected_answer": "In the FY2022 content, Guillermo Bichara was 48 years old. In FY2023, he was 49 years old. The FY2024 content does not include his age.",
+      "predicted_answer": "已核验事实：\n- LIN FY2022 | age = 48 [F1][E4]\n- LIN FY2024 | age = 50 [F2][E6]\n\n确定性计算：\n- difference: F2 - F1 = 2 unit count [C1][E4][E6]\n\n来源：\n[E4] LIN_2022.html — BUSINESS\n[E6] LIN_2024.html — BUSINESS",
+      "exact_match": false,
+      "token_f1": 0.11764705882352942,
+      "numeric_accuracy": 0.5,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "trend",
+      "task_count": 8,
+      "retrieval_task_count": 7,
+      "matched_task_count": 6,
+      "task_coverage": 0.8571428571428571,
+      "fact_count": 2,
+      "calculation_count": 1,
+      "requires_calculation": true,
+      "expected_sources": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_sources": [
+        "ALB_2024.html",
+        "ECL_2022.html",
+        "GS_2022.html",
+        "HD_2023.html",
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html",
+        "NVDA_2022.html",
+        "SLB_2022.html"
+      ],
+      "retrieved_source_hits": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 6088,
+      "retrieval_ms": 231117,
+      "generation_ms": 3161,
+      "latency_ms": 240490,
+      "error": ""
+    },
+    {
+      "id": "md2025_2282",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "In their Item 7 MD&A, which company explicitly states that they provide quantitative information about the impact of changes in volume and pricing on sales, and at which organizational level do they report this? Provide textual evidence from both ECL's FY2022 and LIN's FY2024 filings, and identify which financial table or note is referenced for additional segment detail.",
+      "expected_answer": "ECL's FY2022 Item 7 states: 'We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency at the corporate and reportable segment level.' LIN's FY2024 Item 7 does not contain a similar explicit statement; instead it directs readers to 'Note 18 to the consolidated financial statements for additional information related to Linde’s reportable segments.' This Note 18 constitutes the financial table referenced for segment details.",
+      "predicted_answer": "Based on the provided evidence:\n\n*   **ECL (FY2022):** Yes, ECL explicitly states in its Item 7 MD&A that it provides \"quantitative information about the material sales drivers including the impact of changes in volume and pricing.\" It reports this at the **\"corporate and reportable segment level\"** [E1]. The MD&A directs readers to read the discussion in conjunction with the \"consolidated financial statements and related notes included in this Form 10-K\" for additional detail [E1]. The segment-level tables in the MD&A provide the volume and price changes for each segment (e.g., Global Healthcare & Life Sciences shows \"Volume\" and \"Price changes\" percentages) [E14][E15].\n\n*   **LIN (FY2024):** The retrieved evidence does not show an explicit statement from LIN in their Item 7 MD&A saying they provide quantitative information on the impact of volume and pricing on sales in those exact terms. However, LIN's MD&A extensively provides this quantitative information. It includes consolidated sales change factors (\"Volume —%, Price/Mix 2%\") [E11][E12][E13] and segment-level tables showing factors contributing to sales changes, such as \"Volume,\" \"Price/Mix,\" \"Cost pass-through,\" \"Currency,\" and \"Acquisitions/Divestitures\" for Americas [E5], EMEA [E4][E6], APAC [E7][E9], and Engineering [E8]. The MD&A text discusses these factors, e.g., for the Americas segment, \"Higher pricing contributed 3% to sales... Volumes remained flat\" [E5]. The segment operating profit table references **\"Note 3\"** to the consolidated financial statements for \"Cost reduction program and other charges\" [E5].",
+      "exact_match": false,
+      "token_f1": 0.4121212121212121,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 4,
+      "retrieval_task_count": 4,
+      "matched_task_count": 4,
+      "task_coverage": 1.0,
+      "fact_count": 0,
+      "calculation_count": 0,
+      "requires_calculation": false,
+      "expected_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_source_hits": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 4314,
+      "retrieval_ms": 80309,
+      "generation_ms": 3802,
+      "latency_ms": 88490,
+      "error": ""
+    },
+    {
+      "id": "md2025_2283",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Compare the language used by LIN in FY2024 and ECL in FY2022 regarding the provision of quantitative sales driver information. Does LIN's FY2024 Item 7 mention quantitative sales drivers at all, or does it rely solely on references to financial tables? Support your answer with exact quotes from both filings and indicate which fiscal years are represented.",
+      "expected_answer": "ECL's FY2022 Item 7 states: 'We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency at the corporate and reportable segment level.' LIN's FY2024 Item 7 does not contain any mention of quantitative sales drivers; it only states: 'Item 7, Management's Discussion and Analysis, for a discussion of consolidated sales and Note 18 to the consolidated financial statements for additional information related to Linde’s reportable segments.' Thus, LIN relies entirely on referencing the financial tables (Note 18) rather than providing quantitative descriptions in the text.",
+      "predicted_answer": "当前回答未通过引用校验，因此未输出未经证实的结论。\n\n校验问题：\n- 数值结论缺少原始证据 [E#]\n\n请重试，或在问题中补充明确的公司、财年和指标。",
+      "exact_match": false,
+      "token_f1": 0.0,
+      "numeric_accuracy": null,
+      "has_evidence_citation": false,
+      "citation_blocked": true,
+      "citation_valid": false,
+      "citation_issues": [
+        "答案没有引用任何原始证据 [E#]"
+      ],
+      "refusal": true,
+      "planner_intent": "comparison",
+      "task_count": 3,
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "fact_count": 0,
+      "calculation_count": 0,
+      "requires_calculation": false,
+      "expected_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_source_hits": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 4316,
+      "retrieval_ms": 83896,
+      "generation_ms": 11082,
+      "latency_ms": 99390,
+      "error": ""
+    }
+  ]
+}

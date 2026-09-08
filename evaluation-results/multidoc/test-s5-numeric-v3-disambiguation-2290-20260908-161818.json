@@ -1,0 +1,380 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "metric_version": "deterministic-v3",
+  "split": "test",
+  "subsets": [
+    "S5"
+  ],
+  "run_id": "numeric-v3-disambiguation-2290",
+  "execution_id": "20260908161645369903-d087acbf",
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-08T16:18:18.293952+00:00",
+  "summary": {
+    "overall": {
+      "count": 1,
+      "successful": 1,
+      "strict_exact_match": 0.0,
+      "exact_match": 0.0,
+      "contains_expected_rate": 0.0,
+      "token_precision": 0.06060606060606061,
+      "token_recall": 1.0,
+      "token_f1": 0.1142857142857143,
+      "rouge_l_f1": 0.1142857142857143,
+      "answer_overlap_score": 0.1142857142857143,
+      "numeric_precision": 0.3333333333333333,
+      "numeric_recall": 1.0,
+      "numeric_f1": 0.5,
+      "numeric_accuracy": 1.0,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "answer_task_coverage": 1.0,
+      "fact_extraction_rate": 1.0,
+      "fact_extraction_question_count": 1,
+      "fact_value_recall": 0.5,
+      "fact_value_question_count": 1,
+      "calculation_production_rate": 1.0,
+      "calculation_question_count": 1,
+      "calculation_result_match": 0.5,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.75,
+      "average_latency_ms": 92900.0
+    },
+    "clean_overall": {
+      "count": 1,
+      "successful": 1,
+      "strict_exact_match": 0.0,
+      "exact_match": 0.0,
+      "contains_expected_rate": 0.0,
+      "token_precision": 0.06060606060606061,
+      "token_recall": 1.0,
+      "token_f1": 0.1142857142857143,
+      "rouge_l_f1": 0.1142857142857143,
+      "answer_overlap_score": 0.1142857142857143,
+      "numeric_precision": 0.3333333333333333,
+      "numeric_recall": 1.0,
+      "numeric_f1": 0.5,
+      "numeric_accuracy": 1.0,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "answer_task_coverage": 1.0,
+      "fact_extraction_rate": 1.0,
+      "fact_extraction_question_count": 1,
+      "fact_value_recall": 0.5,
+      "fact_value_question_count": 1,
+      "calculation_production_rate": 1.0,
+      "calculation_question_count": 1,
+      "calculation_result_match": 0.5,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.75,
+      "average_latency_ms": 92900.0
+    },
+    "known_issue_count": 0,
+    "by_subset": {
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "strict_exact_match": 0.0,
+        "exact_match": 0.0,
+        "contains_expected_rate": 0.0,
+        "token_precision": 0.06060606060606061,
+        "token_recall": 1.0,
+        "token_f1": 0.1142857142857143,
+        "rouge_l_f1": 0.1142857142857143,
+        "answer_overlap_score": 0.1142857142857143,
+        "numeric_precision": 0.3333333333333333,
+        "numeric_recall": 1.0,
+        "numeric_f1": 0.5,
+        "numeric_accuracy": 1.0,
+        "numeric_question_count": 1,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "answer_task_coverage": 1.0,
+        "fact_extraction_rate": 1.0,
+        "fact_extraction_question_count": 1,
+        "fact_value_recall": 0.5,
+        "fact_value_question_count": 1,
+        "calculation_production_rate": 1.0,
+        "calculation_question_count": 1,
+        "calculation_result_match": 0.5,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.75,
+        "average_latency_ms": 92900.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_2290",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "From DIS FY2024, net income for fiscal 2024 is $5.0 billion, an increase of $2.6 billion from the prior year. What was the net income for fiscal 2023? Additionally, based on the NFLX FY2022 header, the table includes years 2022, 2021, and 2020. How many fiscal years are covered in that Netflix table?",
+      "expected_answer": "$2.4 billion; three years (2022, 2021, 2020).",
+      "predicted_answer": "**DIS Fiscal 2023 Net Income**  \nBased on the DIS consolidated statement of comprehensive income for fiscal year 2023, net income was $3,390 million for the year ended September 30, 2023 [E1]. Net income attributable to noncontrolling interests was $1,036 million [E1]. Therefore, net income attributable to Disney for fiscal 2023 was **$2,354 million (approximately $2.4 billion)** [E1][C1]. This is confirmed by the DIS fiscal 2024 MD&A, which states fiscal 2023 net income attributable to Disney was $2,354 million, increasing to $4,972 million in fiscal 2024 [E3][F1][F2].\n\n**NFLX Fiscal Years Covered**  \nThe NFLX FY2022 header table covers fiscal years 2022, 2021, and 2020, which is **three fiscal years** [E2]. This is confirmed by evidence explicitly stating revenue figures for years ended December 31, 2022, 2021, and 2020 in the same filing [E2].\n\n**Sources**  \n[E1] DIS_2023.html — Consolidated statement of comprehensive income  \n[E2] NFLX_2022.html",
+      "strict_exact_match": false,
+      "exact_match": false,
+      "contains_expected": false,
+      "token_precision": 0.06060606060606061,
+      "token_recall": 1.0,
+      "token_f1": 0.1142857142857143,
+      "rouge_l_f1": 0.1142857142857143,
+      "answer_overlap_score": 0.1142857142857143,
+      "numeric_precision": 0.3333333333333333,
+      "numeric_recall": 1.0,
+      "numeric_f1": 0.5,
+      "numeric_accuracy": 1.0,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "calculation",
+      "task_count": 3,
+      "retrieval_task_count": 3,
+      "matched_task_count": 3,
+      "task_coverage": 1.0,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 2,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E3",
+          "company": "DIS",
+          "fiscalYear": "2024",
+          "metric": "Net income attributable to Disney",
+          "rawValue": "$4972 million",
+          "value": "4972",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E3",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "metric": "Net income attributable to Disney",
+          "rawValue": "$2354 million",
+          "value": "2354",
+          "unit": "usd",
+          "scale": "million"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.5,
+      "calculation_count": 2,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "difference",
+          "expression": "F1 - F2",
+          "result": "2618",
+          "unit": "usd",
+          "scale": "million",
+          "sourceFactIds": [
+            "F2",
+            "F1"
+          ]
+        },
+        {
+          "calculationId": "C2",
+          "type": "count",
+          "expression": "count(2022, 2021, 2020)",
+          "result": "3",
+          "unit": "count",
+          "scale": "unit"
+        }
+      ],
+      "calculation_result_match": 0.5,
+      "requires_calculation": true,
+      "expected_sources": [
+        "DIS_2024.html",
+        "NFLX_2022.html"
+      ],
+      "retrieved_sources": [
+        "DIS_2023.html",
+        "DIS_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-d762ebe9515140371d4cba81",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-16ec72f912b6ddc575f47c1e",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_fiscal_years_table"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-ad038db5be6f082a00316992",
+          "sourceFile": "DIS_2024.html",
+          "company": "DIS",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_explicit_dis_2024"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-3f6851cb55cb11dcce231ce5",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-81bebce75960755e84ccd2e7",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-88940d97d24c6fca79961704",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-b8e27eb0ba972b564b993fcf",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-31a52170a3eb01a79ad52581",
+          "sourceFile": "DIS_2024.html",
+          "company": "DIS",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_explicit_dis_2024"
+          ]
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-6e2ec9f5e0a8cac4f40d1314",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-9f4c298c30f16846beac6d24",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_dis_2023_net_income"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-5add3d37418cb9e1d0626479",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-b7fd4bf8ffe9b3844c6ec29f",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-7b278549d7298af43e02c3e3",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-4be13d23cebb7b5eb8ea2a6e",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-b855e95101dcf486745c64cd",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table"
+        }
+      ],
+      "retrieved_source_hits": [
+        "DIS_2024.html",
+        "NFLX_2022.html"
+      ],
+      "document_recall": 1.0,
+      "rag_quality_score": 0.75,
+      "planning_ms": 4077,
+      "retrieval_ms": 81869,
+      "generation_ms": 6845,
+      "latency_ms": 92900,
+      "error": "",
+      "known_issue": null
+    }
+  ]
+}

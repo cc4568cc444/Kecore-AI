@@ -1,0 +1,92 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "split": "test",
+  "subsets": [
+    "S4"
+  ],
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-08T11:12:37.834782+00:00",
+  "summary": {
+    "overall": {
+      "count": 1,
+      "successful": 1,
+      "exact_match": 0.0,
+      "token_f1": 0.20758483033932135,
+      "numeric_accuracy": 0.0,
+      "numeric_question_count": 0,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "fact_extraction_rate": 0.0,
+      "calculation_production_rate": 0.0,
+      "refusal_rate": 0.0,
+      "average_latency_ms": 139192.0
+    },
+    "by_subset": {
+      "S4": {
+        "task_type": "cross-company",
+        "count": 1,
+        "successful": 1,
+        "exact_match": 0.0,
+        "token_f1": 0.20758483033932135,
+        "numeric_accuracy": 0.0,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "fact_extraction_rate": 0.0,
+        "calculation_production_rate": 0.0,
+        "refusal_rate": 0.0,
+        "average_latency_ms": 139192.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1559",
+      "subset": "S4",
+      "task_type": "cross-company",
+      "question": "What differences exist between AEP and ED regarding their forward-looking statement disclaimers?",
+      "expected_answer": "AEP's disclaimer includes an explicit list of factors that could cause actual results to differ, such as 'Changes in economic conditions, electric market demand and demographic patterns,' 'Inflationary or deflationary interest rate trends,' and 'New legislation.' ED's disclaimer is less enumerated; it states that strategies may not be effective to address changes in the external business environment and lists factors like 'Changes to the competitive landscape, public policy, laws or regulations (or interpretations thereof), customer behavior or technology.' Thus, AEP provides a more detailed enumerated list of risk factors.",
+      "predicted_answer": "Based on the evidence provided, I can only describe AEP's forward-looking statement disclaimer. The evidence for ED does not contain the actual text of its forward-looking statement disclaimer—it only includes tables of contents, glossaries of terms, and financial statement indexes, none of which contain the disclaimer language. Therefore, a full comparison is not possible with the available evidence.\n\n**AEP FY2024 (Item 7)** [E1]\nAEP's forward-looking statement disclaimer:\n- **Location**: States that forward-looking statements appear in Item 7 – Management's Discussion and Analysis, but notes \"there are others throughout this document.\"\n- **Identifying language**: Statements may be identified by words such as \"expect,\" \"anticipate,\" \"intend,\" \"plan,\" \"believe,\" \"will,\" \"should,\" \"could,\" \"would,\" \"project,\" \"continue\" and similar expressions; includes \"statements reflecting future results or guidance and statements of outlook.\"\n- **Risk acknowledgement**: These matters \"are subject to risks and uncertainties that could cause actual results to differ materially from those projected.\"\n- **Temporal scope**: \"Forward-looking statements in this document are presented as of the date of this document.\"\n- **Update obligation**: \"Except to the extent required by applicable law, management undertakes no obligation to update or revise any forward-looking statement.\"\n- **Risk factors listed**: Includes economic conditions and demand changes, global conflicts and trade tensions, inflation/deflation and interest rates, new legislation altering regulatory frameworks, financial market volatility and disruptions, availability of capital, shifting electricity demand, extreme weather and natural disasters, insurance limitations, fuel costs, generation capacity availability, cost recovery through rates, ability to build or acquire generation/transmission assets, and business disruption from economic conditions or supply chain issues.\n\n**ED FY2024 (Item 7)**\nThe evidence for ED Item 7 is insufficient to answer this question. The retrieved evidence for ED consists only of:\n- Glossary of terms and abbreviations [E2]\n- Tables of contents referencing a \"Forward-Looking Statements\" section at page 10 [E6]\n- Financial statement indexes [E8, E10, E11, E12]\n\nNone of the ED evidence contains the actual language, scope, or content of ED's forward-looking statement disclaimer. The specific fact—ED FY2024 forward-looking statement disclaimer text as disclosed in Item 7—is missing from the supplied evidence.\n\n**Conclusion**: A full comparison cannot be completed because ED's forward-looking disclaimer text was not retrieved. To answer the question fully, the ED FY2024 Item 7 forward-looking statement disclaimer language would need to be supplied. AEP's disclaimer is fully detailed above, but no comparison with ED's language, scope, or content is possible from the available evidence.",
+      "exact_match": false,
+      "token_f1": 0.20758483033932135,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 3,
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "fact_count": 0,
+      "calculation_count": 0,
+      "requires_calculation": false,
+      "expected_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "retrieved_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "retrieved_source_hits": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "document_recall": 1.0,
+      "planning_ms": 4906,
+      "retrieval_ms": 129019,
+      "generation_ms": 5194,
+      "latency_ms": 139192,
+      "error": ""
+    }
+  ]
+}

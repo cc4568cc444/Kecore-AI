@@ -43,7 +43,11 @@ public class FinancialRagService {
     private static final Logger log = LoggerFactory.getLogger(FinancialRagService.class);
 
     private static final Pattern TOKEN_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9&.-]*|\\d+(?:,\\d{3})*(?:\\.\\d+)?%?");
-    private static final Pattern YEAR_PATTERN = Pattern.compile("\\b20(?:22|23|24)\\b");
+    private static final Pattern YEAR_PATTERN = Pattern.compile("(?<!\\d)20(?:22|23|24)(?!\\d)");
+    private static final Pattern COMPANY_TOKEN_PATTERN = Pattern.compile(
+            "(?i)(?<![A-Z0-9-])([A-Z]{1,5}(?:-[A-Z])?)(?![A-Z0-9-])");
+    private static final Pattern NAMED_ENTITY_PATTERN = Pattern.compile(
+            "\\b([A-Z][a-z]{2,}(?:\\s+[A-Z][a-z]{2,}){1,3})\\b");
     private static final int RETRIEVAL_QUERY_COUNT = 5;
     private static final String RETRIEVAL_STRATEGY_DEFAULT = "default";
     private static final String RETRIEVAL_STRATEGY_PARENT_CHILD = "parent-child";
@@ -132,6 +136,12 @@ public class FinancialRagService {
 
     @Value("${app.financial-rag.evidence-ledger.max-content-chars:6000}")
     private int evidenceLedgerMaxContentChars;
+
+    @Value("${app.financial-rag.evidence-ledger.retry-on-empty:true}")
+    private boolean evidenceLedgerRetryOnEmpty;
+
+    @Value("${app.financial-rag.answer-coverage-repair.enabled:true}")
+    private boolean answerCoverageRepairEnabled;
 
     @Value("${app.financial-rag.citation-verifier.enabled:true}")
     private boolean citationVerifierEnabled;
@@ -264,10 +274,16 @@ public class FinancialRagService {
                     .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                     .call()
                     .content();
-            long generationMs = elapsedMs(generationStartedAt);
             String answer = citationVerifierEnabled
                     ? citationVerifier.enforce(generated, ledger, citationVerifierStrict)
                     : generated;
+            String repaired = repairIncompleteAnswer(prompt, plan, ledger, answer, modelId);
+            if (!repaired.equals(answer)) {
+                answer = citationVerifierEnabled
+                        ? citationVerifier.enforce(repaired, ledger, citationVerifierStrict)
+                        : repaired;
+            }
+            long generationMs = elapsedMs(generationStartedAt);
             FinancialCitationVerifier.Audit audit = citationVerifier.verify(answer, ledger);
             return new FinancialAnalysisResult(answer, plan.resolvedQuestion(), plan.intent(),
                     analysisTasks(plan), analysisEvidence(ledger), analysisFacts(ledger), analysisCalculations(ledger),
@@ -362,9 +378,138 @@ public class FinancialRagService {
                     .options(modelConfigService.chatOptions(modelId))
                     .call()
                     .content();
-            return parseRetrievalPlan(prompt, planned);
+            return augmentRetrievalPlan(prompt, parseRetrievalPlan(prompt, planned));
         } catch (Exception ignored) {
-            return fallbackRetrievalPlan(prompt);
+            return augmentRetrievalPlan(prompt, fallbackRetrievalPlan(prompt));
+        }
+    }
+
+    private FinancialRetrievalPlan augmentRetrievalPlan(String prompt, FinancialRetrievalPlan plan) {
+        String table = resolveTableName();
+        Set<String> known = knownCompanies(table);
+        List<String> discoveredCompanies = discoverNamedEntityCompanies(prompt, table);
+        List<CompanyYearScope> explicitScopes = new ArrayList<>(explicitCompanyYearScopes(prompt, known));
+        if (explicitScopes.isEmpty()) {
+            List<String> years = extractYears(prompt);
+            for (String company : discoveredCompanies) {
+                for (String year : years) {
+                    explicitScopes.add(new CompanyYearScope(company, year));
+                }
+            }
+        }
+        if (explicitScopes.isEmpty()) {
+            return plan;
+        }
+        List<FinancialRetrievalTask> tasks = plan.subTasks().stream()
+                .map(task -> bindDiscoveredCompany(task, discoveredCompanies, known))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        Set<String> existing = tasks.stream()
+                .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                .flatMap(task -> task.companies().stream().flatMap(company -> task.years().stream()
+                        .map(year -> company.toUpperCase(Locale.ROOT) + "|" + year)))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        for (CompanyYearScope scope : explicitScopes) {
+            String key = scope.company() + "|" + scope.year();
+            if (!existing.add(key)) {
+                continue;
+            }
+            tasks.add(new FinancialRetrievalTask(
+                    "retrieve_explicit_" + scope.company().toLowerCase(Locale.ROOT) + "_" + scope.year(),
+                    scope.company() + " FY" + scope.year() + " " + cleanLine(prompt),
+                    List.of(scope.company()), List.of(scope.year()), "", "retrieve", "hybrid", List.of()));
+        }
+        return new FinancialRetrievalPlan(plan.translatedQuestion(), plan.resolvedQuestion(), plan.intent(),
+                plan.queries(), List.copyOf(tasks));
+    }
+
+    FinancialRetrievalTask bindDiscoveredCompany(FinancialRetrievalTask task,
+                                                  List<String> discoveredCompanies,
+                                                  Set<String> knownCompanies) {
+        if (discoveredCompanies.size() != 1 || !"retrieve".equalsIgnoreCase(task.operation())) {
+            return task;
+        }
+        boolean alreadyScoped = task.companies().stream()
+                .map(company -> cleanLine(company).toUpperCase(Locale.ROOT))
+                .anyMatch(knownCompanies::contains);
+        if (alreadyScoped) {
+            return task;
+        }
+        return new FinancialRetrievalTask(task.id(), task.query(), List.of(discoveredCompanies.get(0)),
+                task.years(), task.metric(), task.operation(), task.modality(), task.dependsOn());
+    }
+
+    private List<String> discoverNamedEntityCompanies(String prompt, String table) {
+        for (String phrase : namedEntityPhrases(prompt)) {
+            List<CompanyHit> hits = jdbcTemplate.query("""
+                    SELECT company, COUNT(*) AS matches
+                    FROM %s
+                    WHERE to_tsvector('english', content) @@ plainto_tsquery('english', ?)
+                    GROUP BY company
+                    ORDER BY matches DESC
+                    LIMIT 2
+                    """.formatted(safeTableName(table)),
+                    (rs, rowNum) -> new CompanyHit(rs.getString("company"), rs.getInt("matches")), phrase);
+            if (hits.isEmpty()) {
+                continue;
+            }
+            CompanyHit first = hits.get(0);
+            int runnerUp = hits.size() > 1 ? hits.get(1).matches() : 0;
+            if (first.matches() >= 2 && (runnerUp == 0 || first.matches() >= runnerUp * 2)) {
+                return List.of(first.company().toUpperCase(Locale.ROOT));
+            }
+        }
+        return List.of();
+    }
+
+    List<String> namedEntityPhrases(String prompt) {
+        List<String> phrases = new ArrayList<>();
+        Matcher matcher = NAMED_ENTITY_PATTERN.matcher(prompt == null ? "" : prompt);
+        while (matcher.find()) {
+            String phrase = cleanLine(matcher.group(1));
+            String normalized = phrase.toLowerCase(Locale.ROOT);
+            if (!normalized.contains("financial condition")
+                    && !normalized.contains("management discussion")
+                    && !normalized.contains("annual report")
+                    && phrases.stream().noneMatch(existing -> existing.equalsIgnoreCase(phrase))) {
+                phrases.add(phrase);
+            }
+        }
+        return List.copyOf(phrases);
+    }
+
+    List<CompanyYearScope> explicitCompanyYearScopes(String prompt, Set<String> knownCompanies) {
+        LinkedHashMap<String, CompanyYearScope> scopes = new LinkedHashMap<>();
+        String text = prompt == null ? "" : prompt;
+        Matcher companyMatcher = COMPANY_TOKEN_PATTERN.matcher(text);
+        while (companyMatcher.find()) {
+            String company = companyMatcher.group(1).toUpperCase(Locale.ROOT);
+            if (!knownCompanies.contains(company)) {
+                continue;
+            }
+            String after = text.substring(companyMatcher.end(), Math.min(text.length(), companyMatcher.end() + 40));
+            Matcher afterYear = YEAR_PATTERN.matcher(after);
+            if (afterYear.find()) {
+                addCompanyYearScope(scopes, company, afterYear.group(), knownCompanies);
+                continue;
+            }
+            String before = text.substring(Math.max(0, companyMatcher.start() - 40), companyMatcher.start());
+            Matcher beforeYear = YEAR_PATTERN.matcher(before);
+            String closestYear = "";
+            while (beforeYear.find()) {
+                closestYear = beforeYear.group();
+            }
+            if (!closestYear.isBlank()) {
+                addCompanyYearScope(scopes, company, closestYear, knownCompanies);
+            }
+        }
+        return List.copyOf(scopes.values());
+    }
+
+    private void addCompanyYearScope(Map<String, CompanyYearScope> scopes, String company, String year,
+                                     Set<String> knownCompanies) {
+        String normalizedCompany = cleanLine(company).toUpperCase(Locale.ROOT);
+        if (knownCompanies.contains(normalizedCompany)) {
+            scopes.putIfAbsent(normalizedCompany + "|" + year, new CompanyYearScope(normalizedCompany, year));
         }
     }
 
@@ -465,7 +610,7 @@ public class FinancialRagService {
                     cleanLine(node.path("id").asText("task_" + (tasks.size() + 1))),
                     query,
                     stringList(node.path("companies")),
-                    stringList(node.path("years")),
+                    fiscalYearList(node.path("years")),
                     cleanLine(node.path("metric").asText("")),
                     cleanLine(node.path("operation").asText("retrieve")),
                     cleanLine(node.path("modality").asText("hybrid")),
@@ -489,6 +634,19 @@ public class FinancialRagService {
             }
         }
         return List.copyOf(values);
+    }
+
+    private List<String> fiscalYearList(JsonNode nodes) {
+        return stringList(nodes).stream()
+                .map(this::normalizeFiscalYear)
+                .filter(year -> !year.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    String normalizeFiscalYear(String value) {
+        Matcher matcher = YEAR_PATTERN.matcher(cleanLine(value));
+        return matcher.find() ? matcher.group() : cleanLine(value);
     }
 
     private List<String> extractYears(String query) {
@@ -643,46 +801,264 @@ public class FinancialRagService {
             return evidenceLedger.evidenceOnly(documents);
         }
         try {
-            String extraction = ChatClient.builder(modelConfigService.chatModel(modelId))
-                    .defaultSystem("""
-                            You extract auditable numerical facts from SEC 10-K evidence.
-                            Never answer the question, calculate, estimate, or use outside knowledge.
-                            Every extracted fact must contain an exact quote from one supplied evidence block.
-                            Output strict JSON only.
-                            """)
-                    .build()
-                    .prompt()
-                    .user(evidenceLedger.extractionPrompt(plan.resolvedQuestion(), documents))
-                    .options(modelConfigService.chatOptions(modelId))
-                    .call()
-                    .content();
-            return evidenceLedger.build(prompt, documents, extraction);
+            String extraction = extractEvidenceFacts(modelId, plan.resolvedQuestion(), documents);
+            FinancialEvidenceLedger.Ledger result = evidenceLedger.build(prompt, documents, extraction);
+            boolean incompleteNumericalLedger = numericalLedgerIncomplete(plan, result);
+            if (incompleteNumericalLedger && evidenceLedgerRetryOnEmpty && needsEvidenceFacts(plan, documents)) {
+                List<FinancialEvidenceLedger.EvidenceDocument> retryDocuments = compactExtractionDocuments(documents, 8);
+                String retryQuestion = plan.resolvedQuestion() + "\n\nRequired numerical retrieval tasks:\n"
+                        + requiredCoverage(plan)
+                        + "\nAlready verified facts (do not repeat these; extract missing operands):\n"
+                        + result.facts()
+                        + "\nExtract every directly supported operand needed for totals, differences, percentages, and counts.";
+                log.info("Retrying incomplete financial evidence extraction with {} task-balanced documents", retryDocuments.size());
+                extraction = extractEvidenceFacts(modelId, retryQuestion, retryDocuments);
+                result = evidenceLedger.augment(prompt, result, extraction);
+            }
+            return result;
         } catch (Exception exception) {
             log.warn("Financial evidence extraction failed: {}", exception.getMessage());
             return evidenceLedger.evidenceOnly(documents);
         }
     }
 
-    private String answerPrompt(String prompt,
-                                FinancialRetrievalPlan plan,
-                                FinancialEvidenceLedger.Ledger ledger) {
+    private String extractEvidenceFacts(String modelId, String question,
+                                        List<FinancialEvidenceLedger.EvidenceDocument> documents) {
+        return ChatClient.builder(modelConfigService.chatModel(modelId))
+                    .defaultSystem("""
+                            You extract auditable numerical facts from SEC 10-K evidence.
+                            Never answer the question, calculate, estimate, or use outside knowledge.
+                            Every extracted fact must contain an exact quote from one supplied evidence block.
+                            An exact quote may be a complete table row; rawValue may add the row's displayed unit or
+                            currency even when that unit is stated in the table header.
+                            Output strict JSON only.
+                            """)
+                    .build()
+                    .prompt()
+                    .user(evidenceLedger.extractionPrompt(question, documents))
+                    .options(modelConfigService.chatOptions(modelId))
+                    .call()
+                    .content();
+    }
+
+    List<FinancialEvidenceLedger.EvidenceDocument> compactExtractionDocuments(
+            List<FinancialEvidenceLedger.EvidenceDocument> documents, int limit) {
+        Map<String, FinancialEvidenceLedger.EvidenceDocument> selected = new LinkedHashMap<>();
+        LinkedHashSet<String> taskIds = documents.stream()
+                .flatMap(document -> document.matchedTaskIds().stream())
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        for (String taskId : taskIds) {
+            documents.stream().filter(document -> document.matchedTaskIds().contains(taskId)).limit(2)
+                    .forEach(document -> selected.putIfAbsent(document.evidenceId(), compactDocument(document)));
+            if (selected.size() >= limit) {
+                return selected.values().stream().limit(limit).toList();
+            }
+        }
+        for (FinancialEvidenceLedger.EvidenceDocument document : documents) {
+            selected.putIfAbsent(document.evidenceId(), compactDocument(document));
+            if (selected.size() >= limit) {
+                break;
+            }
+        }
+        return List.copyOf(selected.values());
+    }
+
+    private FinancialEvidenceLedger.EvidenceDocument compactDocument(
+            FinancialEvidenceLedger.EvidenceDocument document) {
+        return new FinancialEvidenceLedger.EvidenceDocument(
+                document.evidenceId(), document.chunkId(), document.sourceFile(), document.company(),
+                document.fiscalYear(), document.modality(), document.item(), document.sectionTitle(),
+                truncateEnd(document.content(), Math.min(3000, Math.max(1200, evidenceLedgerMaxContentChars))),
+                document.matchedTaskIds());
+    }
+
+    private boolean needsEvidenceFacts(FinancialRetrievalPlan plan,
+                                       List<FinancialEvidenceLedger.EvidenceDocument> documents) {
+        String question = plan.resolvedQuestion().toLowerCase(Locale.ROOT);
+        boolean numericalRequest = containsAnyText(question, "how much", "how many", "percentage", "percent", "ratio",
+                "difference", "increase", "decrease", "total", "revenue", "income", "cash", "amount", "number");
+        return numericalRequest && documents.stream().anyMatch(document -> document.content().matches("(?s).*\\d.*"));
+    }
+
+    private boolean needsDeterministicCalculation(FinancialRetrievalPlan plan) {
+        String question = plan.resolvedQuestion().toLowerCase(Locale.ROOT);
+        return "calculation".equalsIgnoreCase(plan.intent())
+                || containsAnyText(question, "percentage change", "percent change", "growth rate", "difference",
+                "increase", "decrease", "divided by", "ratio of", "combined", "sum of", "total cash");
+    }
+
+    private boolean numericalLedgerIncomplete(FinancialRetrievalPlan plan,
+                                              FinancialEvidenceLedger.Ledger ledger) {
+        if (ledger.facts().isEmpty()) {
+            return true;
+        }
+        String question = plan.resolvedQuestion().toLowerCase(Locale.ROOT);
+        if (containsAnyText(question, "percentage change", "percent change", "growth rate")) {
+            Set<String> requestedYears = new LinkedHashSet<>(extractYears(plan.resolvedQuestion()));
+            Set<String> factYears = ledger.facts().stream().map(FinancialEvidenceLedger.FinancialFact::fiscalYear)
+                    .collect(java.util.stream.Collectors.toSet());
+            if (!factYears.containsAll(requestedYears)) {
+                return true;
+            }
+        }
+        if (question.contains("total cash")) {
+            Set<String> companies = plan.subTasks().stream()
+                    .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                    .flatMap(task -> task.companies().stream()).map(String::toUpperCase)
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+            for (String company : companies) {
+                List<FinancialEvidenceLedger.FinancialFact> companyFacts = ledger.facts().stream()
+                        .filter(fact -> company.equalsIgnoreCase(fact.company())).toList();
+                boolean directTotal = companyFacts.stream()
+                        .anyMatch(fact -> fact.metric().toLowerCase(Locale.ROOT).contains("total"));
+                long components = companyFacts.stream().map(fact -> fact.metric().toLowerCase(Locale.ROOT))
+                        .distinct().count();
+                if (!directTotal && components < 2) {
+                    return true;
+                }
+            }
+        }
+        boolean hasArithmeticCalculation = ledger.calculations().stream()
+                .anyMatch(calculation -> !"count".equalsIgnoreCase(calculation.type()));
+        return needsDeterministicCalculation(plan) && !hasArithmeticCalculation;
+    }
+
+    private boolean containsAnyText(String value, String... candidates) {
+        for (String candidate : candidates) {
+            if (value.contains(candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    String answerPrompt(String prompt,
+                        FinancialRetrievalPlan plan,
+                        FinancialEvidenceLedger.Ledger ledger) {
         return """
-                用户问题：
+                User question:
                 %s
 
                 %s
 
-                回答规则：
-                1. 只能使用 Evidence Ledger 中的信息，不能补充外部知识。
-                2. 直接数值优先使用已校验事实 [F#]；涉及运算时只能使用确定性计算 [C#]，不得自行心算或改写计算结果，并在计算结论后明确标记对应 [C#]。
-                3. 如果缺少完成比较或计算所需的事实，明确指出缺少哪家公司、财年或指标，不得猜测。
-                4. 每项关键结论后引用原始证据编号 [E#]；引用必须与结论来自同一公司和财年。每个引用必须使用独立方括号，例如 [F1][E2]，不要写成 [F1；E2]。
-                5. 涉及跨公司或跨财年比较时，先按“公司—财年—指标”列出事实，再给出比较结论。
-                6. 结尾给出“来源”列表，格式为 `[E#] source_file — section`，不要伪造页码。
-                7. 如果问题询问某信息是否披露或是否缺失，必须明确回答；只有检索结果中包含对应公司和财年的证据时，
-                   才能说明“未披露/未提及”，并在该结论后引用对应财年的原始证据 [E#]。
-                8. 使用与用户问题相同的语言回答：英文问题用英文，中文问题用中文；公司名、指标名和原始引文保持原文。
-                """.formatted(prompt, ledger.render()) + retrievalPlanPrompt(plan);
+                Required retrieval coverage:
+                %s
+
+                Answer rules:
+                1. Use only information in the Evidence Ledger. Do not add outside knowledge.
+                2. Answer every clause of the question and cover every available company-year item in the required
+                   retrieval coverage. Do not stop after finding evidence for only one side of a comparison.
+                   Give the minimum sufficient answer, normally 120-180 words and never more than 220 words. For a
+                   qualitative comparison, use at most one concise bullet per company/year followed by one comparison
+                   sentence. Do not repeat the conclusion.
+                   Do not enumerate unrelated segment tables, examples, background, or evidence outside the requested
+                   filing item/section merely because it appears in the ledger.
+                3. For direct numerical values, prefer verified facts [F#]. For arithmetic, use only verified
+                   calculations [C#], reproduce the result exactly, and cite the corresponding [C#].
+                4. Qualitative statements and exact quotations may be taken directly from evidence [E#], even when
+                   they do not produce a numerical [F#]. Preserve the meaning and wording of quoted filing text.
+                5. Put the supporting [E#] citation after every key conclusion or quotation. A citation must refer to
+                   the same company and fiscal year as the claim. Write separate markers such as [F1][E2].
+                6. For cross-company or cross-year questions, organize the answer by company and fiscal year before
+                   giving the comparison or trend conclusion.
+                7. If evidence for one required item is insufficient, name that exact company, fiscal year, and fact;
+                   still answer the remaining supported items. Never silently omit a required item.
+                8. Claim that information is absent only if evidence for that same company-year was retrieved and the
+                   supplied evidence supports that conclusion.
+                8a. In a qualitative comparison, do not refuse merely because one side lacks a parallel discussion.
+                    When scoped evidence shows that one company does not directly address the requested topic but uses
+                    a related or broader disclosure, state that asymmetry concisely and compare it with the other side.
+                    Describe only the supplied evidence, not the absence of content from the entire filing.
+                9. End with a Sources list formatted as `[E#] source_file — section`; never invent page numbers.
+                10. Answer in the language of the user question: English question in English, Chinese question in
+                    Chinese. Preserve company names, financial terms, and original quotations in their source language.
+                """.formatted(prompt, ledger.render(), requiredCoverage(plan)) + retrievalPlanPrompt(plan);
+    }
+
+    String requiredCoverage(FinancialRetrievalPlan plan) {
+        List<String> requirements = plan.subTasks().stream()
+                .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                .map(task -> "- " + task.id()
+                        + " | companies=" + displayValues(task.companies())
+                        + " | years=" + displayValues(task.years())
+                        + " | requested fact=" + defaultIfBlank(cleanLine(task.metric()), cleanLine(task.query())))
+                .distinct()
+                .toList();
+        return requirements.isEmpty() ? "- Answer all requested entities, years, and comparison clauses."
+                : String.join("\n", requirements);
+    }
+
+    List<String> missingAnswerCoverage(String answer, FinancialRetrievalPlan plan,
+                                       FinancialEvidenceLedger.Ledger ledger) {
+        String body = answer == null ? "" : answer.split(
+                "(?im)^\\s*(?:[#>*_-]+\\s*)*(?:sources?|来源)\\s*[:：]", 2)[0];
+        List<String> missing = new ArrayList<>();
+        for (FinancialRetrievalTask task : plan.subTasks()) {
+            if (!"retrieve".equalsIgnoreCase(task.operation()) || task.id().startsWith("retrieve_explicit_")) {
+                continue;
+            }
+            List<String> evidenceIds = ledger.evidence().stream()
+                    .filter(document -> document.matchedTaskIds().contains(task.id()))
+                    .map(FinancialEvidenceLedger.EvidenceDocument::evidenceId)
+                    .toList();
+            if (!evidenceIds.isEmpty() && evidenceIds.stream().noneMatch(id -> body.contains("[" + id + "]"))) {
+                missing.add(task.id() + " | companies=" + displayValues(task.companies())
+                        + " | years=" + displayValues(task.years())
+                        + " | requested fact=" + defaultIfBlank(cleanLine(task.metric()), cleanLine(task.query()))
+                        + " | available evidence=" + evidenceIds);
+            }
+        }
+        return List.copyOf(missing);
+    }
+
+    private String repairIncompleteAnswer(String prompt, FinancialRetrievalPlan plan,
+                                          FinancialEvidenceLedger.Ledger ledger, String generated,
+                                          String modelId) {
+        if (!answerCoverageRepairEnabled) {
+            return generated;
+        }
+        List<String> missing = missingAnswerCoverage(generated, plan, ledger);
+        if (missing.isEmpty()) {
+            return generated;
+        }
+        log.info("Repairing financial answer with {} uncovered retrieval tasks", missing.size());
+        try {
+            return ChatClient.builder(modelConfigService.chatModel(modelId))
+                    .defaultSystem("""
+                            You repair an incomplete SEC 10-K RAG answer. Rewrite the complete answer using only the
+                            supplied Evidence Ledger. Answer every listed missing requirement explicitly. Cite every
+                            factual claim with its matching [E#], retain valid [F#]/[C#] references, stay under 220
+                            words, and output only the revised answer.
+                            """)
+                    .build()
+                    .prompt()
+                    .user("""
+                            User question:
+                            %s
+
+                            Incomplete draft:
+                            %s
+
+                            Missing supported requirements:
+                            - %s
+
+                            %s
+                            """.formatted(prompt, generated, String.join("\n- ", missing), ledger.render()))
+                    .options(modelConfigService.chatOptions(modelId))
+                    .call()
+                    .content();
+        } catch (Exception exception) {
+            log.warn("Financial answer coverage repair failed: {}", exception.getMessage());
+            return generated;
+        }
+    }
+
+    private String displayValues(List<String> values) {
+        return values == null || values.isEmpty() ? "unspecified" : String.join(",", values);
+    }
+
+    private String defaultIfBlank(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 
     private Flux<String> verifyAnswer(Flux<String> answer, FinancialEvidenceLedger.Ledger ledger) {
@@ -714,9 +1090,11 @@ public class FinancialRagService {
         }
         return ChatClient.builder(modelConfigService.chatModel(modelId))
                 .defaultSystem("""
-                        你是金融年报 RAG 问答助手。只能基于用户消息中的检索上下文回答 SEC 10-K 年报问题。
-                        优先直接给出结论；涉及表格或财务计算时，必须使用上下文中的公司、年份、period、表头和行名。
-                        如果上下文不足以确定答案，明确说明无法从当前上下文确定，不要编造。
+                        You are a financial annual-report RAG assistant. Answer only from the retrieved SEC 10-K
+                        context supplied in the user message. Lead with the conclusion. For tables or calculations,
+                        preserve the company, fiscal year, period, headers, row names, units, and scale from context.
+                        If the evidence is insufficient, state exactly what is missing and never invent a fact.
+                        Answer in the same language as the user's question.
                         """)
                 .defaultAdvisors(
                         new SimpleLoggerAdvisor(),
@@ -746,7 +1124,8 @@ public class FinancialRagService {
             int limit = index == 0 ? Math.max(finalTopK, hybridTopK) : finalTopK;
             List<FinancialChunk> requestChunks = search(query, limit, retrievalMode, request.company(), request.year(),
                     request.modality(), false).stream().map(chunk -> chunk.withMatchedTask(request.taskId())).toList();
-            if ((!request.company().isBlank() || !request.year().isBlank()) && !requestChunks.isEmpty()) {
+            if ((!request.taskId().isBlank() || !request.company().isBlank() || !request.year().isBlank())
+                    && !requestChunks.isEmpty()) {
                 String scope = request.taskId().isBlank()
                         ? request.company().toUpperCase(Locale.ROOT) + "|" + request.year() + "|"
                         + cleanLine(request.query()).toLowerCase(Locale.ROOT)
@@ -816,6 +1195,8 @@ public class FinancialRagService {
 
     private List<FinancialSearchRequest> taskScopedRequests(FinancialRetrievalPlan plan) {
         List<FinancialSearchRequest> requests = new ArrayList<>();
+        String table = resolveTableName();
+        Set<String> known = knownCompanies(table);
         for (FinancialRetrievalTask task : plan.subTasks()) {
             if (!"retrieve".equalsIgnoreCase(task.operation()) || task.query().isBlank()) {
                 continue;
@@ -824,9 +1205,10 @@ public class FinancialRagService {
             List<String> years = task.years().isEmpty() ? List.of("") : task.years();
             for (String company : companies) {
                 for (String year : years) {
+                    String normalizedCompany = canonicalTaskCompany(company, task.query(), known);
                     addSearchRequest(requests, new FinancialSearchRequest(
                             String.join(" ", List.of(task.query(), task.metric())).strip(),
-                            company.toUpperCase(Locale.ROOT), year, task.modality(), task.id()));
+                            normalizedCompany, year, effectiveTaskModality(task), task.id()));
                 }
             }
         }
@@ -834,6 +1216,33 @@ public class FinancialRagService {
             addSearchRequest(requests, new FinancialSearchRequest(query, "", "", "hybrid", ""));
         }
         return List.copyOf(requests);
+    }
+
+    private String canonicalTaskCompany(String company, String query, Set<String> known) {
+        String candidate = cleanLine(company).toUpperCase(Locale.ROOT);
+        if (known.contains(candidate)) {
+            return candidate;
+        }
+        String description = (cleanLine(company) + " " + cleanLine(query)).toLowerCase(Locale.ROOT);
+        for (Map.Entry<String, String> alias : COMPANY_ALIASES.entrySet()) {
+            if (description.contains(alias.getKey()) && known.contains(alias.getValue())) {
+                return alias.getValue();
+            }
+        }
+        // An invented company value is more harmful than an unscoped search: it produces an empty result set.
+        return "";
+    }
+
+    String effectiveTaskModality(FinancialRetrievalTask task) {
+        String query = (cleanLine(task.query()) + " " + cleanLine(task.metric())).toLowerCase(Locale.ROOT);
+        if (query.matches(".*\\b(age|aged|biograph(?:y|ical)|executive|officer|director|language|quote|quotation|"
+                + "statement|states|stated|mention|mentions|mentioned|textual|narrative)\\b.*")
+                || query.contains("management's discussion")
+                || query.contains("management’s discussion")
+                || query.contains("md&a")) {
+            return "text";
+        }
+        return task.modality();
     }
 
     private void addSearchRequest(List<FinancialSearchRequest> requests, FinancialSearchRequest candidate) {
@@ -900,9 +1309,11 @@ public class FinancialRagService {
         int finalHybridTopK = Math.max(hybridTopK, finalTopK);
         int vectorLimit = Math.max(finalHybridTopK * 3, finalTopK);
         List<FinancialChunk> vectorRows = fetchVectorCandidates(table, vector, filters, vectorLimit);
-        List<FinancialChunk> candidateRows = filters.hasNarrowScope()
-                ? fetchMetadataCandidates(table, filters)
-                : fetchLexicalCandidates(table, filters, query, Math.max(finalHybridTopK * 20, 500));
+        List<FinancialChunk> candidateRows = fetchLexicalCandidates(
+                table, filters, query, Math.max(finalHybridTopK * 20, 500));
+        if (candidateRows.isEmpty() && filters.hasNarrowScope()) {
+            candidateRows = fetchMetadataCandidates(table, filters);
+        }
         if (candidateRows.isEmpty() && filters.hasCompanyOrYear()) {
             RetrievalFilters fallbackFilters = filters.withoutSourceFile();
             vectorRows = fetchVectorCandidates(table, vector, fallbackFilters, vectorLimit);
@@ -924,7 +1335,7 @@ public class FinancialRagService {
         return ranked.stream().limit(finalTopK).toList();
     }
 
-    private RetrievalFilters explicitFilters(String table, String company, String year, String modality) {
+    RetrievalFilters explicitFilters(String table, String company, String year, String modality) {
         String normalizedCompany = cleanLine(company).toUpperCase(Locale.ROOT);
         String normalizedYear = cleanLine(year);
         String sourceFile = "";
@@ -935,7 +1346,10 @@ public class FinancialRagService {
             }
         }
         String chunkType = switch (normalizeModality(modality)) {
-            case "text" -> "text";
+            // Filing parsers frequently wrap narrative paragraphs in a table container (for example,
+            // an introductory table followed by a forward-looking-statements paragraph). Treat text
+            // as a ranking preference, not a hard SQL filter, so those mixed chunks remain retrievable.
+            case "text" -> "";
             case "table" -> "table";
             default -> "";
         };
@@ -1289,10 +1703,24 @@ public class FinancialRagService {
         if (mode == FinancialRetrievalMode.PARENT_CHILD) {
             String parentContext = chunk.metadataText("parent_context");
             if (!parentContext.isBlank()) {
-                return parentContext;
+                return childWithParentContext(chunk.content(), parentContext);
             }
         }
         return chunk.content();
+    }
+
+    String childWithParentContext(String child, String parentContext) {
+        String normalizedChild = cleanLine(child);
+        String normalizedParent = cleanLine(parentContext);
+        if (normalizedChild.isBlank()) {
+            return parentContext == null ? "" : parentContext;
+        }
+        if (normalizedParent.isBlank() || normalizedParent.contains(normalizedChild)) {
+            return normalizedParent.isBlank() ? child : parentContext;
+        }
+        // Keep the exact matched child first. A truncated parent window may otherwise hide the name/value
+        // that caused retrieval, leading reranking and evidence extraction to see only surrounding context.
+        return child.strip() + "\n\nParent context:\n" + parentContext.strip();
     }
 
     private List<FinancialChunk> collapseParentChildRows(List<FinancialChunk> rows, int limit) {
@@ -1301,8 +1729,13 @@ public class FinancialRagService {
             FinancialChunk current = row.copy();
             String key = parentCollapseKey(current);
             FinancialChunk existing = collapsed.get(key);
-            if (existing == null || current.finalScore() > existing.finalScore()) {
+            if (existing == null) {
                 collapsed.put(key, current);
+            } else if (current.finalScore() > existing.finalScore()) {
+                current.matchedTaskIds.addAll(existing.matchedTaskIds);
+                collapsed.put(key, current);
+            } else {
+                existing.matchedTaskIds.addAll(current.matchedTaskIds);
             }
         }
         return collapsed.values().stream()
@@ -1423,7 +1856,12 @@ public class FinancialRagService {
                 boost += 0.18;
             }
         }
-        return Math.min(boost, 1.4);
+        for (String entity : namedEntityPhrases(query)) {
+            if (content.contains(entity.toLowerCase(Locale.ROOT))) {
+                boost += 1.5;
+            }
+        }
+        return Math.min(boost, 3.0);
     }
 
     private Map<String, Object> readMetadata(String value) {
@@ -1502,6 +1940,12 @@ public class FinancialRagService {
     }
 
     private record FinancialSearchRequest(String query, String company, String year, String modality, String taskId) {
+    }
+
+    private record CompanyHit(String company, int matches) {
+    }
+
+    record CompanyYearScope(String company, String year) {
     }
 
     record FinancialRetrievalPlan(String translatedQuestion,

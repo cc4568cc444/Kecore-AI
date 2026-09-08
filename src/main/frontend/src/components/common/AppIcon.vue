@@ -18,6 +18,8 @@ const props = defineProps({
 
 const icon = computed(() => {
   const icons = {
+    panelLeft: [["rect", { x: "3", y: "3", width: "18", height: "18", rx: "3" }], ["path", { d: "M9 3v18" }]],
+    search: [["circle", { cx: "10.5", cy: "10.5", r: "6.5" }], ["path", { d: "m16 16 5 5" }]],
     bot: [
       ["path", { d: "M12 8V4" }],
       ["rect", { x: "5", y: "8", width: "14", height: "10", rx: "3" }],

@@ -177,7 +177,7 @@ function submitSuggestion(prompt) {
     return;
   }
   chat.setPrompt(prompt);
-  chat.submitPrompt(prompt);
+  nextTick(() => document.getElementById("promptInput")?.focus());
 }
 
 function isLatestUserMessage(index) {
@@ -206,6 +206,7 @@ function messageKey(message, index) {
     <div v-if="!messages.length" class="empty-state" id="emptyState">
       <div class="empty-logo" aria-hidden="true"><span>K</span></div>
       <h2 id="emptyTitle">{{ sessions.emptyTitle }}</h2>
+      <p class="welcome-description">{{ sessions.mode === 'finance' ? '从财务指标到年度趋势，让问题找到有据可循的答案。' : sessions.mode === 'agent' ? '描述任务，或打开工作空间连接你的项目。' : '提一个问题，分享一个想法，或一起完成一件事。' }}</p>
       <div class="suggestions" id="chatSuggestions">
         <button
           v-for="item in suggestions"

@@ -399,3 +399,55 @@ body,
     transition: none;
   }
 }
+
+/* Keep the appearance control in the sidebar footer. */
+.appearance-footer {
+  position: fixed;
+  left: 22px;
+  bottom: 22px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 238px;
+  color: var(--theme-text-soft);
+}
+.appearance-caption {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.appearance-caption small {
+  display: block;
+  margin-top: 8px;
+  color: var(--theme-text-muted);
+  font-size: 6px;
+  letter-spacing: .5px;
+}
+.appearance-dot {
+  flex: 0 0 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--theme-accent);
+}
+.appearance-footer .theme-toggle {
+  position: relative;
+  inset: auto;
+  flex: 0 0 80px;
+  width: 80px;
+  height: 42px;
+  box-shadow: 0 3px 10px var(--theme-shadow);
+}
+.appearance-footer .theme-toggle.is-dark .theme-toggle-thumb {
+  transform: translateX(37px);
+}
+@media (min-width: 901px) {
+  .sidebar { padding-bottom: 86px; }
+}
+@media (max-width: 900px) {
+  .appearance-footer { left: auto; right: 16px; bottom: 16px; width: auto; }
+  .appearance-caption { display: none; }
+}

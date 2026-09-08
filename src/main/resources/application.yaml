@@ -21,7 +21,7 @@ spring:
       moderation: none
     openai:
       chat:
-        base-url: https://api.caichen.online
+        base-url: https://nbaiapi.com
         completions-path: /v1/chat/completions
         api-key: ${CAICHEN_KEY}
         options:
@@ -89,7 +89,7 @@ app:
       options:
         model: deepseek-v4-flash
     model2:
-      base-url: https://api.caichen.online
+      base-url: https://nbaiapi.com
       completions-path: /v1/chat/completions
       api-key: ${CAICHEN_KEY:}
       options:
@@ -118,6 +118,9 @@ app:
       enabled: true
       max-documents: 15
       max-content-chars: 6000
+      retry-on-empty: true
+    answer-coverage-repair:
+      enabled: true
     citation-verifier:
       enabled: true
       strict: true

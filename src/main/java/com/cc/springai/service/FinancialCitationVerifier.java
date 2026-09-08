@@ -17,7 +17,7 @@ final class FinancialCitationVerifier {
     // Accept [F1][E2] as well as grouped model output such as [F1; E2] or [F1；E2].
     private static final Pattern REFERENCE = Pattern.compile(
             "(?i)(?<![A-Z0-9])(E|F|C)(\\d+)(?![A-Z0-9])");
-    private static final Pattern YEAR = Pattern.compile("\\b20\\d{2}\\b");
+    private static final Pattern YEAR = Pattern.compile("(?<!\\d)20\\d{2}(?!\\d)");
     private static final Pattern NUMERIC_CLAIM = Pattern.compile("(?:[$€£¥]|\\b\\d[\\d,.]*%?\\b)");
     // Filing identifiers describe where a claim appears; they are not financial/numeric claims themselves.
     // Removing them before NUMERIC_CLAIM matching avoids treating "FY2024", "Item 7" and "10-K"
@@ -25,7 +25,11 @@ final class FinancialCitationVerifier {
     private static final Pattern FILING_IDENTIFIER = Pattern.compile(
             "(?i)\\b(?:FY\\s*)?20\\d{2}\\b|\\b(?:Item|Part|Section|Note)\\s+\\d+[A-Z]?(?:\\.\\d+)?\\b|\\b10-[KQ]\\b");
     private static final Pattern DERIVED_CALCULATION = Pattern.compile(
-            "(?i)(?:计算得出|按.+计算|calculated|computed|\\([^\\n)]*[-+*/×÷][^\\n)]*\\))");
+            "(?i)(?:计算得出|按.+计算|calculated|computed|"
+                    + "\\([^\\n)]*(?:F\\d+|\\d+(?:\\.\\d+)?)\\s*[-+*/×÷]\\s*"
+                    + "(?:F\\d+|\\d+(?:\\.\\d+)?)[^\\n)]*\\))");
+    private static final Pattern NEGATED_CALCULATION = Pattern.compile(
+            "(?i)\\b(?:cannot|can't|could not|not)\\s+(?:be\\s+)?(?:calculated|computed)\\b|无法(?:计算|确定)");
 
     Audit verify(String answer, FinancialEvidenceLedger.Ledger ledger) {
         if (answer == null || answer.isBlank()) {
@@ -67,13 +71,14 @@ final class FinancialCitationVerifier {
         Map<String, FinancialEvidenceLedger.EvidenceDocument> documents = ledger.evidence().stream()
                 .collect(Collectors.toMap(document -> upper(document.evidenceId()), Function.identity()));
         Map<String, Set<String>> supportedYears = supportedYears(ledger);
-        // A decimal point is not a sentence boundary (for example, 2.022%).
-        for (String sentence : answer.split("(?<=[!?。！？\\n])|(?<!\\d)\\.(?!\\d)")) {
+        // A citation at the end of a paragraph/quote supports every sentence in that same block.
+        // Splitting on punctuation incorrectly rejects multi-sentence SEC quotations with one trailing [E#].
+        for (String sentence : answer.split("\\R")) {
             if (sentence.isBlank()) {
                 continue;
             }
             Set<String> sentenceEvidence = references(sentence, 'E');
-            if (DERIVED_CALCULATION.matcher(sentence).find() && references(sentence, 'C').isEmpty()) {
+            if (hasDerivedCalculation(sentence) && references(sentence, 'C').isEmpty()) {
                 issues.add(new Issue("unverified_calculation", "计算结论缺少确定性计算引用 [C#]", sentence.strip()));
             }
             if (hasNumericClaim(sentence) && sentenceEvidence.isEmpty() && !isSourceHeading(sentence)) {
@@ -110,8 +115,12 @@ final class FinancialCitationVerifier {
         if (audit.valid()) {
             return answer;
         }
+        String salvaged = removeUnsupportedLines(answer, audit);
+        if (!salvaged.equals(answer) && verify(salvaged, ledger).valid()) {
+            return salvaged;
+        }
         if (strict && !ledger.facts().isEmpty()) {
-            return verifiedFallback(ledger);
+            return verifiedFallback(ledger, isPredominantlyEnglish(answer));
         }
         String details = issueDetails(audit);
         if (!strict) {
@@ -121,19 +130,41 @@ final class FinancialCitationVerifier {
                 + details + "\n\n请重试，或在问题中补充明确的公司、财年和指标。";
     }
 
-    private String verifiedFallback(FinancialEvidenceLedger.Ledger ledger) {
+    private String removeUnsupportedLines(String answer, Audit audit) {
+        Set<String> salvageableCodes = Set.of(
+                "uncited_numeric_claim", "company_mismatch", "year_mismatch");
+        if (audit.issues().isEmpty()
+                || audit.issues().stream().anyMatch(issue -> !salvageableCodes.contains(issue.code()))) {
+            return answer;
+        }
+        Set<String> unsafeLines = audit.issues().stream()
+                .map(Issue::sentence)
+                .filter(sentence -> sentence != null && !sentence.isBlank())
+                .map(String::strip)
+                .collect(Collectors.toSet());
+        if (unsafeLines.isEmpty()) {
+            return answer;
+        }
+        return answer.lines()
+                .filter(line -> !unsafeLines.contains(line.strip()))
+                .collect(Collectors.joining("\n"))
+                .replaceAll("\n{3,}", "\n\n")
+                .strip();
+    }
+
+    private String verifiedFallback(FinancialEvidenceLedger.Ledger ledger, boolean english) {
         Map<String, FinancialEvidenceLedger.FinancialFact> facts = ledger.facts().stream()
                 .collect(Collectors.toMap(fact -> upper(fact.factId()), Function.identity()));
         Map<String, FinancialEvidenceLedger.EvidenceDocument> evidence = ledger.evidence().stream()
                 .collect(Collectors.toMap(document -> upper(document.evidenceId()), Function.identity()));
-        StringBuilder answer = new StringBuilder("已核验事实：\n");
+        StringBuilder answer = new StringBuilder(english ? "Verified facts:\n" : "已核验事实：\n");
         for (FinancialEvidenceLedger.FinancialFact fact : ledger.facts()) {
             answer.append("- ").append(fact.company()).append(" FY").append(fact.fiscalYear())
                     .append(" | ").append(fact.metric()).append(" = ").append(fact.rawValue())
                     .append(" [").append(fact.factId()).append("][").append(fact.evidenceId()).append("]\n");
         }
         if (!ledger.calculations().isEmpty()) {
-            answer.append("\n确定性计算：\n");
+            answer.append(english ? "\nDeterministic calculations:\n" : "\n确定性计算：\n");
             for (FinancialEvidenceLedger.VerifiedCalculation calculation : ledger.calculations()) {
                 LinkedHashSet<String> evidenceIds = new LinkedHashSet<>();
                 for (String factId : calculation.sourceFactIds()) {
@@ -150,7 +181,7 @@ final class FinancialCitationVerifier {
                 answer.append('\n');
             }
         }
-        answer.append("\n来源：\n");
+        answer.append(english ? "\nSources:\n" : "\n来源：\n");
         LinkedHashSet<String> usedEvidenceIds = ledger.facts().stream()
                 .map(FinancialEvidenceLedger.FinancialFact::evidenceId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -164,6 +195,16 @@ final class FinancialCitationVerifier {
                     .append(document.sourceFile()).append(" — ").append(section).append('\n');
         }
         return answer.toString().stripTrailing();
+    }
+
+    private boolean isPredominantlyEnglish(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        long latin = value.codePoints().filter(codePoint ->
+                (codePoint >= 'A' && codePoint <= 'Z') || (codePoint >= 'a' && codePoint <= 'z')).count();
+        long cjk = value.codePoints().filter(codePoint -> codePoint >= 0x4E00 && codePoint <= 0x9FFF).count();
+        return latin > cjk;
     }
 
     private String issueDetails(Audit audit) {
@@ -239,9 +280,13 @@ final class FinancialCitationVerifier {
 
     private boolean hasNumericClaim(String sentence) {
         String withoutReferences = REFERENCE.matcher(sentence).replaceAll("")
-                .replaceFirst("^\\s*\\d+[.)、]\\s*", "");
+                .replaceFirst("^\\s*(?:[-*#>]\\s*)*(?:\\*{0,2})?\\d+[.)、](?:\\*{0,2})?\\s*", "");
         withoutReferences = FILING_IDENTIFIER.matcher(withoutReferences).replaceAll("");
         return NUMERIC_CLAIM.matcher(withoutReferences).find();
+    }
+
+    private boolean hasDerivedCalculation(String sentence) {
+        return !NEGATED_CALCULATION.matcher(sentence).find() && DERIVED_CALCULATION.matcher(sentence).find();
     }
 
     private String sentenceAt(String answer, int position) {

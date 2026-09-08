@@ -1,15 +1,13 @@
 <script setup>
 import { computed } from "vue";
 import AppIcon from "../common/AppIcon.vue";
-import { useMigrationStore } from "../../stores/migration";
-import { useModelStore } from "../../stores/model";
+import { useShellStore } from "../../stores/shell";
 import { useSessionStore } from "../../stores/session";
 import { useWorkspaceStore } from "../../stores/workspace";
 import AgentWorkspace from "../workspace/AgentWorkspace.vue";
 
 const sessions = useSessionStore();
-const migration = useMigrationStore();
-const models = useModelStore();
+const shell = useShellStore();
 const workspace = useWorkspaceStore();
 
 const workingDirectoryStatus = computed(() => {
@@ -39,6 +37,7 @@ const hasStatusProblem = computed(() => {
 <template>
   <header class="topbar">
     <div class="page-title">
+      <button class="sidebar-open" type="button" title="切换侧栏" aria-label="切换侧栏" aria-controls="appSidebar" :aria-expanded="shell.sidebarOpen" @click="shell.toggleSidebar"><AppIcon name="panelLeft" :size="20" /></button>
       <h1 id="viewTitle">{{ sessions.title }}</h1>
       <span
         class="status"
@@ -51,14 +50,6 @@ const hasStatusProblem = computed(() => {
       </span>
     </div>
     <div class="topbar-actions">
-      <button class="ghost-button icon-text-button" id="vueMigrationButton" type="button" title="数据导入导出" @click="migration.show">
-        <AppIcon name="download" :size="15" />
-        <span>数据迁移</span>
-      </button>
-      <button class="ghost-button icon-text-button" id="modelManageButton" type="button" title="模型管理" @click="models.openModal">
-        <AppIcon name="settings" :size="15" />
-        <span>模型管理</span>
-      </button>
       <button class="ghost-button icon-text-button" id="clearButton" type="button" title="清空当前对话" @click="sessions.clearCurrentSession">
         <AppIcon name="trash2" :size="15" />
         <span>清空对话</span>
@@ -67,14 +58,14 @@ const hasStatusProblem = computed(() => {
         class="workspace-toggle topbar-workspace-toggle"
         id="workspaceToggle"
         type="button"
-        title="展开/收起工作区"
+        title="展开/收起工作空间"
         aria-controls="workspaceBody"
         :aria-expanded="sessions.workspaceExpanded ? 'true' : 'false'"
         :hidden="sessions.mode !== 'agent'"
         @click="sessions.workspaceExpanded = !sessions.workspaceExpanded"
       >
         <span class="workspace-toggle-main">
-          <span class="workspace-toggle-label" id="workspaceToggleLabel">工作区</span>
+          <span class="workspace-toggle-label" id="workspaceToggleLabel">工作空间</span>
           <span class="workspace-toggle-status" id="workingDirectoryStatus">{{ workingDirectoryStatus }}</span>
         </span>
         <span class="workspace-toggle-metrics" id="workspaceToggleMetrics" :hidden="!showWorkspaceMetrics">
