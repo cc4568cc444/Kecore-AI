@@ -79,7 +79,9 @@ public class FinancialRagController {
                 if (!sendEvent(emitter, open, "metrics", Map.of(
                         "translationMs", translationMs,
                         "retrievalMs", retrievalMs,
-                        "retrievalQuery", answer.retrievalQuery()))) {
+                        "retrievalQuery", answer.retrievalQuery(),
+                        "retrievalQuality", answer.retrievalQuality(),
+                        "retrievalWarnings", answer.retrievalWarnings()))) {
                     return;
                 }
 
@@ -93,7 +95,9 @@ public class FinancialRagController {
                         "translationMs", translationMs,
                         "retrievalMs", retrievalMs,
                         "modelResponseMs", modelResponseMs,
-                        "retrievalQuery", answer.retrievalQuery()));
+                        "retrievalQuery", answer.retrievalQuery(),
+                        "retrievalQuality", answer.retrievalQuality(),
+                        "retrievalWarnings", answer.retrievalWarnings()));
                 complete(emitter, open);
             } catch (Exception ex) {
                 sendEvent(emitter, open, "error", Map.of(

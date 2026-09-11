@@ -73,7 +73,19 @@ python tools/multidoc/evaluate_multidoc.py --subsets S3,S4,S5 --limit 10 --worke
 python tools/multidoc/evaluate_multidoc.py --subsets S3,S4,S5 --question-ids md2025_1427,md2025_1559 --workers 1 --timeout 600 --model-id deepseek
 ```
 
-See [`METRICS.md`](METRICS.md) for deterministic-v3 metric definitions and `known_issues.json` for audited dataset-label conflicts.
+See [`METRICS.md`](METRICS.md) for deterministic-v6 metric definitions and `known_issues.json` for audited dataset-label conflicts.
+
+## Checkpoint and resume
+
+Each completed question is saved atomically to a sibling `*.partial.json` file. If an evaluation is interrupted, resume it with:
+
+```powershell
+python .\tools\multidoc\evaluate_multidoc.py --resume-report .\evaluation-results\multidoc\<run>.partial.json --workers 1 --timeout 600 --retries 5
+```
+
+Successful rows are retained, while failed and unfinished rows are evaluated again. The final report and checkpoint are both marked `complete` after all selected questions finish.
+
+Transient overload, connection, and gateway failures are retried. A tokens-per-day (TPD) quota exhaustion fails fast because it cannot recover within the current evaluation process; resume the checkpoint after the provider quota resets.
 
 评测器默认把 Multi-Doc-2025 样本中的 `companies`、`years_required` 和 `evidence_section`
 作为检索范围附加到问题中。部分 S3/S4 问题会在正文中省略公司或年份；若丢弃这些数据集
@@ -83,7 +95,9 @@ See [`METRICS.md`](METRICS.md) for deterministic-v3 metric definitions and `know
 `--run-id` 是写入报告和文件名的实验标签。评测器每次启动都会另外生成唯一
 `execution_id` 作为对话 ID 的一部分，因此重复使用同一 run-id 也不会继承旧评测对话。
 
-评测脚本调用 `/finance/analyze`，结果写入 `evaluation-results/multidoc`。除 Exact Match、
-Token F1、数值准确率、引用有效率、引用拦截率和拒答率外，还会根据数据集中的
-公司—财年关系统计文档召回率，并记录 planner、检索和生成各阶段耗时；最终同时输出
-overall 与各 subset 指标。
+评测脚本调用 `/finance/analyze`，结果写入 `evaluation-results/multidoc`。终端默认只显示
+核心指标摘要，完整 overall、各 subset 指标及逐题证据链保存在 JSON 报告中。评测器统计
+Token F1、数值 F1、引用有效率、拒答率、任务覆盖率，以及文档级 Recall@K、MRR@K、MAP@K、
+nDCG@K 和 Complete Recall@K，并记录 planner、检索和生成耗时；不再计算不适合生成式 RAG
+的 Exact Match。模型遇到 429 或临时 5xx 错误时，
+默认进行 3 次指数退避重试，可通过 `--retries` 和 `--retry-backoff` 调整。

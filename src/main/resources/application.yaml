@@ -112,12 +112,14 @@ app:
     table: multidoc_full_chunks
     fallback-table: multidoc_s2_full_chunks
     legacy-fallback-table: multidoc_s2_medium_chunks
-    top-k: 15
+    top-k: 10
     hybrid-top-k: 60
     evidence-ledger:
       enabled: true
-      max-documents: 15
-      max-content-chars: 6000
+      max-documents: 8
+      max-content-chars: 1800
+      max-total-content-chars: 12000
+      max-documents-per-task: 2
       retry-on-empty: true
     answer-coverage-repair:
       enabled: true
@@ -130,6 +132,18 @@ app:
       model: Qwen3-Reranker-0.6B
       doc-chars: 3000
       candidate-limit: 24
+      auto-start:
+        enabled: ${RERANKER_AUTO_START:true}
+        required: ${RERANKER_REQUIRED:true}
+        python-command: ${RERANKER_PYTHON:python}
+        script: ${RERANKER_SCRIPT:src/main/resources/reranker/qwen3_reranker_server.py}
+        model-path: ${RERANKER_MODEL_PATH:Qwen/Qwen3-Reranker-0.6B}
+        device: ${RERANKER_DEVICE:auto}
+        max-length: ${RERANKER_MAX_LENGTH:1024}
+        batch-size: ${RERANKER_BATCH_SIZE:2}
+        startup-timeout: ${RERANKER_STARTUP_TIMEOUT:10m}
+        poll-interval: 1s
+        instruction: "Given a financial filing question, rank passages by whether they contain the exact evidence, entities, periods, and figures needed to answer it."
   paper-rag:
     table: qasper_paper_chunks
     top-k: 8

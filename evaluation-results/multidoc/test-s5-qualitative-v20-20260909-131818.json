@@ -1,0 +1,477 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "metric_version": "deterministic-v4",
+  "split": "test",
+  "subsets": [
+    "S5"
+  ],
+  "run_id": "qualitative-v20",
+  "execution_id": "20260909131410933517-1a948cc9",
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-09T13:18:18.624523+00:00",
+  "summary": {
+    "overall": {
+      "count": 1,
+      "successful": 1,
+      "token_precision": 0.08695652173913043,
+      "token_recall": 0.023255813953488372,
+      "token_f1": 0.03669724770642202,
+      "rouge_l_f1": 0.03669724770642202,
+      "answer_overlap_score": 0.03669724770642202,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "numeric_question_count": 0,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answer_task_coverage": 0.6,
+      "degraded_retrieval_rate": 0.0,
+      "retrieval_diagnostic_count": 1,
+      "fact_extraction_rate": null,
+      "fact_extraction_question_count": 0,
+      "fact_value_recall": null,
+      "fact_value_question_count": 0,
+      "structured_value_recall": null,
+      "structured_value_question_count": 0,
+      "calculation_production_rate": null,
+      "calculation_question_count": 0,
+      "calculation_result_match": null,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.518348623853211,
+      "average_latency_ms": 247670.0
+    },
+    "clean_overall": {
+      "count": 1,
+      "successful": 1,
+      "token_precision": 0.08695652173913043,
+      "token_recall": 0.023255813953488372,
+      "token_f1": 0.03669724770642202,
+      "rouge_l_f1": 0.03669724770642202,
+      "answer_overlap_score": 0.03669724770642202,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "numeric_question_count": 0,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answer_task_coverage": 0.6,
+      "degraded_retrieval_rate": 0.0,
+      "retrieval_diagnostic_count": 1,
+      "fact_extraction_rate": null,
+      "fact_extraction_question_count": 0,
+      "fact_value_recall": null,
+      "fact_value_question_count": 0,
+      "structured_value_recall": null,
+      "structured_value_question_count": 0,
+      "calculation_production_rate": null,
+      "calculation_question_count": 0,
+      "calculation_result_match": null,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.518348623853211,
+      "average_latency_ms": 247670.0
+    },
+    "known_issue_count": 0,
+    "by_subset": {
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "token_precision": 0.08695652173913043,
+        "token_recall": 0.023255813953488372,
+        "token_f1": 0.03669724770642202,
+        "rouge_l_f1": 0.03669724770642202,
+        "answer_overlap_score": 0.03669724770642202,
+        "numeric_precision": null,
+        "numeric_recall": null,
+        "numeric_f1": null,
+        "numeric_accuracy": null,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "scope_item_match_rate": 1.0,
+        "cross_section_contamination_rate": 0.0,
+        "answer_task_coverage": 0.6,
+        "degraded_retrieval_rate": 0.0,
+        "retrieval_diagnostic_count": 1,
+        "fact_extraction_rate": null,
+        "fact_extraction_question_count": 0,
+        "fact_value_recall": null,
+        "fact_value_question_count": 0,
+        "structured_value_recall": null,
+        "structured_value_question_count": 0,
+        "calculation_production_rate": null,
+        "calculation_question_count": 0,
+        "calculation_result_match": null,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.518348623853211,
+        "average_latency_ms": 247670.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_2286",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Compare the forward-looking statement language in Item 7 of LLY and PFE for fiscal years 2022 and 2024. What specific wording change occurs for LLY between the two years, and how does PFE's language remain consistent? Additionally, based on the common structure of MD&A, which financial statement line item (commonly found in the financial tables) would an analyst use to quantify the risk associated with the forward-looking statements about 'cash generated from operations'?",
+      "expected_answer": "LLY's 2022 Item 7 text includes the phrase 'differ materially from these forward-looking statements', while the 2024 text omits 'materially' and states 'differ from these forward-looking statements'. PFE's Item 7 text is identical in both 2022 and 2024, using the standard 'MANAGEMENT’S DISCUSSION AND ANALYSIS...' opening without any variation. To quantify the risk for 'cash generated from operations', an analyst would refer to the Statement of Cash Flows in the financial tables, specifically the line 'Net cash provided by operating activities'.",
+      "predicted_answer": "Verified facts:\n- LLY FY2021 | Revenue = $ 28,318.4 [F2][E5]\n- LLY FY2024 | Revenue = $ 45,042.7 [F5][E2]\n\nDeterministic calculations:\n- difference: F5 - F2 = 16724.3 million usd [C1][E5][E2]\n\nSources:\n[E5] LLY_2022.html — Management's Discussion and Analysis of Results of Operations and Financial Condition\n[E2] LLY_2024.html — Management's Discussion and Analysis of Results of Operations and Financial Condition",
+      "token_precision": 0.08695652173913043,
+      "token_recall": 0.023255813953488372,
+      "token_f1": 0.03669724770642202,
+      "rouge_l_f1": 0.03669724770642202,
+      "answer_overlap_score": 0.03669724770642202,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 7,
+      "task_trace": [
+        {
+          "id": "retrieve_lly_2022_item7_forward_looking",
+          "query": "forward-looking statement cautionary language safe harbor disclaimers in Item 7 MD&A LLY FY2022",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lly_2024_item7_forward_looking",
+          "query": "forward-looking statement cautionary language safe harbor disclaimers in Item 7 MD&A LLY FY2024",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2022_item7_forward_looking",
+          "query": "forward-looking statement cautionary language safe harbor disclaimers in Item 7 MD&A PFE FY2022",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2024_item7_forward_looking",
+          "query": "forward-looking statement cautionary language safe harbor disclaimers in Item 7 MD&A PFE FY2024",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "compare_lly_forward_looking_2022_2024",
+          "query": "specific wording changes differences additions deletions in LLY forward-looking statement language between FY2022 and FY2024",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "forward-looking statement language changes",
+          "operation": "compare",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_lly_2022_item7_forward_looking",
+            "retrieve_lly_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "id": "compare_pfe_forward_looking_consistency",
+          "query": "consistency stability unchanged forward-looking statement language PFE FY2022 versus FY2024",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "forward-looking statement language consistency",
+          "operation": "compare",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_pfe_2022_item7_forward_looking",
+            "retrieve_pfe_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "id": "retrieve_cash_from_operations_line_item",
+          "query": "net cash provided by operating activities cash generated from operations line item Consolidated Statements of Cash Flows operating cash flow OCF",
+          "companies": [
+            "LLY",
+            "PFE"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "cash generated from operations",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 5,
+      "matched_task_count": 5,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 3,
+      "answer_task_coverage": 0.6,
+      "fact_count": 8,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E5",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Revenue",
+          "rawValue": "$ 28,541.4",
+          "value": "28541.4",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E5",
+          "company": "LLY",
+          "fiscalYear": "2021",
+          "metric": "Revenue",
+          "rawValue": "$ 28,318.4",
+          "value": "28318.4",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F3",
+          "evidenceId": "E5",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Net income",
+          "rawValue": "6,244.8",
+          "value": "6244.8",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F4",
+          "evidenceId": "E5",
+          "company": "LLY",
+          "fiscalYear": "2021",
+          "metric": "Net income",
+          "rawValue": "5,581.7",
+          "value": "5581.7",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F5",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "metric": "Revenue",
+          "rawValue": "$ 45,042.7",
+          "value": "45042.7",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F6",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2023",
+          "metric": "Revenue",
+          "rawValue": "$ 34,124.1",
+          "value": "34124.1",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F7",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "metric": "Net income",
+          "rawValue": "10,590.0",
+          "value": "10590.0",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F8",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2023",
+          "metric": "Net income",
+          "rawValue": "5,240.4",
+          "value": "5240.4",
+          "unit": "usd",
+          "scale": "million"
+        }
+      ],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 1,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "difference",
+          "expression": "F5 - F2",
+          "result": "16724.3",
+          "unit": "usd",
+          "scale": "million",
+          "sourceFactIds": [
+            "F2",
+            "F5"
+          ]
+        }
+      ],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "retrieved_sources": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-42e589deb7dd56b8446d34de",
+          "sourceFile": "LLY_2022.html",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2022_item7_forward_looking"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-e5e10152972bfc43a7f4bd85",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-c09b17163b503c134789d322",
+          "sourceFile": "PFE_2022.html",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Business",
+          "matchedTaskIds": [
+            "retrieve_pfe_2022_item7_forward_looking"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-4686fc1a5b57eb848be73807",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Risk Factors",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-9f9a569adcb8565214ee9224",
+          "sourceFile": "LLY_2022.html",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 6",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_cash_from_operations_line_item"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "document_recall": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.518348623853211,
+      "planning_ms": 33467,
+      "retrieval_ms": 193877,
+      "generation_ms": 20139,
+      "latency_ms": 247670,
+      "error": "",
+      "known_issue": null
+    }
+  ]
+}

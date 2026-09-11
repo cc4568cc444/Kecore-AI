@@ -29,7 +29,7 @@ import java.util.List;
 import static com.fasterxml.jackson.databind.cfg.CoercionInputShape.Array;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.financial-rag.rerank.auto-start.enabled=false")
 class SpringaiApplicationTests {
 
 	// springai 已经自动注入过了

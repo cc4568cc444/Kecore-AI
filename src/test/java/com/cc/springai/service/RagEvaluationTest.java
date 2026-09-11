@@ -18,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {
         "spring.ai.mcp.client.enabled=false",
-        "spring.ai.mcp.client.toolcallback.enabled=false"
+        "spring.ai.mcp.client.toolcallback.enabled=false",
+        "app.financial-rag.rerank.auto-start.enabled=false"
 })
 @EnabledIfSystemProperty(named = "rag.evaluation.enabled", matches = "true")
 class RagEvaluationTest {

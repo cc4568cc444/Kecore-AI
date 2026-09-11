@@ -180,6 +180,66 @@ class FinancialCitationVerifierTest {
     }
 
     @Test
+    void strictModeUsesNaturalFallbackWhenQuestionAndCalculationAreAvailable() {
+        String result = verifier.enforce("Revenue was $999 million [E99].", ledger(), true,
+                "Compare AAPL net sales from FY2023 to FY2024 and calculate the percentage change.");
+
+        assertThat(result).doesNotStartWith("Verified facts:")
+                .contains("AAPL FY2023", "AAPL FY2024", "[F1][E1]", "[F2][E2]", "[C1][E1][E2]")
+                .contains("percentage change was 20 percent");
+        assertThat(verifier.verify(result, ledger()).valid()).isTrue();
+    }
+
+    @Test
+    void strictFallbackAddsOriginalEvidenceToYearCountCalculation() {
+        FinancialEvidenceLedger.EvidenceDocument nflx = new FinancialEvidenceLedger.EvidenceDocument(
+                "E1", "nflx", "NFLX_2022.html", "NFLX", "2022", "table", "", "",
+                "Years ended December 31, 2022, 2021 and 2020", List.of("retrieve_nflx_years"));
+        FinancialEvidenceLedger.FinancialFact disney = new FinancialEvidenceLedger.FinancialFact(
+                "F1", "E2", "DIS", "2023", "net income attributable to Disney", "$2354 million",
+                new BigDecimal("2354"), "usd", "million", "$2354 million");
+        FinancialEvidenceLedger.EvidenceDocument dis = new FinancialEvidenceLedger.EvidenceDocument(
+                "E2", "dis", "DIS_2024.html", "DIS", "2024", "text", "Item 7", "MD&A",
+                "Net income attributable to Disney was $2354 million in fiscal 2023.", List.of("retrieve_dis"));
+        FinancialEvidenceLedger.VerifiedCalculation count = new FinancialEvidenceLedger.VerifiedCalculation(
+                "C1", "count", "count(2022, 2021, 2020)", new BigDecimal("3"),
+                "count", "unit", List.of());
+        FinancialEvidenceLedger.Ledger mixed = new FinancialEvidenceLedger.Ledger(
+                List.of(nflx, dis), List.of(disney), List.of(count));
+
+        String result = verifier.enforce("Unsupported 99 [E99].", mixed, true);
+
+        assertThat(result).contains("[C1][E1]");
+        assertThat(verifier.verify(result, mixed).valid()).isTrue();
+    }
+
+    @Test
+    void strictFallbackCanAnswerRequestedValueAndCountConcisely() {
+        FinancialEvidenceLedger.EvidenceDocument nflx = new FinancialEvidenceLedger.EvidenceDocument(
+                "E1", "nflx", "NFLX_2022.html", "NFLX", "2022", "table", "", "",
+                "The table includes 2022, 2021 and 2020.", List.of("retrieve_nflx"));
+        FinancialEvidenceLedger.EvidenceDocument dis = new FinancialEvidenceLedger.EvidenceDocument(
+                "E2", "dis", "DIS_2024.html", "DIS", "2024", "text", "Item 7", "MD&A",
+                "Net income attributable to Disney was $2354 million in fiscal 2023.", List.of("retrieve_dis"));
+        FinancialEvidenceLedger.FinancialFact fact = new FinancialEvidenceLedger.FinancialFact(
+                "F1", "E2", "DIS", "2023", "Net income attributable to Disney", "$2354 million",
+                new BigDecimal("2354"), "usd", "million", "$2354 million");
+        FinancialEvidenceLedger.VerifiedCalculation count = new FinancialEvidenceLedger.VerifiedCalculation(
+                "C1", "count", "count(2022, 2021, 2020)", new BigDecimal("3"),
+                "count", "unit", List.of());
+        FinancialEvidenceLedger.Ledger mixed = new FinancialEvidenceLedger.Ledger(
+                List.of(nflx, dis), List.of(fact), List.of(count));
+        String question = "Net income was $5.0 billion. What was net income for fiscal 2023? "
+                + "Additionally, how many fiscal years are covered?";
+
+        String result = verifier.enforce("Unsupported 99 [E99].", mixed, true, question);
+
+        assertThat(result).doesNotStartWith("Verified facts:")
+                .contains("$2.4 billion [F1][E2]", "3 fiscal years (2022, 2021, 2020) [C1][E1]");
+        assertThat(verifier.verify(result, mixed).valid()).isTrue();
+    }
+
+    @Test
     void strictFallbackKeepsChineseForChineseGeneratedAnswer() {
         String result = verifier.enforce("收入是 999 百万美元 [E99]。", ledger(), true);
 

@@ -1,0 +1,812 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "metric_version": "deterministic-v3",
+  "split": "test",
+  "subsets": [
+    "S4",
+    "S5"
+  ],
+  "run_id": "semantic-anchor-v10",
+  "execution_id": "20260909070523231311-e0bb7257",
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-09T07:14:37.722173+00:00",
+  "summary": {
+    "overall": {
+      "count": 2,
+      "successful": 2,
+      "strict_exact_match": 0.0,
+      "exact_match": 0.0,
+      "contains_expected_rate": 0.0,
+      "token_precision": 0.14173162350180202,
+      "token_recall": 0.5582010582010581,
+      "token_f1": 0.22451148084797595,
+      "rouge_l_f1": 0.16873995749753798,
+      "answer_overlap_score": 0.22451148084797595,
+      "numeric_precision": 0.3333333333333333,
+      "numeric_recall": 0.5,
+      "numeric_f1": 0.4,
+      "numeric_accuracy": 0.5,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "answer_task_coverage": 1.0,
+      "fact_extraction_rate": null,
+      "fact_extraction_question_count": 0,
+      "fact_value_recall": null,
+      "fact_value_question_count": 0,
+      "structured_value_recall": null,
+      "structured_value_question_count": 0,
+      "calculation_production_rate": null,
+      "calculation_question_count": 0,
+      "calculation_result_match": null,
+      "refusal_rate": 0.5,
+      "rag_quality_score": 0.6663841807909604,
+      "average_latency_ms": 277226.0
+    },
+    "clean_overall": {
+      "count": 2,
+      "successful": 2,
+      "strict_exact_match": 0.0,
+      "exact_match": 0.0,
+      "contains_expected_rate": 0.0,
+      "token_precision": 0.14173162350180202,
+      "token_recall": 0.5582010582010581,
+      "token_f1": 0.22451148084797595,
+      "rouge_l_f1": 0.16873995749753798,
+      "answer_overlap_score": 0.22451148084797595,
+      "numeric_precision": 0.3333333333333333,
+      "numeric_recall": 0.5,
+      "numeric_f1": 0.4,
+      "numeric_accuracy": 0.5,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "answer_task_coverage": 1.0,
+      "fact_extraction_rate": null,
+      "fact_extraction_question_count": 0,
+      "fact_value_recall": null,
+      "fact_value_question_count": 0,
+      "structured_value_recall": null,
+      "structured_value_question_count": 0,
+      "calculation_production_rate": null,
+      "calculation_question_count": 0,
+      "calculation_result_match": null,
+      "refusal_rate": 0.5,
+      "rag_quality_score": 0.6663841807909604,
+      "average_latency_ms": 277226.0
+    },
+    "known_issue_count": 0,
+    "by_subset": {
+      "S4": {
+        "task_type": "cross-company",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "strict_exact_match": 0.0,
+        "exact_match": 0.0,
+        "contains_expected_rate": 0.0,
+        "token_precision": 0.16151202749140894,
+        "token_recall": 0.746031746031746,
+        "token_f1": 0.2655367231638418,
+        "rouge_l_f1": 0.2090395480225989,
+        "answer_overlap_score": 0.2655367231638418,
+        "numeric_precision": null,
+        "numeric_recall": null,
+        "numeric_f1": null,
+        "numeric_accuracy": null,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "answer_task_coverage": 1.0,
+        "fact_extraction_rate": null,
+        "fact_extraction_question_count": 0,
+        "fact_value_recall": null,
+        "fact_value_question_count": 0,
+        "structured_value_recall": null,
+        "structured_value_question_count": 0,
+        "calculation_production_rate": null,
+        "calculation_question_count": 0,
+        "calculation_result_match": null,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.6327683615819208,
+        "average_latency_ms": 341010.0
+      },
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "strict_exact_match": 0.0,
+        "exact_match": 0.0,
+        "contains_expected_rate": 0.0,
+        "token_precision": 0.12195121951219512,
+        "token_recall": 0.37037037037037035,
+        "token_f1": 0.18348623853211007,
+        "rouge_l_f1": 0.12844036697247707,
+        "answer_overlap_score": 0.18348623853211007,
+        "numeric_precision": 0.3333333333333333,
+        "numeric_recall": 0.5,
+        "numeric_f1": 0.4,
+        "numeric_accuracy": 0.5,
+        "numeric_question_count": 1,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "answer_task_coverage": 1.0,
+        "fact_extraction_rate": null,
+        "fact_extraction_question_count": 0,
+        "fact_value_recall": null,
+        "fact_value_question_count": 0,
+        "structured_value_recall": null,
+        "structured_value_question_count": 0,
+        "calculation_production_rate": null,
+        "calculation_question_count": 0,
+        "calculation_result_match": null,
+        "refusal_rate": 1.0,
+        "rag_quality_score": 0.7,
+        "average_latency_ms": 213442.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1558",
+      "subset": "S4",
+      "task_type": "cross-company",
+      "question": "Based on the FY2024 filings, compare the primary strategic objectives of AEP and ED.",
+      "expected_answer": "AEP's filing does not explicitly state a strategic objective in the provided excerpts; it lists risk factors. ED's filing states: 'Con Edison seeks to provide shareholder value through continued dividend growth, supported by earnings growth in regulated utilities and electric transmission projects.' Thus, ED has a clear shareholder-focused strategy, while AEP's excerpt concentrates on forward-looking statements and risks.",
+      "predicted_answer": "Based on the FY2024 filings, AEP and ED have distinctly framed strategic objectives.\n\n- **AEP FY2024**: AEP's core strategy rests on three pillars: (1) reinvestment in core assets, (2) investment in growth opportunities, and (3) acquisition of new assets [E13]. This includes a five-year, $54 billion capital investment plan, adding more than 20,000 MWs of diverse generation resources through 2034, and building \"a culture of accountability and operational excellence\" while maintaining \"a strong balance sheet and achieving our financial targets\" [E13]. AEP's vision also emphasizes six core principles: delivering industry-leading customer service, providing a safe workplace, environmental respect through sustainable energy solutions, regulatory integrity, operational excellence, and strong financial discipline [E13].\n\n- **ED FY2024**: The Item 7 evidence does not contain ED's explicitly stated primary strategic objectives. The available Item 7 text discusses risk factors—specifically that \"The Companies' Strategies May Not Be Effective To Address Changes In The External Business Environment\"—and notes that \"Con Edison seeks to provide shareholder value through continued dividend growth, supported by earnings growth in regulated utilities and electric transmission projects\" [E2]. This dividend-growth framing appears in the risk disclosure rather than as a standalone strategic objectives section. Item 1 evidence (outside the requested Item 7 scope) confirms this shareholder value objective and adds that ED \"invests to provide reliable, resilient, safe and clean energy critical for its New York and New Jersey customers\" [E12], but this was not retrieved under the Item 7 scope.\n\n**Comparison**: AEP provides a detailed, forward-looking strategic framework with specific capital commitments and measurable targets in Item 7, while ED's Item 7 disclosure is risk-oriented and only implicitly references shareholder value through dividend growth as a strategic aim, without comparable granularity on strategic pillars or capital plans.\n\nSources:\n[E2] ED_2024.html — Item 7. The Companies' Strategies May Not Be Effective To Address Changes In The External Business Environment\n[E13] AEP_2024.html — Item 8. FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA (Executive Overview/Company Overview)",
+      "strict_exact_match": false,
+      "exact_match": false,
+      "contains_expected": false,
+      "token_precision": 0.16151202749140894,
+      "token_recall": 0.746031746031746,
+      "token_f1": 0.2655367231638418,
+      "rouge_l_f1": 0.2090395480225989,
+      "answer_overlap_score": 0.2655367231638418,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 3,
+      "task_trace": [
+        {
+          "id": "retrieve_aep_2024_strategic_objectives",
+          "query": "AEP FY2024 Item 7 primary strategic objectives business strategy management discussion analysis",
+          "companies": [
+            "AEP"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "strategic objectives",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_ed_2024_strategic_objectives",
+          "query": "ED FY2024 Item 7 primary strategic objectives business strategy management discussion analysis",
+          "companies": [
+            "ED"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "strategic objectives",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "compare_aep_ed_2024_strategic_objectives",
+          "query": "Compare AEP and ED FY2024 strategic objectives priorities goals initiatives capital allocation",
+          "companies": [
+            "AEP",
+            "ED"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "strategic objectives comparison",
+          "operation": "compare",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_aep_2024_strategic_objectives",
+            "retrieve_ed_2024_strategic_objectives"
+          ]
+        }
+      ],
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "retrieved_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-3cd998fe2fc9ecbfec0629d2",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-a478701e0a398c9852a2d6b4",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "The Companies’ Strategies May Not Be Effective To Address Changes In The External Business Environment. The failure to id",
+          "matchedTaskIds": [
+            "retrieve_ed_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-ad634451b6fd32c833cb6d31",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-38229e0728ef83617b5f2a76",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-70fe2f0d89af5ca2f8a883fc",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-79acbfbb3a3650ecefc0c209",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-43585d7fbfa331b25db050aa",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-f5e677760ef2e91fa8e53c0b",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-2d600fe5aa6e40917293982e",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-81267e6d2ddaafe11a53ebe1",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-8150ea3f41077f25ccca6dd3",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-a355aab75d21147e4c14c4d4",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 1",
+          "sectionTitle": "Con Edison seeks to provide shareholder value through continued dividend growth, supported by earnings growth in regulate",
+          "matchedTaskIds": [
+            "retrieve_ed_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-e71f35f56c9da19d402a5bfd",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_strategic_objectives"
+          ]
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-808ee33aa9fc5fe72e937105",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table"
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-0982e5c50abdd68ced5fcadb",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 1A",
+          "sectionTitle": "CECONY",
+          "matchedTaskIds": [
+            "retrieve_ed_2024_strategic_objectives"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "document_recall": 1.0,
+      "rag_quality_score": 0.6327683615819208,
+      "planning_ms": 15436,
+      "retrieval_ms": 310170,
+      "generation_ms": 15329,
+      "latency_ms": 341010,
+      "error": "",
+      "known_issue": null
+    },
+    {
+      "id": "md2025_2285",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Based solely on the provided text from LLY's and PFE's 10-K filings for FY2022 and FY2024, how many distinct financial statement items are mentioned in the description of Item 7 for each company across both years? Provide the counts and list the items.",
+      "expected_answer": "LLY (both years): 'actual results', 'financial position', 'cash generated from operations' — 3 distinct items. PFE (both years): 'financial condition', 'results of operations', 'cash flows from operations' — 3 distinct items. Total distinct terms across all documents: 'actual results', 'financial position', 'cash generated from operations', 'financial condition', 'results of operations', 'cash flows from operations' — 6 terms.",
+      "predicted_answer": "Based on the provided evidence, I can identify the financial statement items mentioned in the Item 7 descriptions for each company across both years.\n\n**LLY (Eli Lilly and Company):**\n\n- **FY2022** [E1][E9]: 9 distinct items — Revenue, Gross margin, Gross margin as a percent of revenue, Research and development, Marketing selling and administrative, Acquired in-process research and development (IPR&D) and development milestones, Asset impairment restructuring and other special charges, Other—net (income) expense, Net income, Earnings per share - diluted\n\n- **FY2024** [E5][E8]: 3 distinct items — Revenue, Net income, Earnings per share - diluted\n\n**PFE (Pfizer Inc.):**\n\n- **FY2022** [E3][E6][E11]: 4 distinct items — Total Revenues, Net Cash Flow from Operations, Reported Diluted EPS, Adjusted Diluted EPS (Non-GAAP)\n\n- **FY2024**: **Insufficient evidence** — The provided text for PFE FY2024 [E4][E12][E13][E14][E15] does not contain the Item 7 description or its financial statement items. The evidence shows only defined terms, risk factors, business section content, and balance sheet/credit rating disclosures, but not the MD&A opening table or description that would list financial performance metrics.\n\n**Sources:**\n[E1] LLY_2022.html — Item 7 Management's Discussion and Analysis of Results of Operations and Financial Condition\n[E3] PFE_2022.html — Item 7 Management's Discussion and Analysis of Financial Condition and Results of Operations\n[E5] LLY_2024.html — Item 7 Management's Discussion and Analysis of Results of Operations and Financial Condition\n[E6] PFE_2022.html — Item 7 Management's Discussion and Analysis of Financial Condition and Results of Operations\n[E8] LLY_2024.html — Item 7 Management's Discussion and Analysis of Results of Operations and Financial Condition\n[E9] LLY_2022.html — Item 7 Management's Discussion and Analysis of Results of Operations and Financial Condition\n[E11] PFE_2022.html — Item 7 Management's Discussion and Analysis of Financial Condition and Results of Operations",
+      "strict_exact_match": false,
+      "exact_match": false,
+      "contains_expected": false,
+      "token_precision": 0.12195121951219512,
+      "token_recall": 0.37037037037037035,
+      "token_f1": 0.18348623853211007,
+      "rouge_l_f1": 0.12844036697247707,
+      "answer_overlap_score": 0.18348623853211007,
+      "numeric_precision": 0.3333333333333333,
+      "numeric_recall": 0.5,
+      "numeric_f1": 0.4,
+      "numeric_accuracy": 0.5,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": true,
+      "planner_intent": "source_lookup",
+      "task_count": 6,
+      "task_trace": [
+        {
+          "id": "retrieve_lly_2022_item7_financial_items",
+          "query": "LLY 10-K FY2022 Item 7 Management's Discussion and Analysis financial statement items mentioned description",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Item 7 financial statement items",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lly_2024_item7_financial_items",
+          "query": "LLY 10-K FY2024 Item 7 Management's Discussion and Analysis financial statement items mentioned description",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Item 7 financial statement items",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2022_item7_financial_items",
+          "query": "PFE 10-K FY2022 Item 7 Management's Discussion and Analysis financial statement items mentioned description",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Item 7 financial statement items",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2024_item7_financial_items",
+          "query": "PFE 10-K FY2024 Item 7 Management's Discussion and Analysis financial statement items mentioned description",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Item 7 financial statement items",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "calculate_distinct_items_lly",
+          "query": "Count and list distinct financial statement items across LLY 2022 and 2024 Item 7 descriptions",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "distinct financial statement items count",
+          "operation": "calculate",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_lly_2022_item7_financial_items",
+            "retrieve_lly_2024_item7_financial_items"
+          ]
+        },
+        {
+          "id": "calculate_distinct_items_pfe",
+          "query": "Count and list distinct financial statement items across PFE 2022 and 2024 Item 7 descriptions",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "distinct financial statement items count",
+          "operation": "calculate",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_pfe_2022_item7_financial_items",
+            "retrieve_pfe_2024_item7_financial_items"
+          ]
+        }
+      ],
+      "retrieval_task_count": 4,
+      "matched_task_count": 4,
+      "task_coverage": 1.0,
+      "answered_task_count": 4,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": true,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "retrieved_sources": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-9f9a569adcb8565214ee9224",
+          "sourceFile": "LLY_2022.html",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2022_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-32791cb897c3356ab76a2f4f",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-32be3a7fe6bc73baf8b5aa4d",
+          "sourceFile": "PFE_2022.html",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data in this Form 10-K. Discussions of 2020 items and year-to-year comparisons bet",
+          "matchedTaskIds": [
+            "retrieve_pfe_2022_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-9de467c8a1ffb65ee36248fd",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data in this Form 10-K. We also have used several other terms in this Form 10-K, m",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-efcbecc7fac77d286db40a71",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-09a7f96ff8063b825f1fd4ae",
+          "sourceFile": "PFE_2022.html",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data in this Form 10-K. Discussions of 2020 items and year-to-year comparisons bet",
+          "matchedTaskIds": [
+            "retrieve_pfe_2022_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-5880a8787f7a613ef083ec51",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-e5e10152972bfc43a7f4bd85",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-42e589deb7dd56b8446d34de",
+          "sourceFile": "LLY_2022.html",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2022_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-2a994943644fac5d877e55b7",
+          "sourceFile": "PFE_2022.html",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 1A",
+          "sectionTitle": "Risk Factors",
+          "matchedTaskIds": [
+            "retrieve_pfe_2022_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-b6b7dc8b54c419b06ebbc986",
+          "sourceFile": "PFE_2022.html",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data in this Form 10-K. Discussions of 2020 items and year-to-year comparisons bet",
+          "matchedTaskIds": [
+            "retrieve_pfe_2022_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-86986952e14dde1663c0af69",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data in this Form 10-K. We also have used several other terms in this Form 10-K, m",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-c2d108decf65584cb095fede",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-f18c1b2aac9b9857b607ace0",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 1A",
+          "sectionTitle": "Risk Factors section or in MD&A.",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_item7_financial_items"
+          ]
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-70f63ce625cccbeb398e9a11",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 1",
+          "sectionTitle": "Business",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_item7_financial_items"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "document_recall": 1.0,
+      "rag_quality_score": 0.7,
+      "planning_ms": 25493,
+      "retrieval_ms": 169847,
+      "generation_ms": 18075,
+      "latency_ms": 213442,
+      "error": "",
+      "known_issue": null
+    }
+  ]
+}

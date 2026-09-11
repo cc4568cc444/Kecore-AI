@@ -1,5 +1,7 @@
 package com.cc.springai.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -18,6 +20,8 @@ final class FinancialCitationVerifier {
     private static final Pattern REFERENCE = Pattern.compile(
             "(?i)(?<![A-Z0-9])(E|F|C)(\\d+)(?![A-Z0-9])");
     private static final Pattern YEAR = Pattern.compile("(?<!\\d)20\\d{2}(?!\\d)");
+    private static final Pattern REQUESTED_FISCAL_VALUE = Pattern.compile(
+            "(?is)what was.{0,120}?fiscal(?: year)?\\s*(20\\d{2})");
     private static final Pattern NUMERIC_CLAIM = Pattern.compile("(?:[$€£¥]|\\b\\d[\\d,.]*%?\\b)");
     // Filing identifiers describe where a claim appears; they are not financial/numeric claims themselves.
     // Removing them before NUMERIC_CLAIM matching avoids treating "FY2024", "Item 7" and "10-K"
@@ -111,6 +115,10 @@ final class FinancialCitationVerifier {
     }
 
     String enforce(String answer, FinancialEvidenceLedger.Ledger ledger, boolean strict) {
+        return enforce(answer, ledger, strict, "");
+    }
+
+    String enforce(String answer, FinancialEvidenceLedger.Ledger ledger, boolean strict, String question) {
         Audit audit = verify(answer, ledger);
         if (audit.valid()) {
             return answer;
@@ -120,6 +128,14 @@ final class FinancialCitationVerifier {
             return salvaged;
         }
         if (strict && !ledger.facts().isEmpty()) {
+            String calculated = verifiedCalculationFallback(question, ledger, isPredominantlyEnglish(answer));
+            if (!calculated.isBlank() && verify(calculated, ledger).valid()) {
+                return calculated;
+            }
+            String concise = verifiedQuestionFallback(question, ledger, isPredominantlyEnglish(answer));
+            if (!concise.isBlank() && verify(concise, ledger).valid()) {
+                return concise;
+            }
             return verifiedFallback(ledger, isPredominantlyEnglish(answer));
         }
         String details = issueDetails(audit);
@@ -128,6 +144,108 @@ final class FinancialCitationVerifier {
         }
         return "当前回答未通过引用校验，因此未输出未经证实的结论。\n\n校验问题：\n"
                 + details + "\n\n请重试，或在问题中补充明确的公司、财年和指标。";
+    }
+
+    private String verifiedCalculationFallback(String question, FinancialEvidenceLedger.Ledger ledger,
+                                               boolean english) {
+        if (!english || question == null || question.isBlank() || ledger.calculations().isEmpty()) {
+            return "";
+        }
+        FinancialEvidenceLedger.VerifiedCalculation calculation = ledger.calculations().get(0);
+        Map<String, FinancialEvidenceLedger.FinancialFact> factsById = ledger.facts().stream()
+                .collect(Collectors.toMap(fact -> upper(fact.factId()), Function.identity()));
+        List<FinancialEvidenceLedger.FinancialFact> operands = calculation.sourceFactIds().stream()
+                .map(id -> factsById.get(upper(id))).filter(java.util.Objects::nonNull).toList();
+        if (operands.isEmpty()) {
+            return "";
+        }
+        String normalizedQuestion = question == null ? "" : question.toUpperCase(Locale.ROOT);
+        List<FinancialEvidenceLedger.FinancialFact> presentationOrder = operands.stream()
+                .sorted(java.util.Comparator.comparingInt(fact -> {
+                    int index = normalizedQuestion.indexOf(upper(fact.company()));
+                    return index < 0 ? Integer.MAX_VALUE : index;
+                })).toList();
+        String facts = presentationOrder.stream().map(fact ->
+                fact.company() + " FY" + fact.fiscalYear() + " " + fact.metric().toLowerCase(Locale.ROOT)
+                        + " was " + fact.rawValue() + " [" + fact.factId() + "][" + fact.evidenceId() + "]")
+                .collect(Collectors.joining("; "));
+
+        LinkedHashSet<String> evidenceIds = operands.stream()
+                .map(FinancialEvidenceLedger.FinancialFact::evidenceId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        String evidenceMarkers = evidenceIds.stream().map(id -> "[" + id + "]").collect(Collectors.joining());
+        String conclusion;
+        if ("multiple".equalsIgnoreCase(calculation.type()) && operands.size() == 2) {
+            conclusion = operands.get(0).company() + "'s value was approximately "
+                    + calculation.displayResult() + " times larger than " + operands.get(1).company() + "'s";
+        } else {
+            conclusion = "The " + calculation.type().replace('_', ' ') + " was "
+                    + calculation.displayResult() + ("unit".equalsIgnoreCase(calculation.scale())
+                    ? " " + calculation.unit() : " " + calculation.scale() + " " + calculation.unit());
+        }
+        String sources = evidenceIds.stream().map(id -> {
+            FinancialEvidenceLedger.EvidenceDocument document = ledger.evidence().stream()
+                    .filter(candidate -> id.equalsIgnoreCase(candidate.evidenceId())).findFirst().orElse(null);
+            return document == null ? "" : "[" + id + "] " + document.sourceFile();
+        }).filter(value -> !value.isBlank()).collect(Collectors.joining("\n"));
+        return facts + ". " + conclusion + " [" + calculation.calculationId() + "]"
+                + evidenceMarkers + ".\n\nSources:\n" + sources;
+    }
+
+    private String verifiedQuestionFallback(String question, FinancialEvidenceLedger.Ledger ledger,
+                                             boolean english) {
+        if (!english || question == null || question.isBlank()) {
+            return "";
+        }
+        Matcher requested = REQUESTED_FISCAL_VALUE.matcher(question);
+        FinancialEvidenceLedger.VerifiedCalculation count = ledger.calculations().stream()
+                .filter(calculation -> "count".equalsIgnoreCase(calculation.type())).findFirst().orElse(null);
+        if (!requested.find() || count == null) {
+            return "";
+        }
+        String requestedYear = requested.group(1);
+        String lowerQuestion = question.toLowerCase(Locale.ROOT);
+        FinancialEvidenceLedger.FinancialFact fact = ledger.facts().stream()
+                .filter(candidate -> requestedYear.equals(candidate.fiscalYear()))
+                .filter(candidate -> lowerQuestion.contains("net income")
+                        && candidate.metric().toLowerCase(Locale.ROOT).contains("net income"))
+                .findFirst().orElse(null);
+        if (fact == null) {
+            return "";
+        }
+        Set<String> countedYears = matches(YEAR, count.expression());
+        String countEvidence = ledger.evidence().stream()
+                .filter(document -> !countedYears.isEmpty()
+                        && countedYears.stream().allMatch(year -> document.content().contains(year)))
+                .map(FinancialEvidenceLedger.EvidenceDocument::evidenceId).findFirst().orElse("");
+        if (countEvidence.isBlank()) {
+            return "";
+        }
+        String factValue = displayInRequestedScale(fact, lowerQuestion);
+        StringBuilder result = new StringBuilder();
+        result.append(fact.company()).append(" fiscal ").append(requestedYear).append(' ')
+                .append(fact.metric().toLowerCase(Locale.ROOT)).append(" was ").append(factValue)
+                .append(" [").append(fact.factId()).append("][").append(fact.evidenceId()).append("]\n")
+                .append("The table covers ").append(count.displayResult()).append(" fiscal years (")
+                .append(String.join(", ", countedYears)).append(") [").append(count.calculationId())
+                .append("][").append(countEvidence).append("]\n\nSources:\n");
+        Map<String, FinancialEvidenceLedger.EvidenceDocument> byId = ledger.evidence().stream()
+                .collect(Collectors.toMap(document -> upper(document.evidenceId()), Function.identity()));
+        for (String id : new LinkedHashSet<>(List.of(fact.evidenceId(), countEvidence))) {
+            FinancialEvidenceLedger.EvidenceDocument document = byId.get(upper(id));
+            if (document != null) {
+                result.append('[').append(id).append("] ").append(document.sourceFile()).append('\n');
+            }
+        }
+        return result.toString().stripTrailing();
+    }
+
+    private String displayInRequestedScale(FinancialEvidenceLedger.FinancialFact fact, String lowerQuestion) {
+        if (lowerQuestion.contains("billion") && "million".equalsIgnoreCase(fact.scale())) {
+            return "$" + fact.value().divide(BigDecimal.valueOf(1000), 1, RoundingMode.HALF_UP).toPlainString()
+                    + " billion";
+        }
+        return fact.rawValue();
     }
 
     private String removeUnsupportedLines(String answer, Audit audit) {
@@ -157,8 +275,15 @@ final class FinancialCitationVerifier {
                 .collect(Collectors.toMap(fact -> upper(fact.factId()), Function.identity()));
         Map<String, FinancialEvidenceLedger.EvidenceDocument> evidence = ledger.evidence().stream()
                 .collect(Collectors.toMap(document -> upper(document.evidenceId()), Function.identity()));
+        Set<String> calculationFactIds = ledger.calculations().stream()
+                .flatMap(calculation -> calculation.sourceFactIds().stream()).map(this::upper)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        List<FinancialEvidenceLedger.FinancialFact> fallbackFacts = calculationFactIds.isEmpty()
+                ? ledger.facts()
+                : ledger.facts().stream().filter(fact -> calculationFactIds.contains(upper(fact.factId()))
+                        || fact.metric().toLowerCase(Locale.ROOT).startsWith("total ")).toList();
         StringBuilder answer = new StringBuilder(english ? "Verified facts:\n" : "已核验事实：\n");
-        for (FinancialEvidenceLedger.FinancialFact fact : ledger.facts()) {
+        for (FinancialEvidenceLedger.FinancialFact fact : fallbackFacts) {
             answer.append("- ").append(fact.company()).append(" FY").append(fact.fiscalYear())
                     .append(" | ").append(fact.metric()).append(" = ").append(fact.rawValue())
                     .append(" [").append(fact.factId()).append("][").append(fact.evidenceId()).append("]\n");
@@ -173,6 +298,14 @@ final class FinancialCitationVerifier {
                         evidenceIds.add(fact.evidenceId());
                     }
                 }
+                if (evidenceIds.isEmpty() && "count".equalsIgnoreCase(calculation.type())) {
+                    Set<String> calculatedYears = matches(YEAR, calculation.expression());
+                    ledger.evidence().stream()
+                            .filter(document -> !calculatedYears.isEmpty()
+                                    && calculatedYears.stream().allMatch(year -> document.content().contains(year)))
+                            .findFirst().map(FinancialEvidenceLedger.EvidenceDocument::evidenceId)
+                            .ifPresent(evidenceIds::add);
+                }
                 answer.append("- ").append(calculation.type()).append(": ")
                         .append(calculation.expression()).append(" = ").append(calculation.displayResult())
                         .append(' ').append(calculation.scale()).append(' ').append(calculation.unit())
@@ -182,9 +315,16 @@ final class FinancialCitationVerifier {
             }
         }
         answer.append(english ? "\nSources:\n" : "\n来源：\n");
-        LinkedHashSet<String> usedEvidenceIds = ledger.facts().stream()
+        LinkedHashSet<String> usedEvidenceIds = fallbackFacts.stream()
                 .map(FinancialEvidenceLedger.FinancialFact::evidenceId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+        ledger.calculations().stream().filter(calculation -> "count".equalsIgnoreCase(calculation.type()))
+                .flatMap(calculation -> {
+                    Set<String> calculatedYears = matches(YEAR, calculation.expression());
+                    return ledger.evidence().stream().filter(document -> !calculatedYears.isEmpty()
+                            && calculatedYears.stream().allMatch(year -> document.content().contains(year)))
+                            .limit(1).map(FinancialEvidenceLedger.EvidenceDocument::evidenceId);
+                }).forEach(usedEvidenceIds::add);
         for (String evidenceId : usedEvidenceIds) {
             FinancialEvidenceLedger.EvidenceDocument document = evidence.get(upper(evidenceId));
             if (document == null) {

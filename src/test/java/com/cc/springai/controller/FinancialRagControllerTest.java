@@ -21,7 +21,8 @@ class FinancialRagControllerTest {
                 service, mock(ChatMemoryRewindService.class), new ObjectMapper());
         FinancialRagService.FinancialAnalysisResult expected = new FinancialRagService.FinancialAnalysisResult(
                 "answer", "resolved", "comparison", List.of(), List.of(), List.of(), List.of(),
-                new FinancialRagService.CitationAudit(true, List.of()), 1, 2, 3, 6, "");
+                new FinancialRagService.CitationAudit(true, List.of()), 1, 2, 3, 6, "",
+                "NORMAL", List.of());
         when(service.analyze("question", "default", "model", FinancialRagService.FinancialRetrievalMode.PARENT_CHILD))
                 .thenReturn(expected);
 

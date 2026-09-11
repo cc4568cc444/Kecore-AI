@@ -17,8 +17,8 @@ from pydantic import BaseModel, Field
 
 DEFAULT_MODEL = "Qwen/Qwen3-Reranker-0.6B"
 DEFAULT_INSTRUCTION = (
-    "Given a scientific research question, retrieve passages that contain evidence "
-    "needed to answer the question."
+    "Given a financial filing question, rank passages by whether they contain the exact "
+    "evidence, entities, periods, and figures needed to answer it."
 )
 
 
@@ -65,7 +65,7 @@ class Qwen3Reranker:
         self.model = AutoModelForCausalLM.from_pretrained(
             settings.model_path,
             trust_remote_code=True,
-            torch_dtype=dtype,
+            dtype=dtype,
         ).to(self.device).eval()
         self.false_token_id = self.tokenizer.convert_tokens_to_ids("no")
         self.true_token_id = self.tokenizer.convert_tokens_to_ids("yes")

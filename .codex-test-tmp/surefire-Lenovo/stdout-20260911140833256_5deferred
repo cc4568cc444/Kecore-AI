@@ -1,0 +1,2 @@
+14:08:33.372 [main] WARN com.cc.springai.service.FinancialRagService -- Financial retrieval plan JSON parsing failed; using deterministic fallback: Unrecognized token 'not': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 1]

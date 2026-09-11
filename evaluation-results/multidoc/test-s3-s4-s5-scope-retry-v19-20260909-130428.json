@@ -1,0 +1,1667 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "metric_version": "deterministic-v4",
+  "split": "test",
+  "subsets": [
+    "S3",
+    "S4",
+    "S5"
+  ],
+  "run_id": "scope-retry-v19",
+  "execution_id": "20260909125206670821-c3acec09",
+  "dataset_scope_enabled": true,
+  "generated_at": "2026-09-09T13:04:28.784294+00:00",
+  "summary": {
+    "overall": {
+      "count": 4,
+      "successful": 4,
+      "token_precision": 0.1376504457717424,
+      "token_recall": 0.4444067904897625,
+      "token_f1": 0.1960582626924554,
+      "rouge_l_f1": 0.1287799621519655,
+      "answer_overlap_score": 0.1960582626924554,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "numeric_question_count": 0,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "scope_item_match_rate": 0.9166666666666666,
+      "cross_section_contamination_rate": 0.08333333333333334,
+      "answer_task_coverage": 0.9,
+      "degraded_retrieval_rate": 0.25,
+      "retrieval_diagnostic_count": 4,
+      "fact_extraction_rate": null,
+      "fact_extraction_question_count": 0,
+      "fact_value_recall": null,
+      "fact_value_question_count": 0,
+      "structured_value_recall": null,
+      "structured_value_question_count": 0,
+      "calculation_production_rate": null,
+      "calculation_question_count": 0,
+      "calculation_result_match": null,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.5980291313462276,
+      "average_latency_ms": 185512.75
+    },
+    "clean_overall": {
+      "count": 2,
+      "successful": 2,
+      "token_precision": 0.09006853743695849,
+      "token_recall": 0.2770003941663382,
+      "token_f1": 0.12753306637543987,
+      "rouge_l_f1": 0.09021963353961897,
+      "answer_overlap_score": 0.12753306637543987,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "numeric_question_count": 0,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answer_task_coverage": 0.8,
+      "degraded_retrieval_rate": 0.0,
+      "retrieval_diagnostic_count": 2,
+      "fact_extraction_rate": null,
+      "fact_extraction_question_count": 0,
+      "fact_value_recall": null,
+      "fact_value_question_count": 0,
+      "structured_value_recall": null,
+      "structured_value_question_count": 0,
+      "calculation_production_rate": null,
+      "calculation_question_count": 0,
+      "calculation_result_match": null,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.56376653318772,
+      "average_latency_ms": 233180.0
+    },
+    "known_issue_count": 2,
+    "by_subset": {
+      "S3": {
+        "task_type": "cross-year",
+        "known_issue_count": 1,
+        "count": 1,
+        "successful": 1,
+        "token_precision": 0.1452991452991453,
+        "token_recall": 0.85,
+        "token_f1": 0.24817518248175183,
+        "rouge_l_f1": 0.218978102189781,
+        "answer_overlap_score": 0.24817518248175183,
+        "numeric_precision": null,
+        "numeric_recall": null,
+        "numeric_f1": null,
+        "numeric_accuracy": null,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "scope_item_match_rate": 1.0,
+        "cross_section_contamination_rate": 0.0,
+        "answer_task_coverage": 1.0,
+        "degraded_retrieval_rate": 0.0,
+        "retrieval_diagnostic_count": 1,
+        "fact_extraction_rate": null,
+        "fact_extraction_question_count": 0,
+        "fact_value_recall": null,
+        "fact_value_question_count": 0,
+        "structured_value_recall": null,
+        "structured_value_question_count": 0,
+        "calculation_production_rate": null,
+        "calculation_question_count": 0,
+        "calculation_result_match": null,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.6240875912408759,
+        "average_latency_ms": 141234.0
+      },
+      "S4": {
+        "task_type": "cross-company",
+        "known_issue_count": 1,
+        "count": 2,
+        "successful": 2,
+        "token_precision": 0.18913780538039862,
+        "token_recall": 0.4579996274911529,
+        "token_f1": 0.2598988528432219,
+        "rouge_l_f1": 0.13994079190822745,
+        "answer_overlap_score": 0.2598988528432219,
+        "numeric_precision": null,
+        "numeric_recall": null,
+        "numeric_f1": null,
+        "numeric_accuracy": null,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "scope_item_match_rate": 0.8333333333333333,
+        "cross_section_contamination_rate": 0.16666666666666669,
+        "answer_task_coverage": 1.0,
+        "degraded_retrieval_rate": 0.5,
+        "retrieval_diagnostic_count": 2,
+        "fact_extraction_rate": null,
+        "fact_extraction_question_count": 0,
+        "fact_value_recall": null,
+        "fact_value_question_count": 0,
+        "structured_value_recall": null,
+        "structured_value_question_count": 0,
+        "calculation_production_rate": null,
+        "calculation_question_count": 0,
+        "calculation_result_match": null,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.629949426421611,
+        "average_latency_ms": 105450.0
+      },
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "token_precision": 0.02702702702702703,
+        "token_recall": 0.011627906976744186,
+        "token_f1": 0.016260162601626015,
+        "rouge_l_f1": 0.016260162601626015,
+        "answer_overlap_score": 0.016260162601626015,
+        "numeric_precision": null,
+        "numeric_recall": null,
+        "numeric_f1": null,
+        "numeric_accuracy": null,
+        "numeric_question_count": 0,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "scope_item_match_rate": 1.0,
+        "cross_section_contamination_rate": 0.0,
+        "answer_task_coverage": 0.6,
+        "degraded_retrieval_rate": 0.0,
+        "retrieval_diagnostic_count": 1,
+        "fact_extraction_rate": null,
+        "fact_extraction_question_count": 0,
+        "fact_value_recall": null,
+        "fact_value_question_count": 0,
+        "structured_value_recall": null,
+        "structured_value_question_count": 0,
+        "calculation_production_rate": null,
+        "calculation_question_count": 0,
+        "calculation_result_match": null,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.5081300813008129,
+        "average_latency_ms": 389917.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1430",
+      "subset": "S3",
+      "task_type": "cross-year",
+      "question": "Did the description of the company's website for investor information appear in all three years?",
+      "expected_answer": "No. The description of the company's website for investor information appeared in FY2022 and FY2023, but not in FY2024.",
+      "predicted_answer": "Yes, the description of Linde plc's website for investor information appeared in Item 7 of the 10-K filings for all three fiscal years.\n\n- **FY2022**: Under \"2023 Outlook,\" the filing states: \"These materials are available on the company’s website, www.linde.com, but are not incorporated herein.\" [E1][E10]\n- **FY2023**: Under \"2024 Outlook,\" the filing states: \"These materials are available on the company’s website, www.linde.com, but are not incorporated herein.\" [E2][E4][E12]\n- **FY2024**: Under \"2025 Outlook,\" the filing states: \"These materials are available on the company’s website, www.linde.com, but are not incorporated herein.\" [E3][E6][E9]\n\nThe disclosure language is substantially identical across all three years, with only the outlook year label changing (2023, 2024, 2025).\n\nSources:\n[E1] LIN_2022.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n[E2] LIN_2023.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n[E3] LIN_2024.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n[E4] LIN_2023.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n[E6] LIN_2024.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n[E9] LIN_2024.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n[E10] LIN_2022.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n[E12] LIN_2023.html — MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+      "token_precision": 0.1452991452991453,
+      "token_recall": 0.85,
+      "token_f1": 0.24817518248175183,
+      "rouge_l_f1": 0.218978102189781,
+      "answer_overlap_score": 0.24817518248175183,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 4,
+      "task_trace": [
+        {
+          "id": "retrieve_lin_2022_investor_website",
+          "query": "description of investor information website URL in Item 7 Management's Discussion and Analysis",
+          "companies": [
+            "LIN"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "investor relations website disclosure",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lin_2023_investor_website",
+          "query": "description of investor information website URL in Item 7 Management's Discussion and Analysis",
+          "companies": [
+            "LIN"
+          ],
+          "years": [
+            "2023"
+          ],
+          "metric": "investor relations website disclosure",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lin_2024_investor_website",
+          "query": "description of investor information website URL in Item 7 Management's Discussion and Analysis",
+          "companies": [
+            "LIN"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "investor relations website disclosure",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "compare_lin_2022_2023_2024_investor_website",
+          "query": "compare presence and consistency of investor information website description across FY2022, FY2023, and FY2024 Item 7",
+          "companies": [
+            "LIN"
+          ],
+          "years": [
+            "2022",
+            "2023",
+            "2024"
+          ],
+          "metric": "investor relations website disclosure",
+          "operation": "compare",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_lin_2022_investor_website",
+            "retrieve_lin_2023_investor_website",
+            "retrieve_lin_2024_investor_website"
+          ]
+        }
+      ],
+      "retrieval_task_count": 3,
+      "matched_task_count": 3,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 3,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "retrieved_sources": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-3cafbe109219a6ea7e0efd66",
+          "sourceFile": "LIN_2022.html",
+          "company": "LIN",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2022_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-652f0a4127cb7e8a1b66a046",
+          "sourceFile": "LIN_2023.html",
+          "company": "LIN",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2023_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-48bc7bbbd47088c55ff43264",
+          "sourceFile": "LIN_2024.html",
+          "company": "LIN",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2024_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-8e2678af5477174f6b7fe725",
+          "sourceFile": "LIN_2023.html",
+          "company": "LIN",
+          "fiscalYear": "2023",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2023_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-4313808e8317e3024793d062",
+          "sourceFile": "LIN_2022.html",
+          "company": "LIN",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2022_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-7b4b364514ffc9f6676e2ded",
+          "sourceFile": "LIN_2024.html",
+          "company": "LIN",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2024_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-4658106926fd55f08a5bfe96",
+          "sourceFile": "LIN_2022.html",
+          "company": "LIN",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2022_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-3dfc131728596404aaa4545e",
+          "sourceFile": "LIN_2022.html",
+          "company": "LIN",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2022_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-0c35ca5f8adebb2bf45d423a",
+          "sourceFile": "LIN_2024.html",
+          "company": "LIN",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2024_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-9696a46a87a3c4f53c72647c",
+          "sourceFile": "LIN_2022.html",
+          "company": "LIN",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2022_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-1ea1ea3c09eb2d4393551859",
+          "sourceFile": "LIN_2022.html",
+          "company": "LIN",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2022_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-319f7b6d37e1018ed851126b",
+          "sourceFile": "LIN_2023.html",
+          "company": "LIN",
+          "fiscalYear": "2023",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2023_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-5c90f78e0746aab609f63663",
+          "sourceFile": "LIN_2023.html",
+          "company": "LIN",
+          "fiscalYear": "2023",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2023_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-d493d3967fd497df9a96aaf9",
+          "sourceFile": "LIN_2024.html",
+          "company": "LIN",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2024_investor_website"
+          ]
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-3ecd6532dca686b9d93f414d",
+          "sourceFile": "LIN_2022.html",
+          "company": "LIN",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+          "matchedTaskIds": [
+            "retrieve_lin_2022_investor_website"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "LIN_2022.html",
+        "LIN_2023.html",
+        "LIN_2024.html"
+      ],
+      "document_recall": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.6240875912408759,
+      "planning_ms": 18426,
+      "retrieval_ms": 106735,
+      "generation_ms": 15869,
+      "latency_ms": 141234,
+      "error": "",
+      "known_issue": "Gold says the investor-information website description is absent in FY2024, but LIN_2024 contains that paragraph under Item 1."
+    },
+    {
+      "id": "md2025_1559",
+      "subset": "S4",
+      "task_type": "cross-company",
+      "question": "What differences exist between AEP and ED regarding their forward-looking statement disclaimers?",
+      "expected_answer": "AEP's disclaimer includes an explicit list of factors that could cause actual results to differ, such as 'Changes in economic conditions, electric market demand and demographic patterns,' 'Inflationary or deflationary interest rate trends,' and 'New legislation.' ED's disclaimer is less enumerated; it states that strategies may not be effective to address changes in the external business environment and lists factors like 'Changes to the competitive landscape, public policy, laws or regulations (or interpretations thereof), customer behavior or technology.' Thus, AEP provides a more detailed enumerated list of risk factors.",
+      "predicted_answer": "AEP FY2024 Item 7 contains a detailed forward-looking statement disclaimer with safe harbor language, specific risk factors, and explicit non-update obligations [E1][E3]. ED FY2024 Item 7 evidence does not contain any forward-looking statement disclaimer; the retrieved ED evidence shows only securities registration and exchange listing tables from the report cover page [E2].\n\nAEP's disclaimer identifies forward-looking statements by words like \"expect,\" \"anticipate,\" \"intend,\" \"plan,\" \"believe,\" \"will,\" \"should,\" \"could,\" \"would,\" \"project,\" \"continue\" and similar expressions, includes statements reflecting future results, guidance, and outlook, and lists specific risk factors (economic conditions, global conflicts, interest rates, legislation, weather, insurance, fuel costs, generation capacity, regulatory recovery, and operational disruptions) [E1][E3]. AEP also explicitly states that except as required by applicable law, management undertakes no obligation to update or revise any forward-looking statement [E1].\n\nED's retrieved Item 7 evidence contains no parallel forward-looking statement disclaimer, safe harbor language, or cautionary statement enumeration [E2].\n\n**Sources**\n[E1] AEP_2024.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations\n[E2] ED_2024.html — Item 7 (securities registration tables only; no forward-looking disclaimer retrieved)\n[E3] AEP_2024.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations (table format)",
+      "token_precision": 0.2251655629139073,
+      "token_recall": 0.37362637362637363,
+      "token_f1": 0.2809917355371901,
+      "rouge_l_f1": 0.11570247933884298,
+      "answer_overlap_score": 0.2809917355371901,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 3,
+      "task_trace": [
+        {
+          "id": "retrieve_aep_2024_forward_looking_disclaimer",
+          "query": "AEP FY2024 Item 7 forward-looking statement disclaimer safe harbor cautionary statements risk factors",
+          "companies": [
+            "AEP"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement disclaimer",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_ed_2024_forward_looking_disclaimer",
+          "query": "ED Consolidated Edison FY2024 Item 7 forward-looking statement disclaimer safe harbor cautionary statements risk factors",
+          "companies": [
+            "ED"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement disclaimer",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "compare_aep_ed_2024_forward_looking_disclaimers",
+          "query": "Compare AEP and ED FY2024 forward-looking statement disclaimers differences scope language safe harbor provisions cautionary statements risk disclosures",
+          "companies": [
+            "AEP",
+            "ED"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement disclaimer",
+          "operation": "compare",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_aep_2024_forward_looking_disclaimer",
+            "retrieve_ed_2024_forward_looking_disclaimer"
+          ]
+        }
+      ],
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 0.6666666666666666,
+      "cross_section_contamination_rate": 0.33333333333333337,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "retrieved_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-3cd998fe2fc9ecbfec0629d2",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_forward_looking_disclaimer"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-be285e7aa9e071377224bcf0",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "matchedTaskIds": [
+            "retrieve_ed_2024_forward_looking_disclaimer"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-50b3b1d0b58821a08fb71eaf",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations,",
+          "matchedTaskIds": [
+            "retrieve_aep_2024_forward_looking_disclaimer"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "document_recall": 1.0,
+      "retrieval_quality_status": "DEGRADED",
+      "retrieval_warnings": [
+        "missing_scoped_coverage: retrieve_ed_2024_forward_looking_disclaimer | Item 7"
+      ],
+      "rag_quality_score": 0.640495867768595,
+      "planning_ms": 14839,
+      "retrieval_ms": 110172,
+      "generation_ms": 9410,
+      "latency_ms": 134457,
+      "error": "",
+      "known_issue": "Gold treats ED Item 7 external-business-environment risk language as a forward-looking-statement disclaimer; ED's actual disclaimer is elsewhere in the filing."
+    },
+    {
+      "id": "md2025_1560",
+      "subset": "S4",
+      "task_type": "cross-company",
+      "question": "Compare the audit opinions for AEP and ED as presented in their FY2024 filings.",
+      "expected_answer": "Both audit opinions are virtually identical: they state the consolidated financial statements present fairly in conformity with GAAP and that the company maintained effective internal control over financial reporting based on COSO criteria. Both are audited in accordance with PCAOB standards. There is no substantive difference in the audit opinions between AEP and ED based on the provided excerpts.",
+      "predicted_answer": "**Conclusion:** AEP received an unqualified audit opinion with critical audit matters disclosed, while the retrieved ED (Con Edison) FY2024 Item 8 evidence does not contain the audit opinion itself.\n\n- **AEP FY2024:** PricewaterhouseCoopers LLP issued an unqualified opinion on AEP's consolidated financial statements, explicitly stating they \"express no such opinion\" on internal control over financial reporting because AEP was not required to have, and PwC was not engaged to perform, an audit of internal control [E3][E5]. The opinion identified multiple critical audit matters: \"Accounting for the Effects of Cost-Based Regulation\" [E1][E4], \"Valuation of Level 3 Energy Contracts\" [E1][E14], and \"Incremental Asset Retirement Obligations arising from the Federal EPA's Revised Coal Combustion Residuals (CCR) Rule\" [E4][E14]. The audit was conducted in accordance with PCAOB standards [E3][E5].\n\n- **ED FY2024:** The retrieved Item 8 evidence for Consolidated Edison (ED) contains only introductory sections—\"Available Information,\" \"Forward-Looking Statements,\" and corporate governance disclosures [E2]—with no audit opinion, basis for opinion, or critical audit matters included. The audit opinion for ED FY2024 is missing from the supplied evidence.\n\n**Comparison:** AEP's audit opinion is fully present in the retrieved Item 8 evidence with explicit unqualified language and detailed critical audit matters, whereas ED's retrieved Item 8 evidence lacks any audit opinion content, making direct comparison impossible.\n\nSources:\n[E1] AEP_2024.html — Item 8\n[E2] ED_2024.html — Item 8\n[E3] AEP_2024.html — Item 8\n[E4] AEP_2024.html — Item 8\n[E5] AEP_2024.html — Item 8\n[E14] AEP_2024.html — Item 8",
+      "token_precision": 0.15311004784688995,
+      "token_recall": 0.5423728813559322,
+      "token_f1": 0.23880597014925373,
+      "rouge_l_f1": 0.16417910447761191,
+      "answer_overlap_score": 0.23880597014925373,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 2,
+      "task_trace": [
+        {
+          "id": "retrieve_scope_aep_2024",
+          "query": "AEP FY2024 Compare the audit opinions for AEP and ED as presented in their FY2024 filings. Dataset retrieval scope (metadata only): documentScopes=AEP FY2024; ED FY2024; evidence section=AEP: Item 8; ED: Item 8.",
+          "companies": [
+            "AEP"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_scope_ed_2024",
+          "query": "ED FY2024 Compare the audit opinions for AEP and ED as presented in their FY2024 filings. Dataset retrieval scope (metadata only): documentScopes=AEP FY2024; ED FY2024; evidence section=AEP: Item 8; ED: Item 8.",
+          "companies": [
+            "ED"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "retrieved_sources": [
+        "AEP_2024.html",
+        "ED_2024.html",
+        "META_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-fe393f9bdf4c4946a697874e",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-df52d60e1213985f7eba12f4",
+          "sourceFile": "ED_2024.html",
+          "company": "ED",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Markdown table:",
+          "matchedTaskIds": [
+            "retrieve_scope_ed_2024"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-bcddc2b37ebf7622d72f7495",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-ca89dfe270a1c6fd62ce5645",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-0094063c5f228b6f9ca8cb04",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-a386e3a00b4d7840706fded2",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E7",
+          "chunkId": "s2-pc-cc4642bbd032e0e5a4dded92",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E8",
+          "chunkId": "s2-pc-9f70ecf2cec69bd62b2db021",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E9",
+          "chunkId": "s2-pc-71dc0923f098f78d7c21c574",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E10",
+          "chunkId": "s2-pc-52466a31a0e2408439ec138e",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E11",
+          "chunkId": "s2-pc-240bacd194891ed05f5e5c73",
+          "sourceFile": "META_2024.html",
+          "company": "META",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data"
+        },
+        {
+          "evidenceId": "E12",
+          "chunkId": "s2-pc-db68d408e7c4f0b5b763a79d",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E13",
+          "chunkId": "s2-pc-a98d54c1181be0dbb62a0e92",
+          "sourceFile": "META_2024.html",
+          "company": "META",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data"
+        },
+        {
+          "evidenceId": "E14",
+          "chunkId": "s2-pc-4ac2c570e7d0abed763a0b94",
+          "sourceFile": "AEP_2024.html",
+          "company": "AEP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 8",
+          "sectionTitle": "Our responsibility is to express opinions on the Company’s consolidated financial statements and on the Company's interna",
+          "matchedTaskIds": [
+            "retrieve_scope_aep_2024"
+          ]
+        },
+        {
+          "evidenceId": "E15",
+          "chunkId": "s2-pc-ca135cf22d9ee5e56c01e232",
+          "sourceFile": "META_2024.html",
+          "company": "META",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 8",
+          "sectionTitle": "Financial Statements and Supplementary Data"
+        }
+      ],
+      "retrieved_source_hits": [
+        "AEP_2024.html",
+        "ED_2024.html"
+      ],
+      "document_recall": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.6194029850746269,
+      "planning_ms": 143,
+      "retrieval_ms": 62175,
+      "generation_ms": 14085,
+      "latency_ms": 76443,
+      "error": "",
+      "known_issue": null
+    },
+    {
+      "id": "md2025_2286",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Compare the forward-looking statement language in Item 7 of LLY and PFE for fiscal years 2022 and 2024. What specific wording change occurs for LLY between the two years, and how does PFE's language remain consistent? Additionally, based on the common structure of MD&A, which financial statement line item (commonly found in the financial tables) would an analyst use to quantify the risk associated with the forward-looking statements about 'cash generated from operations'?",
+      "expected_answer": "LLY's 2022 Item 7 text includes the phrase 'differ materially from these forward-looking statements', while the 2024 text omits 'materially' and states 'differ from these forward-looking statements'. PFE's Item 7 text is identical in both 2022 and 2024, using the standard 'MANAGEMENT’S DISCUSSION AND ANALYSIS...' opening without any variation. To quantify the risk for 'cash generated from operations', an analyst would refer to the Statement of Cash Flows in the financial tables, specifically the line 'Net cash provided by operating activities'.",
+      "predicted_answer": "Verified facts:\n- PFE FY2022 | Total shares purchased = 475,190 [F21][E3]\n- PFE FY2017 | PFIZER performance = $100.0 [F23][E3]\n- PFE FY2024 | Total shares purchased = 131,015 [F35][E4]\n- PFE FY2022 | PFIZER performance = $154.5 [F40][E4]\n\nDeterministic calculations:\n- difference: F40 - F23 = 54.5 unit usd [C1][E3][E4]\n\nSources:\n[E3] PFE_2022.html — Business\n[E4] PFE_2024.html — Risk Factors",
+      "token_precision": 0.02702702702702703,
+      "token_recall": 0.011627906976744186,
+      "token_f1": 0.016260162601626015,
+      "rouge_l_f1": 0.016260162601626015,
+      "answer_overlap_score": 0.016260162601626015,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 7,
+      "task_trace": [
+        {
+          "id": "retrieve_lly_2022_item7_forward_looking",
+          "query": "forward-looking statement cautionary language disclosure in Item 7 MD&A for LLY FY2022",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lly_2024_item7_forward_looking",
+          "query": "forward-looking statement cautionary language disclosure in Item 7 MD&A for LLY FY2024",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2022_item7_forward_looking",
+          "query": "forward-looking statement cautionary language disclosure in Item 7 MD&A for PFE FY2022",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2024_item7_forward_looking",
+          "query": "forward-looking statement cautionary language disclosure in Item 7 MD&A for PFE FY2024",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "compare_lly_forward_looking_change",
+          "query": "specific wording changes differences in forward-looking statement language between LLY FY2022 and LLY FY2024 Item 7",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "forward-looking statement language change",
+          "operation": "compare",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_lly_2022_item7_forward_looking",
+            "retrieve_lly_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "id": "compare_pfe_forward_looking_consistency",
+          "query": "consistency stability of forward-looking statement language between PFE FY2022 and PFE FY2024 Item 7",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "forward-looking statement language consistency",
+          "operation": "compare",
+          "modality": "text",
+          "dependsOn": [
+            "retrieve_pfe_2022_item7_forward_looking",
+            "retrieve_pfe_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "id": "retrieve_cash_from_operations_line_item",
+          "query": "cash generated from operations operating cash flow line item in financial statements MD&A risk quantification",
+          "companies": [
+            "LLY",
+            "PFE"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "cash generated from operations",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 5,
+      "matched_task_count": 5,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 3,
+      "answer_task_coverage": 0.6,
+      "fact_count": 40,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Revenue",
+          "rawValue": "$ 28,541.4",
+          "value": "28541.4",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Gross margin",
+          "rawValue": "21,911.6",
+          "value": "21911.6",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F3",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Research and development",
+          "rawValue": "$ 7,190.8",
+          "value": "7190.8",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F4",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Marketing, selling, and administrative",
+          "rawValue": "6,440.4",
+          "value": "6440.4",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F5",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Acquired in-process research and development (IPR&D) and development milestones",
+          "rawValue": "908.5",
+          "value": "908.5",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F6",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Asset impairment, restructuring, and other special charges",
+          "rawValue": "244.6",
+          "value": "244.6",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F7",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Other—net, (income) expense",
+          "rawValue": "320.9",
+          "value": "320.9",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F8",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Net income",
+          "rawValue": "6,244.8",
+          "value": "6244.8",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F9",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Earnings per share - diluted",
+          "rawValue": "6.90",
+          "value": "6.90",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F10",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Acquired IPR&D and development milestones charge",
+          "rawValue": "$908.5 million",
+          "value": "908.5",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F11",
+          "evidenceId": "E1",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "Net investment losses on equity securities",
+          "rawValue": "$410.7 million",
+          "value": "410.7",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F12",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "metric": "Revenue",
+          "rawValue": "$ 45,042.7",
+          "value": "45042.7",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F13",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "metric": "Net income",
+          "rawValue": "10,590.0",
+          "value": "10590.0",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F14",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "metric": "Earnings per share - diluted",
+          "rawValue": "11.71",
+          "value": "11.71",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F15",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Shares purchased October 3 through October 30, 2022",
+          "rawValue": "19,483",
+          "value": "19483",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F16",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Average price paid per share October 3 through October 30, 2022",
+          "rawValue": "$ 43.68",
+          "value": "43.68",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F17",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Shares purchased October 31 through November 30, 2022",
+          "rawValue": "39,821",
+          "value": "39821",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F18",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Average price paid per share October 31 through November 30, 2022",
+          "rawValue": "$ 47.85",
+          "value": "47.85",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F19",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Shares purchased December 1 through December 31, 2022",
+          "rawValue": "415,886",
+          "value": "415886",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F20",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Average price paid per share December 1 through December 31, 2022",
+          "rawValue": "$ 51.29",
+          "value": "51.29",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F21",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Total shares purchased",
+          "rawValue": "475,190",
+          "value": "475190",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F22",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "Average price paid per share total",
+          "rawValue": "$ 50.69",
+          "value": "50.69",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F23",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2017",
+          "metric": "PFIZER performance",
+          "rawValue": "$100.0",
+          "value": "100.0",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F24",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2018",
+          "metric": "PFIZER performance",
+          "rawValue": "$124.8",
+          "value": "124.8",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F25",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2019",
+          "metric": "PFIZER performance",
+          "rawValue": "$116.2",
+          "value": "116.2",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F26",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2020",
+          "metric": "PFIZER performance",
+          "rawValue": "$120.2",
+          "value": "120.2",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F27",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2021",
+          "metric": "PFIZER performance",
+          "rawValue": "$200.4",
+          "value": "200.4",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F28",
+          "evidenceId": "E3",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "PFIZER performance",
+          "rawValue": "$179.5",
+          "value": "179.5",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F29",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Shares purchased September 30 through October 27, 2024",
+          "rawValue": "33,110",
+          "value": "33110",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F30",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Average price paid per share September 30 through October 27, 2024",
+          "rawValue": "$ 29.04",
+          "value": "29.04",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F31",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Shares purchased October 28 through November 30, 2024",
+          "rawValue": "34,233",
+          "value": "34233",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F32",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Average price paid per share October 28 through November 30, 2024",
+          "rawValue": "$ 27.85",
+          "value": "27.85",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F33",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Shares purchased December 1 through December 31, 2024",
+          "rawValue": "63,672",
+          "value": "63672",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F34",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Average price paid per share December 1 through December 31, 2024",
+          "rawValue": "$ 26.21",
+          "value": "26.21",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F35",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Total shares purchased",
+          "rawValue": "131,015",
+          "value": "131015",
+          "unit": "count",
+          "scale": "unit"
+        },
+        {
+          "factId": "F36",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "metric": "Average price paid per share total",
+          "rawValue": "$ 27.36",
+          "value": "27.36",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F37",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2019",
+          "metric": "PFIZER performance",
+          "rawValue": "$100.0",
+          "value": "100.0",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F38",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2020",
+          "metric": "PFIZER performance",
+          "rawValue": "$103.4",
+          "value": "103.4",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F39",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2021",
+          "metric": "PFIZER performance",
+          "rawValue": "$172.5",
+          "value": "172.5",
+          "unit": "usd",
+          "scale": "unit"
+        },
+        {
+          "factId": "F40",
+          "evidenceId": "E4",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "metric": "PFIZER performance",
+          "rawValue": "$154.5",
+          "value": "154.5",
+          "unit": "usd",
+          "scale": "unit"
+        }
+      ],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 1,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "difference",
+          "expression": "F40 - F23",
+          "result": "54.5",
+          "unit": "usd",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F23",
+            "F40"
+          ]
+        }
+      ],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "retrieved_sources": [
+        "AXP_2024.html",
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-42e589deb7dd56b8446d34de",
+          "sourceFile": "LLY_2022.html",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2022_item7_forward_looking",
+            "retrieve_cash_from_operations_line_item"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-e5e10152972bfc43a7f4bd85",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-c09b17163b503c134789d322",
+          "sourceFile": "PFE_2022.html",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Business",
+          "matchedTaskIds": [
+            "retrieve_pfe_2022_item7_forward_looking"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-4686fc1a5b57eb848be73807",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Risk Factors",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_item7_forward_looking"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-c9b245e8afce424ce450e4ba",
+          "sourceFile": "AXP_2024.html",
+          "company": "AXP",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS (MD&A)"
+        }
+      ],
+      "retrieved_source_hits": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "document_recall": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.5081300813008129,
+      "planning_ms": 32489,
+      "retrieval_ms": 336413,
+      "generation_ms": 20975,
+      "latency_ms": 389917,
+      "error": "",
+      "known_issue": null
+    }
+  ]
+}
