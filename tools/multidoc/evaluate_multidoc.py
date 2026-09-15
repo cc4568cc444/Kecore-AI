@@ -34,6 +34,8 @@ SUBSET_LABELS = {
 TOKEN = re.compile(r"[a-z0-9]+|[\u4e00-\u9fff]", re.IGNORECASE)
 NUMBER = re.compile(r"[-+]?\d[\d,]*(?:\.\d+)?%?")
 CITATION = re.compile(r"\[E\d+]", re.IGNORECASE)
+FACT_MARKER = re.compile(r"\[F\d+]", re.IGNORECASE)
+CALCULATION_MARKER = re.compile(r"\[C\d+]", re.IGNORECASE)
 REFERENCE_MARKER = re.compile(r"\[(?:E|F|C)\d+(?:\s*[;,]\s*(?:E|F|C)?\d+)*]", re.IGNORECASE)
 BARE_LEDGER_REFERENCE = re.compile(r"\b(?:E|F|C)\d+\b", re.IGNORECASE)
 SOURCE_HEADING = re.compile(r"^\s*(?:[#>*_-]+\s*)*(?:sources?|来源)\s*[:：]?", re.IGNORECASE)
@@ -61,6 +63,27 @@ COUNT_WORD_VALUES = {
     "six": 6.0, "seven": 7.0, "eight": 8.0, "nine": 9.0, "ten": 10.0,
 }
 RETRIEVAL_CUTOFFS = (1, 3, 5, 10)
+METRIC_VERSION = "deterministic-v7-evidence-layers"
+METRIC_DEFINITIONS = {
+    "document_presence_recall": (
+        "Fraction of dataset-labelled filing names present in the final Evidence Ledger. "
+        "This is a file-presence metric, not passage relevance or answer support."
+    ),
+    "section_presence_recall": (
+        "Fraction of dataset-labelled filing/item pairs present in the final Evidence Ledger. "
+        "This checks structural scope only."
+    ),
+    "direct_evidence_coverage": (
+        "Fraction of required Query Planner retrieval tasks having at least one backend-verified "
+        "direct-support evidence chunk. This is system coverage, not gold-passage recall."
+    ),
+    "fact_value_recall": (
+        "Fraction of reference-answer numeric values recovered in structured Fact slots. "
+        "Only applicable to numeric questions."
+    ),
+    "document_recall": "Deprecated compatibility alias of document_presence_recall.",
+    "retrieval_task_coverage": "Deprecated compatibility alias of planner_task_assignment_coverage.",
+}
 
 
 def requested_item(value: str) -> str:
@@ -452,9 +475,30 @@ def all_document_ranking_metrics(expected: set[str], ranked: list[str]) -> dict[
 
 def expected_section_keys(row: dict[str, Any], expected_sources: set[str]) -> set[tuple[str, str]]:
     """Build gold filing-section units from the dataset's document and evidence_section labels."""
-    section = requested_item(str(row.get("evidence_section") or ""))
-    if not section:
-        section = requested_item(str(row.get("question") or ""))
+    label = str(row.get("evidence_section") or "").strip()
+    segments = [segment.strip() for segment in re.split(r"[;；]", label) if segment.strip()]
+    company_sections: dict[str, str] = {}
+    has_company_specific_labels = False
+    expected_companies = {
+        source.rsplit("_", 1)[0].upper(): source for source in expected_sources if "_" in source
+    }
+    for segment in segments:
+        company_match = re.match(r"^\s*([A-Za-z][A-Za-z0-9._-]*)\s*[:：]", segment)
+        if not company_match:
+            continue
+        company = company_match.group(1).upper()
+        if company not in expected_companies:
+            continue
+        has_company_specific_labels = True
+        section = requested_item(segment)
+        if section:
+            company_sections[company] = section
+    if has_company_specific_labels:
+        return {
+            (expected_companies[company], section)
+            for company, section in company_sections.items()
+        }
+    section = requested_item(label) or requested_item(str(row.get("question") or ""))
     return {(source, section) for source in expected_sources} if section else set()
 
 
@@ -490,6 +534,26 @@ def evidence_task_ids(item: dict[str, Any]) -> list[Any]:
     if "verifiedTaskIds" in item:
         return list(item.get("verifiedTaskIds") or [])
     return list(item.get("matchedTaskIds") or [])
+
+
+def direct_evidence_metrics(required_task_ids: set[str], evidence: list[dict[str, Any]],
+                            labels_available: bool | None = None
+                            ) -> tuple[float | None, set[str], bool]:
+    """Measure post-verification support without falling back to retrieval assignment labels."""
+    available = bool(labels_available) if labels_available is not None else any(
+        "verifiedTaskIds" in item for item in evidence or []
+    )
+    verified_ids = {
+        str(task_id)
+        for item in evidence or []
+        for task_id in item.get("verifiedTaskIds") or []
+        if not str(task_id).startswith("retrieve_explicit_")
+    }
+    if not required_task_ids:
+        return None, verified_ids, available
+    if not available:
+        return None, verified_ids, False
+    return len(required_task_ids & verified_ids) / len(required_task_ids), verified_ids, True
 
 
 def all_named_ranking_metrics(prefix: str, expected: set[Any], ranked: list[Any]
@@ -598,22 +662,29 @@ def evaluate_row(row: dict[str, Any], prediction: str, latency_ms: int, error: s
     retrieved_sources = ranked_document_names(analysis.get("evidence") or [])
     expected_sources = sorted(expected_document_names(row))
     source_hits = set(retrieved_sources) & set(expected_sources)
-    document_recall = len(source_hits) / len(expected_sources) if expected_sources else None
+    document_presence_recall = len(source_hits) / len(expected_sources) if expected_sources else None
     ranking_metrics = all_document_ranking_metrics(set(expected_sources), retrieved_sources)
     expected_sections = expected_section_keys(row, set(expected_sources))
-    section_ranking_metrics = all_named_ranking_metrics(
-        "section", expected_sections, ranked_section_keys(analysis.get("evidence") or []))
+    retrieved_sections = ranked_section_keys(analysis.get("evidence") or [])
+    section_presence_recall = (len(expected_sections & set(retrieved_sections)) / len(expected_sections)
+                               if expected_sections else None)
+    section_ranking_metrics = all_named_ranking_metrics("section", expected_sections, retrieved_sections)
     citation_audit = analysis.get("citationAudit") or {}
     retrieval_tasks = [task for task in analysis.get("tasks") or [] if str(task.get("operation") or "").lower() == "retrieve"]
     planned_task_ids = {str(task.get("id")) for task in retrieval_tasks if task.get("id")}
     answerable_task_ids = {
         task_id for task_id in planned_task_ids if not task_id.startswith("retrieve_explicit_")
     }
-    matched_task_ids = {
+    assigned_task_ids = {
         str(task_id)
         for evidence in analysis.get("evidence") or []
-        for task_id in evidence_task_ids(evidence)
+        for task_id in evidence.get("matchedTaskIds") or []
     }
+    verified_labels_available = any(
+        "verifiedTaskIds" in evidence for evidence in analysis.get("evidence") or []
+    ) or (not analysis.get("evidence") and "retrievalQuality" in analysis)
+    direct_evidence_coverage, verified_task_ids, verified_labels_available = direct_evidence_metrics(
+        answerable_task_ids, analysis.get("evidence") or [], verified_labels_available)
     task_ranking_metrics = all_named_ranking_metrics(
         "retrieval_task", answerable_task_ids, ranked_task_ids(analysis.get("evidence") or []))
     task_items = {
@@ -631,7 +702,7 @@ def evaluate_row(row: dict[str, Any], prediction: str, latency_ms: int, error: s
         sum(expected == actual for expected, actual in scoped_evidence_pairs) / len(scoped_evidence_pairs)
         if scoped_evidence_pairs else None
     )
-    task_coverage = (len(answerable_task_ids & matched_task_ids) / len(answerable_task_ids)
+    task_coverage = (len(answerable_task_ids & assigned_task_ids) / len(answerable_task_ids)
                      if answerable_task_ids else None)
     answerable_tasks = [task for task in retrieval_tasks if str(task.get("id") or "") in answerable_task_ids]
     answered_task_count, answer_task_coverage = cited_task_coverage(
@@ -642,8 +713,11 @@ def evaluate_row(row: dict[str, Any], prediction: str, latency_ms: int, error: s
         and not is_textual_count_question(str(row.get("question") or ""))
     structured_calculation_required = bool(row.get("requires_calculation")) \
         and not is_textual_count_question(str(row.get("question") or ""))
-    retrieval_components = [value for value in (document_recall, task_coverage) if value is not None]
-    retrieval_quality = average(retrieval_components) if retrieval_components else 0.0
+    fact_produced = bool(facts) or bool(FACT_MARKER.search(prediction or ""))
+    calculation_produced = bool(calculations) or bool(CALCULATION_MARKER.search(prediction or ""))
+    # Filing or section presence does not prove answer support. Only direct evidence coverage
+    # contributes to retrieval quality; old APIs without verified labels receive no such credit.
+    retrieval_quality = float(direct_evidence_coverage) if direct_evidence_coverage is not None else 0.0
     grounding_quality = float(citation_audit.get("valid")) if citation_audit.get("valid") is not None \
         else float(bool(CITATION.search(prediction or "")))
     rag_quality_score = 0.5 * answer_quality + 0.3 * retrieval_quality + 0.2 * grounding_quality
@@ -652,6 +726,7 @@ def evaluate_row(row: dict[str, Any], prediction: str, latency_ms: int, error: s
         "subset": str(row.get("subset") or "").upper(),
         "task_type": SUBSET_LABELS.get(str(row.get("subset") or "").upper(), "unknown"),
         "question": row.get("question"),
+        "evidence_section": row.get("evidence_section"),
         "expected_answer": expected,
         "predicted_answer": prediction,
         "token_precision": token_precision,
@@ -672,21 +747,29 @@ def evaluate_row(row: dict[str, Any], prediction: str, latency_ms: int, error: s
         "task_count": len(analysis.get("tasks") or []),
         "task_trace": analysis.get("tasks") or [],
         "retrieval_task_count": len(answerable_task_ids),
-        "matched_task_count": len(answerable_task_ids & matched_task_ids),
+        "matched_task_count": len(answerable_task_ids & assigned_task_ids),
         "task_coverage": task_coverage,
+        "planner_task_assignment_coverage": task_coverage,
+        "direct_evidence_labels_available": verified_labels_available,
+        "directly_supported_task_count": len(answerable_task_ids & verified_task_ids),
+        "missing_direct_evidence_task_ids": sorted(answerable_task_ids - verified_task_ids)
+        if verified_labels_available else [],
+        "direct_evidence_coverage": direct_evidence_coverage,
         "scope_item_match_rate": scope_item_match_rate,
         "cross_section_contamination_rate": 1.0 - scope_item_match_rate
         if scope_item_match_rate is not None else None,
         "answered_task_count": answered_task_count,
         "answer_task_coverage": answer_task_coverage,
         "fact_count": len(facts),
+        "fact_produced": fact_produced,
         "fact_trace": fact_trace,
-        "fact_extracted": bool(facts) if structured_fact_applicable else None,
+        "fact_extracted": fact_produced if structured_fact_applicable else None,
         "fact_value_recall": nullable_numeric_recall(expected_body, fact_values)
         if structured_fact_applicable else None,
         "structured_value_recall": nullable_numeric_recall(expected_body, fact_values + calculation_values)
         if structured_fact_applicable else None,
         "calculation_count": len(calculations),
+        "calculation_produced": calculation_produced,
         "calculation_plan_count": len(calculation_plans),
         "calculation_plan_trace": calculation_plans,
         "calculation_plan_execution_rate": min(1.0, len(calculations) / len(calculation_plans))
@@ -702,7 +785,9 @@ def evaluate_row(row: dict[str, Any], prediction: str, latency_ms: int, error: s
         "retrieved_sources": retrieved_sources,
         "evidence_trace": evidence_trace,
         "retrieved_source_hits": sorted(source_hits),
-        "document_recall": document_recall,
+        "document_presence_recall": document_presence_recall,
+        "section_presence_recall": section_presence_recall,
+        "document_recall": document_presence_recall,
         **ranking_metrics,
         **section_ranking_metrics,
         **task_ranking_metrics,
@@ -734,7 +819,7 @@ def rescore_saved_result(saved: dict[str, Any], known_issues: dict[str, str]) ->
     calculation_values = [
         value for calculation in calculations for value in structured_calculation_numeric_values(calculation)
     ]
-    document_recall = saved.get("document_recall")
+    document_presence_recall = saved.get("document_presence_recall", saved.get("document_recall"))
     saved_evidence = list(saved.get("evidence_trace") or [])
     ranked_sources = ranked_document_names(saved_evidence)
     if not ranked_sources:
@@ -742,8 +827,10 @@ def rescore_saved_result(saved: dict[str, Any], known_issues: dict[str, str]) ->
     expected_sources = set(saved.get("expected_sources") or [])
     ranking_metrics = all_document_ranking_metrics(expected_sources, ranked_sources)
     expected_sections = expected_section_keys(saved, expected_sources)
-    section_ranking_metrics = all_named_ranking_metrics(
-        "section", expected_sections, ranked_section_keys(saved_evidence))
+    ranked_sections = ranked_section_keys(saved_evidence)
+    section_presence_recall = (len(expected_sections & set(ranked_sections)) / len(expected_sections)
+                               if expected_sections else None)
+    section_ranking_metrics = all_named_ranking_metrics("section", expected_sections, ranked_sections)
     explicit_task_ids = {
         str(task_id)
         for item in saved_evidence
@@ -772,10 +859,10 @@ def rescore_saved_result(saved: dict[str, Any], known_issues: dict[str, str]) ->
                     scope["years"].append(year)
         saved_tasks = list(inferred_scopes.values())
     saved_task_ids = {str(task.get("id") or "") for task in saved_tasks if task.get("id")}
-    matched_task_ids = {
+    assigned_task_ids = {
         str(task_id)
         for item in saved_evidence
-        for task_id in evidence_task_ids(item)
+        for task_id in item.get("matchedTaskIds") or []
         if not str(task_id).startswith("retrieve_explicit_")
     }
     task_items = {
@@ -793,15 +880,17 @@ def rescore_saved_result(saved: dict[str, Any], known_issues: dict[str, str]) ->
         sum(expected == actual for expected, actual in scoped_evidence_pairs) / len(scoped_evidence_pairs)
         if scoped_evidence_pairs else None
     )
-    task_coverage = (len(saved_task_ids & matched_task_ids) / len(saved_task_ids)
+    task_coverage = (len(saved_task_ids & assigned_task_ids) / len(saved_task_ids)
                      if saved_task_ids else saved.get("task_coverage"))
+    labels_available = saved.get("direct_evidence_labels_available")
+    direct_evidence_coverage, verified_task_ids, labels_available = direct_evidence_metrics(
+        saved_task_ids, saved_evidence, labels_available)
     task_ranking_metrics = all_named_ranking_metrics(
         "retrieval_task", saved_task_ids, ranked_task_ids(saved_evidence))
     answered_task_count, answer_task_coverage = cited_task_coverage(
         predicted_raw, saved_evidence, saved_tasks, facts
     )
-    retrieval_components = [float(value) for value in (document_recall, task_coverage) if value is not None]
-    retrieval_quality = average(retrieval_components) if retrieval_components else 0.0
+    retrieval_quality = float(direct_evidence_coverage) if direct_evidence_coverage is not None else 0.0
     citation_valid = saved.get("citation_valid")
     grounding_quality = float(citation_valid) if citation_valid is not None \
         else float(bool(CITATION.search(predicted_raw)))
@@ -832,9 +921,18 @@ def rescore_saved_result(saved: dict[str, Any], known_issues: dict[str, str]) ->
         "answered_task_count": answered_task_count,
         "answer_task_coverage": answer_task_coverage,
         "retrieval_task_count": len(saved_task_ids) if saved_task_ids else saved.get("retrieval_task_count", 0),
-        "matched_task_count": len(saved_task_ids & matched_task_ids) if saved_task_ids
+        "matched_task_count": len(saved_task_ids & assigned_task_ids) if saved_task_ids
         else saved.get("matched_task_count", 0),
         "task_coverage": task_coverage,
+        "planner_task_assignment_coverage": task_coverage,
+        "direct_evidence_labels_available": labels_available,
+        "directly_supported_task_count": len(saved_task_ids & verified_task_ids),
+        "missing_direct_evidence_task_ids": sorted(saved_task_ids - verified_task_ids)
+        if labels_available else [],
+        "direct_evidence_coverage": direct_evidence_coverage,
+        "document_presence_recall": document_presence_recall,
+        "section_presence_recall": section_presence_recall,
+        "document_recall": document_presence_recall,
         "retrieved_sources": ranked_sources,
         "expected_sections": [f"{source}::{section}" for source, section in sorted(expected_sections)],
         **ranking_metrics,
@@ -850,13 +948,25 @@ def rescore_saved_result(saved: dict[str, Any], known_issues: dict[str, str]) ->
     return result
 
 
-def rescore_report(path: Path, output_dir: Path, known_issues_path: Path) -> Path:
+def rescore_report(path: Path, output_dir: Path, known_issues_path: Path,
+                   data_dir: Path = DEFAULT_DATA_DIR) -> Path:
     payload = json.loads(path.read_text(encoding="utf-8"))
     known_issues = load_known_issues(known_issues_path)
-    results = [rescore_saved_result(row, known_issues) for row in payload.get("results") or []]
+    split = str(payload.get("split") or "test")
+    subsets = [str(value).upper() for value in payload.get("subsets") or SUBSET_LABELS]
+    dataset_by_id = {
+        str(row.get("id") or ""): row for row in load_questions(data_dir, split, subsets)
+    }
+    enriched_results = []
+    for saved in payload.get("results") or []:
+        gold = dataset_by_id.get(str(saved.get("id") or ""), {})
+        enriched_results.append({**saved, "evidence_section": gold.get(
+            "evidence_section", saved.get("evidence_section"))})
+    results = [rescore_saved_result(row, known_issues) for row in enriched_results]
     rescored = dict(payload)
     rescored.update({
-        "metric_version": "deterministic-v6",
+        "metric_version": METRIC_VERSION,
+        "metric_definitions": METRIC_DEFINITIONS,
         "rescored_from": str(path.resolve()),
         "rescored_at": datetime.now(timezone.utc).isoformat(),
         "summary": report(results),
@@ -896,7 +1006,10 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     fact_rows = [row for row in successful if row.get("fact_extracted") is not None]
     fact_value_rows = [row for row in successful if row.get("fact_value_recall") is not None]
     structured_value_rows = [row for row in successful if row.get("structured_value_recall") is not None]
-    retrieval_rows = [row for row in successful if row["document_recall"] is not None]
+    retrieval_rows = [row for row in successful if row.get(
+        "document_presence_recall", row.get("document_recall")) is not None]
+    section_presence_rows = [row for row in successful if row.get("section_presence_recall") is not None]
+    evidence_coverage_rows = [row for row in successful if row.get("direct_evidence_coverage") is not None]
     audited_rows = [row for row in successful if row["citation_valid"] is not None]
     task_rows = [row for row in successful if row["task_coverage"] is not None]
     section_scope_rows = [row for row in successful if row.get("scope_item_match_rate") is not None]
@@ -907,6 +1020,10 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     calculation_rows = [
         row for row in successful
         if row.get("requires_structured_calculation", row["requires_calculation"])
+        or row.get("calculation_produced", False)
+    ]
+    planned_calculation_rows = [
+        row for row in successful if int(row.get("calculation_plan_count") or 0) > 0
     ]
     ranking_summary = {
         f"document_{metric}_at_{cutoff}": applicable_average([
@@ -948,7 +1065,20 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "evidence_citation_rate": average([float(row["has_evidence_citation"]) for row in successful]),
         "citation_valid_rate": average([float(row["citation_valid"]) for row in audited_rows]),
         "citation_block_rate": average([float(row["citation_blocked"]) for row in successful]),
-        "document_recall": average([float(row["document_recall"]) for row in retrieval_rows]),
+        "document_presence_recall": average([
+            float(row.get("document_presence_recall", row.get("document_recall"))) for row in retrieval_rows
+        ]),
+        "section_presence_recall": applicable_average([
+            float(row["section_presence_recall"]) for row in section_presence_rows
+        ]),
+        "direct_evidence_coverage": applicable_average([
+            float(row["direct_evidence_coverage"]) for row in evidence_coverage_rows
+        ]),
+        "evidence_coverage_question_count": len(evidence_coverage_rows),
+        # Compatibility alias; this historically measured only expected filing-name presence.
+        "document_recall": average([
+            float(row.get("document_presence_recall", row.get("document_recall"))) for row in retrieval_rows
+        ]),
         "retrieval_ranking_question_count": len(retrieval_rows),
         **ranking_summary,
         **section_ranking_summary,
@@ -977,15 +1107,16 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "structured_value_question_count": len(structured_value_rows),
         "calculation_production_rate": applicable_average(
-            [float(row["calculation_count"] > 0) for row in calculation_rows]
+            [float(row.get("calculation_produced", row["calculation_count"] > 0)) for row in calculation_rows]
         ),
         "calculation_plan_rate": applicable_average(
             [float(row.get("calculation_plan_count", 0) > 0) for row in calculation_rows]
         ),
         "calculation_plan_execution_rate": applicable_average([
             float(row["calculation_plan_execution_rate"])
-            for row in calculation_rows if row.get("calculation_plan_execution_rate") is not None
+            for row in planned_calculation_rows if row.get("calculation_plan_execution_rate") is not None
         ]),
+        "planned_calculation_question_count": len(planned_calculation_rows),
         "calculation_question_count": len(calculation_rows),
         "calculation_result_match": applicable_average([
             float(row["calculation_result_match"])
@@ -1045,7 +1176,9 @@ def format_result_details(results: list[dict[str, Any]]) -> str:
             "token_f1": row.get("token_f1"),
             "rouge_l_f1": row.get("rouge_l_f1"),
             "rag_quality_score": row.get("rag_quality_score"),
-            "document_recall": row.get("document_recall"),
+            "document_presence_recall": row.get("document_presence_recall", row.get("document_recall")),
+            "section_presence_recall": row.get("section_presence_recall"),
+            "direct_evidence_coverage": row.get("direct_evidence_coverage"),
             "document_recall_at_5": row.get("document_recall_at_5"),
             "document_mrr_at_10": row.get("document_mrr_at_10"),
             "document_map_at_10": row.get("document_map_at_10"),
@@ -1094,12 +1227,14 @@ def format_summary_line(summary: dict[str, Any]) -> str:
     return (
         f"[summary] success={overall.get('successful', 0)}/{overall.get('count', 0)} "
         f"f1={score('token_f1')} quality={score('rag_quality_score')} "
-        f"numeric_f1={score('numeric_f1')} doc_recall={score('document_recall')} "
+        f"numeric_f1={score('numeric_f1')} doc_presence={score('document_presence_recall')} "
+        f"section_presence={score('section_presence_recall')} "
+        f"evidence_coverage={score('direct_evidence_coverage')} "
         f"recall@5={score('document_recall_at_5')} mrr@10={score('document_mrr_at_10')} "
         f"ndcg@10={score('document_ndcg_at_10')} all_docs@10={score('document_complete_recall_at_10')} "
         f"section_recall@5={score('section_recall_at_5')} "
         f"task_recall@5={score('retrieval_task_recall_at_5')} "
-        f"task_coverage={score('retrieval_task_coverage')} "
+        f"task_assignment={score('retrieval_task_coverage')} "
         f"citation_valid={score('citation_valid_rate')} refusal={score('refusal_rate')}"
     )
 
@@ -1131,7 +1266,8 @@ def evaluation_payload(args: argparse.Namespace, questions: list[dict[str, Any]]
                        results: list[dict[str, Any]], status: str) -> dict[str, Any]:
     return {
         "dataset": "Multi-Doc-2025",
-        "metric_version": "deterministic-v6",
+        "metric_version": METRIC_VERSION,
+        "metric_definitions": METRIC_DEFINITIONS,
         "status": status,
         "split": args.split,
         "subsets": args.subsets,
@@ -1311,7 +1447,7 @@ def main() -> int:
         return 0
     if args.rescore_report:
         try:
-            output = rescore_report(args.rescore_report, args.output_dir, args.known_issues)
+            output = rescore_report(args.rescore_report, args.output_dir, args.known_issues, args.data_dir)
             payload = json.loads(output.read_text(encoding="utf-8"))
         except (FileNotFoundError, json.JSONDecodeError, ValueError) as exc:
             print(f"error: {exc}")
@@ -1405,12 +1541,14 @@ def main() -> int:
             indexed_results.append((index, result))
             row = questions[index - 1]
             error = result["error"]
-            recall = result["document_recall"]
+            recall = result["document_presence_recall"]
             recall_text = "n/a" if recall is None else f"{recall:.3f}"
             print(
                 f"[eval] {completed}/{len(questions)} {row['id']} {row['subset']} "
                 f"f1={result['token_f1']:.3f} quality={result['rag_quality_score']:.3f} "
-                f"doc_recall={recall_text} citation={result['has_evidence_citation']} error={bool(error)}",
+                f"doc_presence={recall_text} "
+                f"evidence_coverage={result['direct_evidence_coverage'] if result['direct_evidence_coverage'] is not None else 'n/a'} "
+                f"citation={result['has_evidence_citation']} error={bool(error)}",
                 flush=True,
             )
             checkpoint_results = [item for _, item in sorted(indexed_results, key=lambda pair: pair[0])]

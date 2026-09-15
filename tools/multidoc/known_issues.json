@@ -6,6 +6,8 @@
   "md2025_1430": "Gold says the investor-information website description is absent in FY2024, but LIN_2024 contains that paragraph under Item 1.",
   "md2025_1431": "Gold says the executive-officer listing is absent in FY2024, but LIN_2024 contains the Executive Officers section and lists Sanjiv Lamba as age 60; the benchmark also attributes this Item 1 content to Item 7.",
   "md2025_1559": "Gold treats ED Item 7 external-business-environment risk language as a forward-looking-statement disclaimer; ED's actual disclaimer is elsewhere in the filing.",
+  "md2025_1566": "Gold says AEP's provided Item 8 content has no guarantees or indemnifications, but AEP_2024 Item 8 explicitly contains an 'Indemnifications and Other Guarantees' disclosure covering letters of credit and contractual indemnifications.",
+  "md2025_1567": "Gold says XEL's provided Item 8 content has no auditor report or independence statement, but XEL_2024 Item 8 explicitly states the auditor is PCAOB-registered, required to be independent, and responsible for expressing audit opinions.",
   "md2025_2282": "Gold attributes Linde's Note 18 cross-reference to FY2024 Item 7, but the quoted sentence appears in Item 1 and points readers to Item 7 and Note 18.",
   "md2025_2283": "Gold says LIN FY2024 Item 7 contains no quantitative sales-driver descriptions, but Item 7 explicitly reports price, volume, cost pass-through, and currency percentage effects; its quoted Note 18 cross-reference appears in Item 1.",
   "md2025_2293": "Gold says META FY2022 and FY2024 Item 7 provide no user or revenue metrics, but the filings explicitly report FY2022 worldwide ARPP and Facebook DAU/MAU/ARPU, and FY2024 worldwide DAP and ARPP metrics.",

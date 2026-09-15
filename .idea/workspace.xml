@@ -5,21 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="37cc6903-97c8-4742-8c09-6c6906f96bde" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/SpringaiApplication.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/agent/AgentApprovalModeRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/agent/AgentApprovalRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/agent/AgentAutoCompactionUsage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/agent/AgentChatRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/agent/AgentContextPreview.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/agent/AgentContextRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/agent/AgentContextUsage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cc/springai/service/FinancialCitationVerifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/service/FinancialCitationVerifier.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cc/springai/service/FinancialEvidenceLedger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/service/FinancialEvidenceLedger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cc/springai/service/FinancialRagService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cc/springai/service/FinancialRagService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/cc/springai/service/FinancialCitationVerifierTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/cc/springai/service/FinancialCitationVerifierTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/cc/springai/service/FinancialEvidenceLedgerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/cc/springai/service/FinancialEvidenceLedgerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/cc/springai/service/FinancialRagServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/cc/springai/service/FinancialRagServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/multidoc/FINANCE_RAG_AUDIT.md" beforeDir="false" afterPath="$PROJECT_DIR$/tools/multidoc/FINANCE_RAG_AUDIT.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/multidoc/evaluate_multidoc.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/multidoc/evaluate_multidoc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/multidoc/known_issues.json" beforeDir="false" afterPath="$PROJECT_DIR$/tools/multidoc/known_issues.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/multidoc/test_evaluate_multidoc.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/multidoc/test_evaluate_multidoc.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,6 +51,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;Spring Boot.SpringaiApplication.executor&quot;: &quot;Run&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Kecore AI&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -62,6 +60,7 @@
     &quot;project.structure.last.edited&quot;: &quot;模块&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -71,7 +70,7 @@
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
       <envs>
         <env name="UTOOLS_MCP_KEY" value="0937166b0127c417c18283e60fe405a3" />
-        <env name="DEEPSEEK_KEY" value="sk-25566a20613c4978a1a21c914f933853" />
+        <env name="DEEPSEEK_KEY" value="sk-a6692bfdf2bf408aa2b744c158f43bbb" />
         <env name="LUCKIN_MCP_TOKEN" value="aa44c5a234cb4ef4a1bde447358a2c800mcpLUCKIN_MCP_AI" />
       </envs>
       <module name="Kecore-AI" />
@@ -102,10 +101,28 @@
       <workItem from="1784723806652" duration="187000" />
       <workItem from="1784724006591" duration="1295000" />
       <workItem from="1784798249450" duration="92000" />
+      <workItem from="1789369688790" duration="27137000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="CUSTOM_BOOLEAN_PROPERTIES">
+                <map>
+                  <entry key="Show.Git.Branches" value="true" />
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

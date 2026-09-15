@@ -60,6 +60,17 @@ class FinancialCitationVerifierTest {
     }
 
     @Test
+    void acceptsVerifiedCalculationWithoutRepeatingEvidenceOnTheSameLine() {
+        FinancialCitationVerifier.Audit audit = verifier.verify(
+                "AAPL sales were $100 million [F1][E1] and $120 million [F2][E2].\n"
+                        + "The percentage change was 20% [C1].\nSources: [E1] AAPL; [E2] AAPL",
+                ledger());
+
+        assertThat(audit.valid()).isTrue();
+        assertThat(audit.issues()).isEmpty();
+    }
+
+    @Test
     void doesNotTreatFilingIdentifiersAsNumericClaims() {
         FinancialEvidenceLedger.Ledger qualitativeLedger = new FinancialEvidenceLedger.Ledger(
                 List.of(

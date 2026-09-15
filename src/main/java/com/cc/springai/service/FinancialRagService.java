@@ -52,6 +52,8 @@ public class FinancialRagService {
             "\\b([A-Z][a-z]{2,}(?:\\s+[A-Z][a-z]{2,}){1,3})\\b");
     private static final Pattern FINANCIAL_PREMISE_PATTERN = Pattern.compile(
             "(?is)\\$?[\\d,.]+\\s+(?:million|billion).{0,100}\\b(?:increase|decrease|difference|change)\\b");
+    private static final Pattern COMPARATIVE_DERIVED_NUMBER = Pattern.compile(
+            "(?i)(?<![\\d,.])(\\d+(?:\\.\\d+)?)\\s*(percentage\\s+points?|times|倍|个百分点)");
     private static final Pattern REQUESTED_ITEM_PATTERN = Pattern.compile("(?i)\\bitem\\s+(\\d+[A-Z]?)\\b");
     private static final Pattern DATASET_SCOPE_PATTERN = Pattern.compile(
             "(?is)\\s*dataset\\s+retrieval\\s+scope\\s*\\(metadata\\s+only\\)\\s*:.*$");
@@ -88,6 +90,9 @@ public class FinancialRagService {
             Map.entry("prologis", "PLD"),
             Map.entry("welltower", "WELL"),
             Map.entry("exelon", "EXC"),
+            Map.entry("american electric power", "AEP"),
+            Map.entry("consolidated edison", "ED"),
+            Map.entry("xcel energy", "XEL"),
             Map.entry("valero", "VLO"),
             Map.entry("amazon", "AMZN"),
             Map.entry("google", "GOOGL"),
@@ -160,9 +165,6 @@ public class FinancialRagService {
     @Value("${app.financial-rag.evidence-ledger.retry-on-empty:true}")
     private boolean evidenceLedgerRetryOnEmpty;
 
-    @Value("${app.financial-rag.answer-coverage-repair.enabled:true}")
-    private boolean answerCoverageRepairEnabled;
-
     @Value("${app.financial-rag.citation-verifier.enabled:true}")
     private boolean citationVerifierEnabled;
 
@@ -195,14 +197,14 @@ public class FinancialRagService {
         }
 
         try {
-            FinancialRetrievalPlan plan = planRetrieval(prompt, conversationId, modelId);
+            FinancialRetrievalPlan plan = timedPlanRetrieval(prompt, conversationId, modelId);
             SearchOutcome searchOutcome = searchWithDiagnostics(plan, retrievalMode);
             List<FinancialChunk> chunks = searchOutcome.chunks();
             if (chunks.isEmpty()) {
                 return Flux.just("未在 Multi-Doc-2025 年报知识库中检索到相关片段。请确认索引已构建，或在问题中补充公司和年份。");
             }
 
-            FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
+            FinancialEvidenceLedger.Ledger ledger = timedBuildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
             String userPrompt = answerPrompt(prompt, plan, ledger);
 
             Flux<String> answer = financeChatClient(modelId).prompt()
@@ -211,7 +213,8 @@ public class FinancialRagService {
                     .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                     .stream()
                     .content();
-            return verifyAnswer(answer, ledger, prompt);
+            return answer.collectList().flatMapMany(parts -> Flux.just(finalizeGeneratedAnswer(
+                    prompt, plan, ledger, String.join("", parts), modelId)));
         } catch (Exception ex) {
             return Flux.just("金融问答检索失败：" + ex.getMessage());
         }
@@ -235,7 +238,7 @@ public class FinancialRagService {
         }
 
         try {
-            FinancialRetrievalPlan plan = planRetrieval(prompt, conversationId, modelId);
+            FinancialRetrievalPlan plan = timedPlanRetrieval(prompt, conversationId, modelId);
             String retrievalQuery = plan.displayQuery();
             long translationMs = elapsedMs(translationStartedAt);
             long retrievalStartedAt = System.currentTimeMillis();
@@ -248,7 +251,7 @@ public class FinancialRagService {
                     searchOutcome.quality(), searchOutcome.warnings());
             }
 
-            FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
+            FinancialEvidenceLedger.Ledger ledger = timedBuildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
             long retrievalMs = elapsedMs(retrievalStartedAt);
             String userPrompt = answerPrompt(prompt, plan, ledger);
 
@@ -259,7 +262,7 @@ public class FinancialRagService {
                     .stream()
                     .chatResponse()
                     .flatMapIterable(this::eventsFromResponse);
-            content = verifyAnswerEvents(content, ledger, prompt);
+            content = finalizeAnswerEvents(content, prompt, plan, ledger, modelId);
             return new FinancialAnswerStream(content, translationMs, retrievalMs, true, retrievalQuery,
                     searchOutcome.quality(), searchOutcome.warnings());
         } catch (Exception ex) {
@@ -277,7 +280,7 @@ public class FinancialRagService {
         long startedAt = System.currentTimeMillis();
         try {
             long planningStartedAt = System.currentTimeMillis();
-            FinancialRetrievalPlan plan = planRetrieval(prompt, conversationId, modelId);
+            FinancialRetrievalPlan plan = timedPlanRetrieval(prompt, conversationId, modelId);
             long planningMs = elapsedMs(planningStartedAt);
 
             long retrievalStartedAt = System.currentTimeMillis();
@@ -290,7 +293,7 @@ public class FinancialRagService {
                         elapsedMs(retrievalStartedAt), 0L, elapsedMs(startedAt), "没有检索到证据",
                         searchOutcome.quality(), searchOutcome.warnings());
             }
-            FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
+            FinancialEvidenceLedger.Ledger ledger = timedBuildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
             long retrievalMs = elapsedMs(retrievalStartedAt);
 
             long generationStartedAt = System.currentTimeMillis();
@@ -303,16 +306,9 @@ public class FinancialRagService {
                             .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                             .call()
                             .content());
-            String answer = citationVerifierEnabled
-                    ? citationVerifier.enforce(generated, ledger, citationVerifierStrict, prompt)
-                    : generated;
-            String repaired = repairIncompleteAnswer(prompt, plan, ledger, answer, modelId);
-            if (!repaired.equals(answer)) {
-                answer = citationVerifierEnabled
-                        ? citationVerifier.enforce(repaired, ledger, citationVerifierStrict, prompt)
-                        : repaired;
-            }
+            String answer = finalizeGeneratedAnswer(prompt, plan, ledger, generated, modelId);
             long generationMs = elapsedMs(generationStartedAt);
+            logStage("generation", generationMs);
             FinancialCitationVerifier.Audit audit = citationVerifier.verify(answer, ledger);
             return new FinancialAnalysisResult(answer, plan.resolvedQuestion(), plan.intent(),
                     analysisTasks(plan), analysisCalculationPlans(plan), analysisEvidence(ledger),
@@ -390,7 +386,7 @@ public class FinancialRagService {
                               "calculationPlans": [
                                 {
                                   "id": "stable id such as calculate_aapl_multiple",
-                                  "operator": "ADD | SUBTRACT | DIVIDE | PERCENT_CHANGE | PERCENT_OF_TOTAL | SUM | COUNT | AVERAGE | CAGR",
+                                  "operator": "SUM | DIFFERENCE | RATIO | PERCENT_CHANGE | MARGIN | AVERAGE | CAGR | COUNT",
                                   "operands": [
                                     {
                                       "role": "numerator | denominator | start | end | component",
@@ -423,11 +419,16 @@ public class FinancialRagService {
                             - Prefer English retrieval queries because SEC filings are indexed in English.
                              - For cross-company or cross-year questions, create one retrieve sub-task per company/year/metric fact.
                              - Keep calculation/comparison nodes dependent on the retrieve nodes; do not combine all entities into one retrieve task.
+                             - Keep metric fields limited to topics explicitly requested by the user. Synonyms may expand query text,
+                               but must not create new answer dimensions. For example, auditor independence/responsibility must not
+                               expand into GAAP, COSO, ICFR, or the full audit opinion unless those dimensions were asked for.
                              - For every requested arithmetic result, emit one calculationPlans entry. Choose the operator from meaning,
-                               not by copying wording. DIVIDE with outputUnit=times means a multiple; PERCENT_OF_TOTAL means a ratio × 100.
+                               not by copying wording. RATIO with outputUnit=times means a multiple; MARGIN means numerator / denominator × 100.
+                             - For a financial trend across fiscal periods, retrieve every endpoint and emit adjacent
+                               PERCENT_CHANGE plans unless the user explicitly asks for absolute differences only.
                               - List only known input values as operands, in execution order, and bind each operand to the retrieve task
                                 that supplies that exact input. Never use the unknown value being solved for as an operand. For example,
-                                if a current value is 5.0 and it increased by 2.6, SUBTRACT operands are current value then increase amount;
+                                if a current value is 5.0 and it increased by 2.6, DIFFERENCE operands are current value then increase amount;
                                 create a retrieve task for the disclosed increase, not for the unknown prior-year result.
                               - Copy a numerical input explicitly supplied by the question into that operand's rawValue/unit/scale.
                                 Leave rawValue empty when the input must be extracted from retrieval evidence. Explicit inputs are still
@@ -472,8 +473,11 @@ public class FinancialRagService {
         LinkedHashSet<String> scopedCompanyHints = new LinkedHashSet<>(explicitCompanies);
         scopedCompanyHints.addAll(discoveredCompanies);
         explicitScopes.stream().map(CompanyYearScope::company).forEach(scopedCompanyHints::add);
+        String requiredItem = requestedItem(prompt);
         if (explicitScopes.isEmpty() && scopedCompanyHints.isEmpty()) {
-            return plan;
+            return new FinancialRetrievalPlan(plan.translatedQuestion(), plan.resolvedQuestion(), plan.intent(),
+                    plan.queries(), enforceRequestedItemScope(plan.subTasks(), requiredItem),
+                    plan.calculationPlans());
         }
         List<FinancialRetrievalTask> tasks = plan.subTasks().stream()
                 .map(task -> bindDiscoveredCompany(task, discoveredCompanies, known))
@@ -502,7 +506,25 @@ public class FinancialRagService {
                     List.of(scope.company()), List.of(scope.year()), "", "retrieve", "hybrid", List.of()));
         }
         return new FinancialRetrievalPlan(plan.translatedQuestion(), plan.resolvedQuestion(), plan.intent(),
-                plan.queries(), List.copyOf(tasks), plan.calculationPlans());
+                plan.queries(), enforceRequestedItemScope(tasks, requiredItem), plan.calculationPlans());
+    }
+
+    List<FinancialRetrievalTask> enforceRequestedItemScope(List<FinancialRetrievalTask> tasks,
+                                                            String requiredItem) {
+        if (requiredItem == null || requiredItem.isBlank()) {
+            return List.copyOf(tasks);
+        }
+        return tasks.stream().map(task -> {
+            if (!"retrieve".equalsIgnoreCase(task.operation()) || usesSoftSectionScope(task)) {
+                return task;
+            }
+            String query = REQUESTED_ITEM_PATTERN.matcher(task.query()).replaceAll(requiredItem);
+            if (requestedItem(query).isBlank()) {
+                query = cleanLine(query + " " + requiredItem);
+            }
+            return new FinancialRetrievalTask(task.id(), query, task.companies(), task.years(), task.metric(),
+                    task.operation(), task.modality(), task.dependsOn());
+        }).toList();
     }
 
     private List<AnalysisCalculationPlan> analysisCalculationPlans(FinancialRetrievalPlan plan) {
@@ -704,10 +726,13 @@ public class FinancialRagService {
             if (isTextEnumerationQuestion(prompt)) {
                 calculationPlans = List.of();
             } else {
+                calculationPlans = rejectUnrequestedPercentageChanges(prompt, calculationPlans);
+                calculationPlans = rejectUnrequestedCagr(prompt, calculationPlans);
                 calculationPlans = repairCalculationPlanBindings(subTasks, calculationPlans);
                 calculationPlans = rejectHeaderOnlyValuePlans(subTasks, calculationPlans);
                 calculationPlans = completeStructuredCountPlans(subTasks, calculationPlans);
                 calculationPlans = completeAdjacentPercentageChangePlans(subTasks, calculationPlans);
+                calculationPlans = completeTrendCalculationPlans(intent, subTasks, calculationPlans);
             }
             List<String> queries = new ArrayList<>();
             FinancialRetrievalPlan fallback = fallbackRetrievalPlan(prompt);
@@ -736,6 +761,34 @@ public class FinancialRagService {
                     exception.getMessage());
             return fallbackRetrievalPlan(prompt);
         }
+    }
+
+    List<FinancialEvidenceLedger.CalculationPlan> rejectUnrequestedPercentageChanges(
+            String question, List<FinancialEvidenceLedger.CalculationPlan> plans) {
+        String lower = cleanLine(stripDatasetRetrievalScope(question)).toLowerCase(Locale.ROOT);
+        boolean requestsPercentageChange = containsAnyText(lower,
+                "percentage change", "percent change", "percentage growth", "percent growth", "growth rate",
+                "what percentage", "by what percent", "% change", "百分比", "百分率", "增长率", "增幅");
+        if (requestsPercentageChange) {
+            return List.copyOf(plans);
+        }
+        return plans.stream()
+                .filter(plan -> plan.operator() != FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE)
+                .toList();
+    }
+
+    List<FinancialEvidenceLedger.CalculationPlan> rejectUnrequestedCagr(
+            String question, List<FinancialEvidenceLedger.CalculationPlan> plans) {
+        String lower = cleanLine(stripDatasetRetrievalScope(question)).toLowerCase(Locale.ROOT);
+        boolean requestsCagr = containsAnyText(lower,
+                "compound annual growth rate", "compound annual rate", "annualized growth rate", "cagr",
+                "复合年增长率", "年复合增长率");
+        if (requestsCagr) {
+            return List.copyOf(plans);
+        }
+        return plans.stream()
+                .filter(plan -> plan.operator() != FinancialEvidenceLedger.CalculationOperator.CAGR)
+                .toList();
     }
 
     private FinancialRetrievalPlan fallbackRetrievalPlan(String prompt) {
@@ -841,6 +894,54 @@ public class FinancialRagService {
                                 new FinancialEvidenceLedger.CalculationOperand(
                                         "end", end.id(), company, end.years().get(0), end.metric())),
                         seed.outputUnit(), seed.outputScale(), seed.precision(), 0));
+            }
+        }
+        return List.copyOf(completed);
+    }
+
+    List<FinancialEvidenceLedger.CalculationPlan> completeTrendCalculationPlans(
+            String intent,
+            List<FinancialRetrievalTask> tasks,
+            List<FinancialEvidenceLedger.CalculationPlan> plans) {
+        if (!"trend".equalsIgnoreCase(cleanLine(intent))) {
+            return List.copyOf(plans);
+        }
+        List<FinancialEvidenceLedger.CalculationPlan> completed = new ArrayList<>(plans);
+        Map<String, List<FinancialRetrievalTask>> series = tasks.stream()
+                .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                .filter(task -> task.companies().size() == 1 && task.years().size() == 1)
+                .filter(task -> !cleanLine(task.metric()).isBlank())
+                .collect(java.util.stream.Collectors.groupingBy(
+                        task -> task.companies().get(0).toUpperCase(Locale.ROOT) + "|"
+                                + cleanLine(task.metric()).toLowerCase(Locale.ROOT),
+                        LinkedHashMap::new, java.util.stream.Collectors.toList()));
+        for (List<FinancialRetrievalTask> unordered : series.values()) {
+            List<FinancialRetrievalTask> ordered = unordered.stream()
+                    .sorted(Comparator.comparing(task -> task.years().get(0)))
+                    .toList();
+            for (int index = 1; index < ordered.size(); index++) {
+                FinancialRetrievalTask start = ordered.get(index - 1);
+                FinancialRetrievalTask end = ordered.get(index);
+                boolean exists = completed.stream().anyMatch(plan ->
+                        plan.operator() == FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE
+                                && plan.operands().stream().anyMatch(operand ->
+                                operand.sourceTaskId().equalsIgnoreCase(start.id()))
+                                && plan.operands().stream().anyMatch(operand ->
+                                operand.sourceTaskId().equalsIgnoreCase(end.id())));
+                if (exists) {
+                    continue;
+                }
+                String company = start.companies().get(0).toUpperCase(Locale.ROOT);
+                completed.add(new FinancialEvidenceLedger.CalculationPlan(
+                        "calculate_trend_" + company.toLowerCase(Locale.ROOT) + "_"
+                                + start.years().get(0) + "_" + end.years().get(0),
+                        FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE,
+                        List.of(
+                                new FinancialEvidenceLedger.CalculationOperand(
+                                        "start", start.id(), company, start.years().get(0), start.metric()),
+                                new FinancialEvidenceLedger.CalculationOperand(
+                                        "end", end.id(), company, end.years().get(0), end.metric())),
+                        "percent", "unit", 1, 0));
             }
         }
         return List.copyOf(completed);
@@ -1130,6 +1231,7 @@ public class FinancialRagService {
         List<FinancialEvidenceLedger.EvidenceDocument> documents = new ArrayList<>();
         List<FinancialChunk> verifiedChunks = verifyAndSelectEvidence(plan, chunks,
                 Math.max(1, evidenceLedgerMaxDocuments), Math.max(1, evidenceLedgerMaxDocumentsPerTask));
+        logRetrievalTaskTrace("evidence_ledger", plan.subTasks(), verifiedChunks);
         int remainingContentChars = Math.max(1000, evidenceLedgerMaxTotalContentChars);
         for (int index = 0; index < verifiedChunks.size() && remainingContentChars > 0; index++) {
             FinancialChunk chunk = verifiedChunks.get(index);
@@ -1147,7 +1249,7 @@ public class FinancialRagService {
             String content = adaptiveEvidenceContent(chunk, plan, retrievalMode, contentLimit);
             documents.add(new FinancialEvidenceLedger.EvidenceDocument(
                     "E" + (index + 1), chunk.chunkId(), chunk.sourceFile(), company, year,
-                    chunk.chunkType(), canonicalItem(chunk), chunk.metadataText("section_title"),
+                    chunk.chunkType(), canonicalItem(chunk), readableSectionTitle(chunk.metadataText("section_title")),
                     content,
                     List.copyOf(chunk.matchedTaskIds)));
             remainingContentChars -= content.length();
@@ -1163,12 +1265,17 @@ public class FinancialRagService {
             String extraction = extractEvidenceFacts(modelId, extractionQuestion, documents);
             FinancialEvidenceLedger.Ledger result = evidenceLedger.build(
                     prompt, documents, extraction, plan.calculationPlans());
-            boolean incompleteNumericalLedger = numericalLedgerIncomplete(plan, result);
+            Set<String> missingNumericalTasks = missingNumericalTaskIds(plan, result);
+            boolean incompleteNumericalLedger = numericalLedgerIncomplete(plan, result)
+                    || !missingNumericalTasks.isEmpty();
             if (incompleteNumericalLedger && evidenceLedgerRetryOnEmpty
                     && needsEvidenceFacts(prompt, plan, documents)) {
-                List<FinancialEvidenceLedger.EvidenceDocument> retryDocuments = compactExtractionDocuments(documents, 8);
+                List<FinancialEvidenceLedger.EvidenceDocument> retryDocuments =
+                        compactExtractionDocuments(documents, 8, missingNumericalTasks);
                 String retryQuestion = plan.resolvedQuestion() + "\n\nRequired numerical retrieval tasks:\n"
                         + requiredCoverage(plan)
+                        + "\nMissing numerical task IDs (extract these first):\n"
+                        + String.join(", ", missingNumericalTasks)
                         + "\nAlready verified facts (do not repeat these; extract missing operands):\n"
                         + result.facts()
                         + "\nExtract every directly supported operand needed for totals, differences, percentages, and counts.";
@@ -1188,7 +1295,7 @@ public class FinancialRagService {
         if (chunks == null || chunks.isEmpty()) {
             return List.of();
         }
-        List<FinancialRetrievalTask> tasks = plan.subTasks().stream()
+        List<FinancialRetrievalTask> tasks = atomicRetrievalScopes(plan.subTasks()).stream()
                 .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
                 .filter(task -> !task.id().isBlank())
                 .toList();
@@ -1217,6 +1324,7 @@ public class FinancialRagService {
             for (FinancialRetrievalTask task : tasks) {
                 List<FinancialChunk> matches = chunks.stream()
                         .filter(chunk -> verifiedByChunk.getOrDefault(chunk.chunkId(), Set.of()).contains(task.id()))
+                        .filter(chunk -> evidenceMatchesTaskScope(task, chunk))
                         .toList();
                 if (pass < matches.size()) {
                     String chunkId = matches.get(pass).chunkId();
@@ -1245,6 +1353,10 @@ public class FinancialRagService {
     }
 
     boolean evidenceMatchesTaskScope(FinancialRetrievalTask task, FinancialChunk chunk) {
+        return evidenceSupport(task, chunk) == EvidenceSupport.DIRECT_SUPPORT;
+    }
+
+    EvidenceSupport evidenceSupport(FinancialRetrievalTask task, FinancialChunk chunk) {
         String company = defaultIfBlank(chunk.metadataText("company"), sourceCompany(chunk.sourceFile()));
         String year = defaultIfBlank(chunk.metadataText("year"), sourceYear(chunk.sourceFile()));
         boolean companyMatches = task.companies().isEmpty()
@@ -1253,31 +1365,43 @@ public class FinancialRagService {
         String item = requestedItemForTask(task);
         boolean itemMatches = item.isBlank() || item.equalsIgnoreCase(canonicalItem(chunk));
         if (!companyMatches || !yearMatches || !itemMatches || chunk.content().isBlank()) {
-            return false;
+            return EvidenceSupport.IRRELEVANT;
         }
         if (isBiographicalFactTask(task)) {
-            return biographicalEvidenceMatches(task.query(), chunk.content());
+            return biographicalEvidenceMatches(task.query(), chunk.content())
+                    ? EvidenceSupport.DIRECT_SUPPORT : EvidenceSupport.SCOPE_ONLY;
         }
         if (isFilingCrossReferenceTask(task)) {
             String lower = cleanLine(chunk.content()).toLowerCase(Locale.ROOT);
             return filingCrossReferenceEvidenceMatches(chunk.content())
                     || (lower.contains("segment") && (lower.contains("note")
-                    || lower.contains("financial statement")));
+                    || lower.contains("financial statement")))
+                    ? EvidenceSupport.DIRECT_SUPPORT : EvidenceSupport.SCOPE_ONLY;
         }
         if (!taskRequestsBreakdown(task) && isRegionalBreakdownEvidence(chunk.content())) {
-            return false;
+            return EvidenceSupport.IRRELEVANT;
         }
         if (requiresDirectMetricEvidence(task)
                 && !evidenceLedger.containsDirectMetricValue(task.metric(), chunk.content())) {
-            return false;
+            return EvidenceSupport.SCOPE_ONLY;
+        }
+        if (isAuditEvidenceTask(task) && !auditEvidenceMatches(task, chunk.content())) {
+            return EvidenceSupport.SCOPE_ONLY;
+        }
+        if (isGuaranteeEvidenceTask(task) && !guaranteeEvidenceMatches(chunk.content())) {
+            return EvidenceSupport.SCOPE_ONLY;
         }
         // Text chunks can contain orphan table rows with lost region and period headers.
         if (requiresDirectMetricEvidence(task) && !"table".equalsIgnoreCase(chunk.chunkType())
                 && Pattern.compile("(?m)^\\s*\\|").matcher(chunk.content()).find()
                 && !chunk.content().contains("Table header:")) {
-            return false;
+            return EvidenceSupport.IRRELEVANT;
         }
-        return true;
+        if (isHeaderOnlyTask(task)
+                && !chunk.content().toLowerCase(Locale.ROOT).contains("table header:")) {
+            return EvidenceSupport.SCOPE_ONLY;
+        }
+        return EvidenceSupport.DIRECT_SUPPORT;
     }
 
     private boolean taskRequestsBreakdown(FinancialRetrievalTask task) {
@@ -1307,11 +1431,77 @@ public class FinancialRagService {
         if (metric.startsWith("total ") || metric.startsWith("total_")) {
             return true;
         }
-        if (!"table".equalsIgnoreCase(effectiveTaskModality(task))) {
+        if (isHeaderOnlyTask(task)) {
             return false;
         }
-        return containsAnyText(metric, "revenue", "sales", "income", "earnings", "profit",
-                "cash", "asset", "membership", "subscriber", "addition", "margin", "expense");
+        if (isQuantitativeMetric(metric)) {
+            return true;
+        }
+        return !"text".equalsIgnoreCase(effectiveTaskModality(task)) && containsAnyText(metric,
+                "revenue", "sales", "income", "earnings", "profit",
+                "cash", "asset", "liability", "membership", "subscriber", "addition", "margin", "expense",
+                "earnings per share", "eps");
+    }
+
+    private boolean isQuantitativeMetric(String metric) {
+        return containsAnyText(cleanLine(metric).toLowerCase(Locale.ROOT),
+                "revenue", "sales", "income", "earnings", "profit", "cash", "asset", "liability",
+                "membership", "subscriber", "addition", "margin", "expense", "earnings per share", "eps");
+    }
+
+    private boolean isAuditEvidenceTask(FinancialRetrievalTask task) {
+        String description = (cleanLine(task.metric()) + " " + cleanLine(task.query())).toLowerCase(Locale.ROOT);
+        return containsAnyText(description, "audit opinion", "audit_opinion", "auditor independence",
+                "auditor responsibility", "independent registered public accounting firm");
+    }
+
+    private boolean isAuditOpinionTask(FinancialRetrievalTask task) {
+        String description = (cleanLine(task.metric()) + " " + cleanLine(task.query())).toLowerCase(Locale.ROOT);
+        return containsAnyText(description, "audit opinion", "audit_opinion");
+    }
+
+    private boolean auditEvidenceMatches(FinancialRetrievalTask task, String content) {
+        String description = (cleanLine(task.metric()) + " " + cleanLine(task.query())).toLowerCase(Locale.ROOT);
+        String lower = cleanLine(content).toLowerCase(Locale.ROOT);
+        boolean opinion = containsAnyText(lower, "opinion on the financial statements", "opinion on financial statements")
+                || (lower.contains("in our opinion") && lower.contains("present fairly"));
+        boolean independence = lower.contains("required to be independent")
+                || (lower.contains("public accounting firm") && lower.contains("pcaob"));
+        boolean responsibility = containsAnyText(lower, "our responsibility is to express an opinion",
+                "our responsibility is to express opinions", "auditor's responsibility", "auditor responsibility");
+        if (description.contains("independence") && description.contains("responsibility")) {
+            return independence && responsibility;
+        }
+        if (description.contains("independence")) {
+            return independence;
+        }
+        if (description.contains("responsibility")) {
+            return responsibility;
+        }
+        if (containsAnyText(description, "audit opinion", "audit_opinion")) {
+            return opinion && completeAuditOpinionEvidence(lower);
+        }
+        return opinion;
+    }
+
+    boolean completeAuditOpinionEvidence(String content) {
+        String lower = cleanLine(content).toLowerCase(Locale.ROOT);
+        boolean coversInternalControl = lower.contains("internal control over financial reporting");
+        boolean givesInternalControlOpinion = containsAnyText(lower,
+                "maintained effective internal control", "maintains effective internal control",
+                "effective internal control over financial reporting")
+                && containsAnyText(lower, "also in our opinion", "in our opinion");
+        return coversInternalControl && givesInternalControlOpinion;
+    }
+
+    private boolean isGuaranteeEvidenceTask(FinancialRetrievalTask task) {
+        String description = (cleanLine(task.metric()) + " " + cleanLine(task.query())).toLowerCase(Locale.ROOT);
+        return description.contains("guarantee") || description.contains("indemnif");
+    }
+
+    private boolean guaranteeEvidenceMatches(String content) {
+        String lower = cleanLine(content).toLowerCase(Locale.ROOT);
+        return lower.contains("guarantee") || lower.contains("indemnif");
     }
 
     private String sourceCompany(String sourceFile) {
@@ -1342,6 +1532,9 @@ public class FinancialRagService {
                 && matchedTasks.stream().anyMatch(this::requiresDirectMetricEvidence)) {
             return compactMetricTable(chunk.content(), matchedTasks, limit);
         }
+        if (matchedTasks.stream().anyMatch(this::isAuditEvidenceTask)) {
+            return compactAuditEvidence(chunk.content(), query, limit);
+        }
         String child = centeredEvidenceWindow(chunk.content(), query, limit);
         if (retrievalMode != FinancialRetrievalMode.PARENT_CHILD || child.length() >= limit * 3 / 5) {
             return child;
@@ -1359,6 +1552,28 @@ public class FinancialRagService {
             return child;
         }
         return child + "\n\nLocal context:\n" + localParent;
+    }
+
+    String compactAuditEvidence(String content, String query, int limit) {
+        String text = defaultIfBlank(content, "").strip();
+        if (text.length() <= limit) {
+            return text;
+        }
+        String marker = "Complementary audit-standards passage:";
+        int markerIndex = text.indexOf(marker);
+        if (markerIndex < 0) {
+            return centeredEvidenceWindow(text, query, limit);
+        }
+        String primary = text.substring(0, markerIndex).strip();
+        String standards = text.substring(markerIndex + marker.length()).strip();
+        int separatorLength = 45;
+        int primaryBudget = Math.max(700, Math.min(primary.length(), limit * 2 / 3));
+        int standardsBudget = Math.max(300, limit - primaryBudget - separatorLength);
+        String primaryWindow = centeredEvidenceWindow(primary,
+                query + " present fairly effective internal control COSO", primaryBudget);
+        String standardsWindow = centeredEvidenceWindow(standards,
+                "conducted audits standards PCAOB internal control", standardsBudget);
+        return primaryWindow + "\n\nComplementary audit standards:\n" + standardsWindow;
     }
 
     String compactMetricTable(String content, List<FinancialRetrievalTask> tasks, int limit) {
@@ -1480,11 +1695,20 @@ public class FinancialRagService {
 
     List<FinancialEvidenceLedger.EvidenceDocument> compactExtractionDocuments(
             List<FinancialEvidenceLedger.EvidenceDocument> documents, int limit) {
+        return compactExtractionDocuments(documents, limit, Set.of());
+    }
+
+    List<FinancialEvidenceLedger.EvidenceDocument> compactExtractionDocuments(
+            List<FinancialEvidenceLedger.EvidenceDocument> documents, int limit,
+            Set<String> priorityTaskIds) {
         Map<String, FinancialEvidenceLedger.EvidenceDocument> selected = new LinkedHashMap<>();
         LinkedHashSet<String> taskIds = documents.stream()
                 .flatMap(document -> document.matchedTaskIds().stream())
                 .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-        for (String taskId : taskIds) {
+        LinkedHashSet<String> orderedTaskIds = new LinkedHashSet<>();
+        orderedTaskIds.addAll(priorityTaskIds == null ? Set.of() : priorityTaskIds);
+        orderedTaskIds.addAll(taskIds);
+        for (String taskId : orderedTaskIds) {
             documents.stream().filter(document -> document.matchedTaskIds().contains(taskId)).limit(2)
                     .forEach(document -> selected.putIfAbsent(document.evidenceId(), compactDocument(document)));
             if (selected.size() >= limit) {
@@ -1517,8 +1741,10 @@ public class FinancialRagService {
     private boolean needsEvidenceFacts(String originalQuestion,
                                        FinancialRetrievalPlan plan,
                                        List<FinancialEvidenceLedger.EvidenceDocument> documents) {
-        String question = (defaultIfBlank(originalQuestion, "") + " "
-                + defaultIfBlank(plan.resolvedQuestion(), "")).toLowerCase(Locale.ROOT);
+        // Decide whether to extract values from the user's question, not from topics introduced by
+        // the planner rewrite. This prevents qualitative disclosure comparisons from injecting
+        // incidental table values into the final answer.
+        String question = defaultIfBlank(originalQuestion, plan.resolvedQuestion()).toLowerCase(Locale.ROOT);
         if (isTextEnumerationQuestion(question)) {
             return false;
         }
@@ -1741,6 +1967,41 @@ public class FinancialRagService {
                 && ledger.calculations().size() < plan.calculationPlans().size();
     }
 
+    Set<String> missingNumericalTaskIds(FinancialRetrievalPlan plan,
+                                        FinancialEvidenceLedger.Ledger ledger) {
+        LinkedHashSet<String> missing = new LinkedHashSet<>();
+        for (FinancialEvidenceLedger.CalculationPlan calculation : plan.calculationPlans()) {
+            if (calculation.operator() == FinancialEvidenceLedger.CalculationOperator.COUNT) {
+                continue;
+            }
+            for (FinancialEvidenceLedger.CalculationOperand operand : calculation.operands()) {
+                if (!operand.sourceTaskId().isBlank()
+                        && !evidenceLedger.hasFactForOperand(
+                        operand, ledger.facts(), ledger.evidence())) {
+                    missing.add(operand.sourceTaskId());
+                }
+            }
+        }
+        if (!plan.calculationPlans().isEmpty()) {
+            return Set.copyOf(missing);
+        }
+        for (FinancialRetrievalTask task : atomicRetrievalScopes(plan.subTasks())) {
+            if (!"retrieve".equalsIgnoreCase(task.operation())
+                    || "text".equalsIgnoreCase(effectiveTaskModality(task))
+                    || isHeaderOnlyTask(task) || !requiresDirectMetricEvidence(task)) {
+                continue;
+            }
+            FinancialEvidenceLedger.CalculationOperand requiredFact =
+                    new FinancialEvidenceLedger.CalculationOperand(
+                            "value", task.id(), task.companies().stream().findFirst().orElse(""),
+                            task.years().stream().findFirst().orElse(""), task.metric());
+            if (!evidenceLedger.hasFactForOperand(requiredFact, ledger.facts(), ledger.evidence())) {
+                missing.add(task.id());
+            }
+        }
+        return Set.copyOf(missing);
+    }
+
     private boolean containsAnyText(String value, String... candidates) {
         for (String candidate : candidates) {
             if (value.contains(candidate)) {
@@ -1765,10 +2026,22 @@ public class FinancialRagService {
     String answerPrompt(String prompt,
                         FinancialRetrievalPlan plan,
                         FinancialEvidenceLedger.Ledger ledger) {
+        // QueryIntent scopes qualitative generation only. Numeric answers continue to follow the
+        // planner coverage and verified [F#]/[C#] path used before the lightweight intent change.
+        if (usesNumericAnswerContract(prompt, plan)) {
+            return numericAnswerPrompt(prompt, plan, ledger);
+        }
+        QueryIntent intent = queryIntent(plan);
+        if (intent.companies().size() <= 1 || !intent.needsComparison() || intent.needsCalculation()) {
+            return directQualitativeAnswerPrompt(prompt, plan, ledger);
+        }
         return """
                 Required output language: %s. This is mandatory; do not translate the answer into another language.
 
                 User question:
+                %s
+
+                Lightweight QueryIntent (qualitative generation scope only):
                 %s
 
                 %s
@@ -1776,63 +2049,149 @@ public class FinancialRagService {
                 Required retrieval coverage:
                 %s
 
+                Question-specific answer contract:
+                %s
+
                 Answer rules:
                 1. Use only information in the Evidence Ledger. Do not add outside knowledge.
-                2. Answer every clause of the question and cover every available company-year item in the required
-                   retrieval coverage. Do not stop after finding evidence for only one side of a comparison.
-                   Give the minimum sufficient answer. For direct numerical or short multi-part questions, use one
-                   concise sentence per requested clause, normally 40-90 words total. Include only requested results;
-                   do not narrate intermediate operands, confirmations, or derivations unless the user asks for them.
-                   Do not include adjacent prior-year columns, source-table percentages, or surrounding metrics unless
-                   they are requested operands or requested comparison results. State each operand and result at most
-                   once; do not repeat the same quantity in rounded and full-precision forms unless explicitly asked.
-                   For a qualitative comparison, use at most one concise bullet per company/year followed by one
-                   comparison sentence. Never exceed 180 words and do not repeat the conclusion.
-                   Do not enumerate unrelated segment tables, examples, background, or evidence outside the requested
-                   filing item/section merely because it appears in the ledger.
-                3. For direct numerical values, prefer verified facts [F#]. For arithmetic, use only verified
-                   calculations [C#], reproduce the result exactly, and cite the corresponding [C#].
-                   Preserve the scale and rounding style requested by the question. If the question uses rounded
-                   billions while the ledger reports millions, convert to the requested billion scale and give only
-                   the requested rounded result unless exact precision is explicitly requested.
-                4. Qualitative statements and exact quotations may be taken directly from evidence [E#], even when
-                   they do not produce a numerical [F#]. Preserve the meaning and wording of quoted filing text.
-                4a. When asked which distinct items, terms, words, or phrases are "mentioned in the description" of
-                    a filing section, extract only the literal parallel noun phrases in that descriptive sentence.
-                    Deduplicate those phrases across requested years, then count them. Do not reinterpret financial
-                    metrics or table rows elsewhere in the section as the requested descriptive items.
-                4b. When asked for an objective, mission, or strategy, distinguish an explicitly stated objective from
-                    an inferred initiative. Do not promote capital plans, regulatory obligations, or operating actions
-                    into a "primary objective" unless the supplied evidence explicitly frames them that way.
-                    Report only the explicit objective for each company, or state that the supplied excerpt does not
-                    explicitly state one. Do not list risk factors as implied objectives. If any company has an explicit
-                    objective, the opening conclusion must not say that no company has one.
-                4c. Honor an explicitly requested Item, section, or dataset evidence-section scope. Do not use or cite
-                    evidence from another Item merely because it contains a more detailed or convenient answer.
-                4d. If the question asks which financial-statement line item an analyst would use, return the line-item
-                    name and statement name only. Treat it as identification, not as a request to extract values or
-                    perform arithmetic on unrelated table rows.
-                4e. Distinguish an explicit meta-disclosure such as "we provide quantitative information" from a
-                    filing that merely reports numerical sales results. When asked which company explicitly states
-                    that it provides such information, require the explicit statement; do not treat unrelated
-                    percentage tables or sales-variance prose as an equivalent methodological statement.
-                5. Put the supporting [E#] citation after every key conclusion or quotation. A citation must refer to
-                   the same company and fiscal year as the claim. Write separate markers such as [F1][E2].
-                6. For cross-company or cross-year questions, organize the answer by company and fiscal year before
-                   giving the comparison or trend conclusion.
-                7. If evidence for one required item is insufficient, name that exact company, fiscal year, and fact;
-                   still answer the remaining supported items. Never silently omit a required item.
-                8. A few retrieved excerpts cannot establish that a metric is absent from an entire filing.
-                   If excerpts omit it, say only that it was not found in the supplied excerpts. Never infer
-                   discontinued disclosure or a changed disclosure policy from missing retrieval results.
-                8a. In a qualitative comparison, do not refuse merely because one side lacks a parallel discussion.
-                    When scoped evidence shows that one company does not directly address the requested topic but uses
-                    a related or broader disclosure, state that asymmetry concisely and compare it with the other side.
-                    Describe only the supplied evidence, not the absence of content from the entire filing.
+                2. Answer only requestedTopics and cover every requested company/year. Do not add related but unasked
+                   audit, accounting, control, risk, numerical, or disclosure dimensions.
+                3. Give the minimum sufficient answer: one short sentence per requested topic/entity plus one contrast
+                   sentence when comparison is requested. Target 40-120 words and do not repeat the conclusion.
+                4. Use verified [F#] facts for reported values and only verified [C#] calculations for arithmetic.
+                   Never calculate freely in prose or include intermediate operands unless explicitly requested.
+                5. Put a matching [E#] after each key claim. If a required fact lacks evidence, name that exact gap and
+                   still answer supported parts; absence means only "not found in the supplied evidence".
+                6. End with a Sources list and answer in the user's language.
                 9. End with a Sources list formatted as `[E#] source_file — section`; never invent page numbers.
                 10. Answer in the language of the user question: English question in English, Chinese question in
                     Chinese. Preserve company names, financial terms, and original quotations in their source language.
+                """.formatted(answerLanguage(prompt), prompt, qualitativeTopicScope(plan), ledger.render(), requiredCoverage(plan),
+                answerContract(plan, ledger));
+    }
+
+    private String qualitativeTopicScope(FinancialRetrievalPlan plan) {
+        QueryIntent intent = queryIntent(plan);
+        return intent.render() + "\nOnly answer the topics explicitly requested by the user; "
+                + "do not expand related but unasked topics.";
+    }
+
+    private String directQualitativeAnswerPrompt(String prompt,
+                                                 FinancialRetrievalPlan plan,
+                                                 FinancialEvidenceLedger.Ledger ledger) {
+        return """
+                Required output language: %s. This is mandatory.
+
+                User question:
+                %s
+
+                %s
+
+                Required retrieval coverage (from Query Planner):
+                %s
+
+                Answer rules:
+                1. Use only the Evidence Ledger and cover the Query Planner requirements.
+                2. Give the minimum sufficient direct answer; omit adjacent background and repeated conclusions.
+                3. Put a matching [E#] after each key claim. If evidence is missing, name the exact gap.
+                4. End with Sources formatted as `[E#] source_file - section`; never invent page numbers.
                 """.formatted(answerLanguage(prompt), prompt, ledger.render(), requiredCoverage(plan));
+    }
+
+    boolean usesNumericAnswerContract(String question, FinancialRetrievalPlan plan) {
+        // Calculation plans have already passed the unrequested-calculation guards during planning.
+        if (!plan.calculationPlans().isEmpty()) {
+            return true;
+        }
+        String lower = cleanLine(question).toLowerCase(Locale.ROOT);
+        if (lower.isBlank() || isQualitativeChangeRequest(lower)) {
+            return false;
+        }
+        boolean explicitCalculation = containsAnyText(lower,
+                "calculate", "compute", "percentage change", "percent change", "growth rate",
+                "ratio of", "margin", "cagr", "compound annual growth", "by how much",
+                "how many times", "difference between", "percentage point",
+                "计算", "百分比", "增长率", "比率", "差额", "多少倍");
+        boolean asksForValue = Pattern.compile(
+                "(?i)\\b(?:what (?:was|were|is|are)|how much|how many)\\b.{0,120}"
+                        + "\\b(?:revenue|sales|income|earnings|profit|cash|assets?|liabilit(?:y|ies)|"
+                        + "expense|margin|eps|earnings per share|amount|balance|value|number)\\b")
+                .matcher(lower).find();
+        return explicitCalculation || asksForValue;
+    }
+
+    private String numericAnswerPrompt(String prompt,
+                                       FinancialRetrievalPlan plan,
+                                       FinancialEvidenceLedger.Ledger ledger) {
+        return """
+                Required output language: %s. This is mandatory.
+
+                User question:
+                %s
+
+                %s
+
+                Required retrieval coverage (from Query Planner):
+                %s
+
+                Numeric answer contract:
+                1. Use only the Evidence Ledger and cover every requested company/year/metric.
+                2. Report every requested endpoint fact in chronological or question order with [F#][E#].
+                3. Report every verified requested calculation exactly once with [C#]. Never calculate freely.
+                4. Keep the answer as one concise paragraph so endpoint facts and calculations remain together.
+                5. Do not include intermediate arithmetic, adjacent table values, or duplicate rounded/exact forms.
+                6. If a required fact is missing, name that exact gap instead of silently omitting the period.
+                7. End with Sources formatted as `[E#] source_file - section`; never invent page numbers.
+                """.formatted(answerLanguage(prompt), prompt, ledger.render(), requiredCoverage(plan));
+    }
+
+    String answerContract(FinancialRetrievalPlan plan, FinancialEvidenceLedger.Ledger ledger) {
+        QueryIntent intent = queryIntent(plan);
+        boolean headerOnly = plan.subTasks().stream()
+                .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                .anyMatch(task -> containsAnyText((task.query() + " " + task.metric()).toLowerCase(Locale.ROOT),
+                        "table header", "table headers", "column header", "period labels", "years covered"));
+        if (intent.needsCalculation()) {
+            return "Numerical/change answer: report the requested endpoint facts in chronological order, then "
+                    + "one plain-language result sentence per verified calculation. Omit intermediate arithmetic, "
+                    + "unrequested source values, and duplicate rounded/exact forms.";
+        }
+        if (headerOnly) {
+            return "Header-evidence answer: report only the labels or periods visibly present in the header. "
+                    + "Do not claim or calculate a financial value unless a verified fact slot supplies it.";
+        }
+        if (intent.needsComparison()) {
+            return "Minimum-sufficient comparison: answer only requestedTopics=" + intent.requestedTopics()
+                    + ". Give one short finding per requested entity and one contrast sentence. Do not add adjacent "
+                    + "dimensions, examples, amounts, standards, controls, or background unless explicitly requested.";
+        }
+        return "Minimum-sufficient direct answer: answer only requestedTopics=" + intent.requestedTopics()
+                + ". State the finding first and omit adjacent metrics, dimensions, and background.";
+    }
+
+    QueryIntent queryIntent(FinancialRetrievalPlan plan) {
+        List<FinancialRetrievalTask> retrievalTasks = plan.subTasks().stream()
+                .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                .toList();
+        List<String> companies = retrievalTasks.stream().flatMap(task -> task.companies().stream())
+                .map(String::toUpperCase).distinct().toList();
+        List<String> years = retrievalTasks.stream().flatMap(task -> task.years().stream()).distinct().toList();
+        List<String> topics = retrievalTasks.stream().map(FinancialRetrievalTask::metric)
+                .map(this::cleanLine).filter(topic -> !topic.isBlank()).distinct().toList();
+        boolean comparison = "comparison".equalsIgnoreCase(plan.intent()) || companies.size() > 1 || years.size() > 1;
+        boolean calculation = !plan.calculationPlans().isEmpty() || "calculation".equalsIgnoreCase(plan.intent());
+        return new QueryIntent(companies, years, topics, comparison, calculation);
+    }
+
+    boolean isAuditOpinionComparison(FinancialRetrievalPlan plan) {
+        long auditEntities = plan.subTasks().stream()
+                .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                .filter(this::isAuditOpinionTask)
+                .flatMap(task -> task.companies().stream())
+                .map(String::toUpperCase)
+                .distinct()
+                .count();
+        return auditEntities > 1;
     }
 
     String answerLanguage(String prompt) {
@@ -1842,16 +2201,39 @@ public class FinancialRagService {
     }
 
     String requiredCoverage(FinancialRetrievalPlan plan) {
-        List<String> requirements = plan.subTasks().stream()
+        List<String> requirements = new ArrayList<>(plan.subTasks().stream()
                 .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
                 .map(task -> "- " + task.id()
                         + " | companies=" + displayValues(task.companies())
                         + " | years=" + displayValues(task.years())
                         + " | requested fact=" + defaultIfBlank(cleanLine(task.metric()), cleanLine(task.query())))
                 .distinct()
-                .toList();
+                .toList());
+        answerObligations(plan.resolvedQuestion()).forEach(requirement ->
+                requirements.add("- " + requirement));
         return requirements.isEmpty() ? "- Answer all requested entities, years, and comparison clauses."
                 : String.join("\n", requirements);
+    }
+
+    List<String> answerObligations(String question) {
+        String lower = cleanLine(question).toLowerCase(Locale.ROOT);
+        List<String> obligations = new ArrayList<>();
+        boolean asksComparison = containsAnyText(lower, "compare", "comparison", "compared with", "compared to",
+                "versus", " vs. ", "different disclosure", "\u6bd4\u8f83", "\u76f8\u6bd4", "\u5bf9\u6bd4")
+                || Pattern.compile("\\bhow\\s+do(?:es)?\\b.{0,120}\\bcompare\\b").matcher(lower).find();
+        if (asksComparison) {
+            obligations.add("comparison_clause | state an explicit comparative conclusion, not just parallel facts");
+        }
+        if ((containsAnyText(lower, "what does this", "what does the", "what do these")
+                && containsAnyText(lower, "imply", "indicate", "suggest", "mean", "reflect"))
+                || containsAnyText(lower, "\u610f\u5473\u7740", "\u8bf4\u660e\u4ec0\u4e48", "\u8868\u660e\u4ec0\u4e48")) {
+            obligations.add("interpretation_clause | explicitly explain what the reported change implies");
+        }
+        if (containsAnyText(lower, "challenge", "difficulty", "difficult", "limitation", "obstacle",
+                "\u6311\u6218", "\u56f0\u96be", "\u5c40\u9650")) {
+            obligations.add("analysis_challenge_clause | explicitly state the requested analytical or comparison challenge");
+        }
+        return List.copyOf(obligations);
     }
 
     List<String> missingAnswerCoverage(String answer, FinancialRetrievalPlan plan,
@@ -1887,49 +2269,150 @@ public class FinancialRagService {
                         + " | available evidence=" + evidenceIds);
             }
         }
+        String lowerBody = cleanLine(body).toLowerCase(Locale.ROOT);
+        for (String obligation : answerObligations(plan.resolvedQuestion())) {
+            if (obligation.startsWith("comparison_clause") && !containsAnyText(lowerBody,
+                    "higher", "lower", "faster", "slower", "outpaced", "compared", "whereas", "while",
+                    "in contrast", "difference", "differ", "more than", "less than", "not comparable",
+                    "cannot compare", "inconsistent", "asymmetry", "equivalent", "similar", "identical",
+                    "same opinion", "no substantive difference", "\u66f4\u9ad8", "\u66f4\u4f4e",
+                    "\u66f4\u5feb", "\u66f4\u6162", "\u76f8\u6bd4", "\u5dee\u5f02", "\u4e0d\u53ef\u6bd4")) {
+                missing.add(obligation);
+            } else if (obligation.startsWith("interpretation_clause") && !containsAnyText(lowerBody,
+                    "implies", "indicates", "suggests", "signals", "reflects", "means",
+                    "acceleration", "deceleration", "re-acceleration", "trajectory",
+                    "\u610f\u5473\u7740", "\u8868\u660e", "\u8bf4\u660e", "\u52a0\u901f", "\u653e\u7f13")) {
+                missing.add(obligation);
+            } else if (obligation.startsWith("analysis_challenge_clause") && !containsAnyText(lowerBody,
+                    "challenge", "difficult", "difficulty", "limitation", "limits", "not comparable",
+                    "cannot compare", "inconsistent", "incomparability", "asymmetry",
+                    "\u6311\u6218", "\u56f0\u96be", "\u5c40\u9650", "\u4e0d\u53ef\u6bd4")) {
+                missing.add(obligation);
+            }
+        }
+        missing.addAll(missingAuditAnswerCoverage(body, plan, ledger));
+        unsupportedComparativeNumbers(body, plan.resolvedQuestion(), ledger).forEach(value ->
+                missing.add("unsupported_derived_number | remove " + value
+                        + " or replace it with a qualitative comparison because it has no verified [C#] result"));
         return List.copyOf(missing);
     }
 
-    private String repairIncompleteAnswer(String prompt, FinancialRetrievalPlan plan,
-                                          FinancialEvidenceLedger.Ledger ledger, String generated,
-                                          String modelId) {
-        if (!answerCoverageRepairEnabled) {
-            return generated;
+    List<String> missingAuditAnswerCoverage(String body, FinancialRetrievalPlan plan,
+                                            FinancialEvidenceLedger.Ledger ledger) {
+        if (!isAuditOpinionComparison(plan)) {
+            return List.of();
         }
-        List<String> missing = missingAnswerCoverage(generated, plan, ledger);
-        if (missing.isEmpty()) {
-            return generated;
+        String lowerBody = cleanLine(body).toLowerCase(Locale.ROOT);
+        List<String> missing = new ArrayList<>();
+        for (FinancialRetrievalTask task : plan.subTasks()) {
+            if (!"retrieve".equalsIgnoreCase(task.operation()) || !isAuditOpinionTask(task)) {
+                continue;
+            }
+            List<String> evidenceIds = ledger.evidence().stream()
+                    .filter(document -> document.matchedTaskIds().contains(task.id()))
+                    .map(FinancialEvidenceLedger.EvidenceDocument::evidenceId)
+                    .toList();
+            boolean citedEffectiveInternalControl = evidenceIds.stream()
+                    .anyMatch(id -> citationClauseContains(body, id, "internal control")
+                            && citationClauseContains(body, id, "effective"));
+            if (!evidenceIds.isEmpty() && !citedEffectiveInternalControl) {
+                missing.add("audit_internal_control_clause | explicitly state the internal-control opinion for "
+                        + displayValues(task.companies()) + " and cite " + evidenceIds);
+            }
+            String taskEvidence = ledger.evidence().stream()
+                    .filter(document -> document.matchedTaskIds().contains(task.id()))
+                    .map(FinancialEvidenceLedger.EvidenceDocument::content)
+                    .collect(java.util.stream.Collectors.joining(" ")).toLowerCase(Locale.ROOT);
+            boolean citedPcaobForEntity = evidenceIds.stream().anyMatch(id ->
+                    citationClauseContains(body, id, "pcaob")
+                            || citationClauseContains(body, id, "public company accounting oversight board"));
+            if (taskEvidence.contains("pcaob") && !citedPcaobForEntity) {
+                missing.add("audit_standard_clause | explicitly state the PCAOB audit standards for "
+                        + displayValues(task.companies()) + " and cite " + evidenceIds);
+            }
         }
-        log.info("Repairing financial answer with {} uncovered retrieval tasks", missing.size());
+        String auditEvidence = ledger.evidence().stream()
+                .filter(document -> plan.subTasks().stream().filter(this::isAuditOpinionTask)
+                        .anyMatch(task -> document.matchedTaskIds().contains(task.id())))
+                .map(FinancialEvidenceLedger.EvidenceDocument::content)
+                .collect(java.util.stream.Collectors.joining(" ")).toLowerCase(Locale.ROOT);
+        if (auditEvidence.contains("coso") && !lowerBody.contains("coso")) {
+            missing.add("audit_framework_clause | name the COSO internal-control framework supported by the evidence");
+        }
+        boolean mentionsPcaob = containsAnyText(lowerBody,
+                "pcaob", "public company accounting oversight board");
+        boolean incorrectlyDeniesPcaob = Pattern.compile(
+                "(?is)(?:(?:pcaob|audit standards?).{0,50}"
+                        + "(?:unstated|not stated|not specified|not provided|absent|missing)"
+                        + "|(?:does not|do not|did not|not).{0,50}(?:state|specify|provide).{0,30}"
+                        + "(?:pcaob|audit standards?))")
+                .matcher(lowerBody).find();
+        if (auditEvidence.contains("pcaob") && (!mentionsPcaob || incorrectlyDeniesPcaob)) {
+            missing.add("audit_standard_clause | state that both audits used PCAOB standards");
+        }
+        return List.copyOf(new LinkedHashSet<>(missing));
+    }
+
+    boolean citationClauseContains(String body, String evidenceId, String concept) {
+        String lower = defaultIfBlank(body, "").toLowerCase(Locale.ROOT);
+        String marker = "[" + cleanLine(evidenceId).toLowerCase(Locale.ROOT) + "]";
+        int markerStart = lower.indexOf(marker);
+        while (markerStart >= 0) {
+            int clauseStart = Math.max(lower.lastIndexOf('\n', markerStart),
+                    lower.lastIndexOf('.', markerStart));
+            String clause = lower.substring(clauseStart + 1, markerStart);
+            if (clause.contains(cleanLine(concept).toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+            markerStart = lower.indexOf(marker, markerStart + marker.length());
+        }
+        return false;
+    }
+
+    List<String> unsupportedComparativeNumbers(String answer, String question,
+                                                FinancialEvidenceLedger.Ledger ledger) {
+        String body = answerBodySafe(answer);
+        List<String> unsupported = new ArrayList<>();
+        Matcher matcher = COMPARATIVE_DERIVED_NUMBER.matcher(body);
+        while (matcher.find()) {
+            java.math.BigDecimal claimed = decimal(matcher.group(1));
+            if (claimed == null || numericValueAppears(question, claimed)
+                    || ledger.calculations().stream().anyMatch(calculation -> {
+                java.math.BigDecimal verified = decimal(calculation.displayResult());
+                return verified != null && verified.compareTo(claimed) == 0;
+            })) {
+                continue;
+            }
+            unsupported.add(matcher.group().strip());
+        }
+        return List.copyOf(new LinkedHashSet<>(unsupported));
+    }
+
+    private String answerBodySafe(String answer) {
+        return answer == null ? "" : answer.split(
+                "(?im)^\\s*(?:[#>*_-]+\\s*)*(?:sources?|\\u6765\\u6e90)\\s*[:\\uFF1A]", 2)[0];
+    }
+
+    private boolean numericValueAppears(String value, java.math.BigDecimal requested) {
+        Matcher matcher = TOKEN_PATTERN.matcher(defaultIfBlank(value, ""));
+        while (matcher.find()) {
+            java.math.BigDecimal candidate = decimal(matcher.group());
+            if (candidate != null && candidate.compareTo(requested) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private java.math.BigDecimal decimal(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.replace(",", "").replace("%", "").strip();
         try {
-            return ChatClient.builder(modelConfigService.chatModel(modelId))
-                    .defaultSystem("""
-                            You repair an incomplete SEC 10-K RAG answer. Rewrite the complete answer using only the
-                            supplied Evidence Ledger. Answer every listed missing requirement explicitly. Cite every
-                            factual claim with its matching [E#], retain valid [F#]/[C#] references, stay under 220
-                            words. For direct numerical questions keep only requested results, not intermediate
-                            operands or repeated confirmations. Output only the revised answer.
-                            """)
-                    .build()
-                    .prompt()
-                    .user("""
-                            User question:
-                            %s
-
-                            Incomplete draft:
-                            %s
-
-                            Missing supported requirements:
-                            - %s
-
-                            %s
-                            """.formatted(prompt, generated, String.join("\n- ", missing), ledger.render()))
-                    .options(modelConfigService.chatOptions(modelId))
-                    .call()
-                    .content();
-        } catch (Exception exception) {
-            log.warn("Financial answer coverage repair failed: {}", exception.getMessage());
-            return generated;
+            return new java.math.BigDecimal(normalized);
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 
@@ -1941,27 +2424,26 @@ public class FinancialRagService {
         return value == null || value.isBlank() ? fallback : value;
     }
 
-    private Flux<String> verifyAnswer(Flux<String> answer, FinancialEvidenceLedger.Ledger ledger, String question) {
-        if (!citationVerifierEnabled) {
-            return answer;
-        }
-        return answer.collectList().flatMapMany(parts -> Flux.just(
-                citationVerifier.enforce(String.join("", parts), ledger, citationVerifierStrict, question)));
+    private String finalizeGeneratedAnswer(String prompt, FinancialRetrievalPlan plan,
+                                           FinancialEvidenceLedger.Ledger ledger, String generated,
+                                           String modelId) {
+        return citationVerifierEnabled
+                ? citationVerifier.enforce(generated, ledger, citationVerifierStrict, prompt)
+                : generated;
     }
 
-    private Flux<ModelStreamEvent> verifyAnswerEvents(Flux<ModelStreamEvent> events,
-                                                       FinancialEvidenceLedger.Ledger ledger,
-                                                       String question) {
-        if (!citationVerifierEnabled) {
-            return events;
-        }
+    private Flux<ModelStreamEvent> finalizeAnswerEvents(Flux<ModelStreamEvent> events,
+                                                        String prompt,
+                                                        FinancialRetrievalPlan plan,
+                                                        FinancialEvidenceLedger.Ledger ledger,
+                                                        String modelId) {
         return events.collectList().flatMapMany(parts -> {
             List<ModelStreamEvent> verified = new ArrayList<>();
             parts.stream().filter(event -> "reasoning".equals(event.type())).forEach(verified::add);
-            String answer = parts.stream().filter(event -> "token".equals(event.type()))
+            String generated = parts.stream().filter(event -> "token".equals(event.type()))
                     .map(ModelStreamEvent::content).collect(java.util.stream.Collectors.joining());
             verified.add(new ModelStreamEvent("token",
-                    citationVerifier.enforce(answer, ledger, citationVerifierStrict, question)));
+                    finalizeGeneratedAnswer(prompt, plan, ledger, generated, modelId)));
             return Flux.fromIterable(verified);
         });
     }
@@ -1989,7 +2471,30 @@ public class FinancialRagService {
         return Math.max(0L, System.currentTimeMillis() - startedAtMs);
     }
 
+    private FinancialRetrievalPlan timedPlanRetrieval(String prompt, String conversationId, String modelId) {
+        long startedAt = System.currentTimeMillis();
+        FinancialRetrievalPlan plan = planRetrieval(prompt, conversationId, modelId);
+        logStage("planning", elapsedMs(startedAt));
+        return plan;
+    }
+
+    private FinancialEvidenceLedger.Ledger timedBuildEvidenceLedger(String prompt, FinancialRetrievalPlan plan,
+                                                                     List<FinancialChunk> chunks,
+                                                                     FinancialRetrievalMode retrievalMode,
+                                                                     String modelId) {
+        long startedAt = System.currentTimeMillis();
+        FinancialEvidenceLedger.Ledger ledger = buildEvidenceLedger(prompt, plan, chunks, retrievalMode, modelId);
+        logStage("evidence_build", elapsedMs(startedAt));
+        return ledger;
+    }
+
+    private void logStage(String stage, long durationMs) {
+        log.info("financial_rag_stage stage={} duration_ms={}", stage, durationMs);
+    }
+
     private SearchOutcome searchWithDiagnostics(FinancialRetrievalPlan plan, FinancialRetrievalMode retrievalMode) {
+        long retrievalStartedAt = System.currentTimeMillis();
+        long searchStartedAt = retrievalStartedAt;
         List<String> warnings = new ArrayList<>();
         List<FinancialSearchRequest> requests = taskScopedRequests(plan);
         if (requests.isEmpty()) {
@@ -2014,6 +2519,7 @@ public class FinancialRagService {
             requestChunks = preferNarrativeForQualitativeLanguage(request, requestChunks);
             requestChunks = preferBiographicalFactEvidence(request, requestChunks);
             requestChunks = preferFilingCrossReferenceEvidence(request, requestChunks);
+            logRetrievalTaskTrace("scoped_candidates", plan.subTasks(), requestChunks);
             if ((!request.taskId().isBlank() || !request.company().isBlank() || !request.year().isBlank())
                     && !requestChunks.isEmpty()) {
                 String scope = (request.taskId().isBlank()
@@ -2054,10 +2560,15 @@ public class FinancialRagService {
             candidates.putIfAbsent(chunk.chunkId(), chunk);
         }
         List<FinancialChunk> globallyRanked = List.copyOf(candidates.values());
+        logRetrievalTaskTrace("before_global_rerank", plan.subTasks(), globallyRanked);
+        logStage("vector_search", elapsedMs(searchStartedAt));
         if (rerankEnabled && !globallyRanked.isEmpty()) {
+            long rerankStartedAt = System.currentTimeMillis();
             globallyRanked = rerank(stripDatasetRetrievalScope(plan.resolvedQuestion()), globallyRanked,
                     candidateLimit, retrievalMode, warnings);
+            logStage("rerank", elapsedMs(rerankStartedAt));
         }
+        logRetrievalTaskTrace("after_global_rerank", plan.subTasks(), globallyRanked);
         globallyRanked = filterCrossSectionNoise(globallyRanked, plan.subTasks());
         globallyRanked = filterQualitativeModalityNoise(globallyRanked, plan.subTasks());
         globallyRanked = promoteFilingCrossReferenceEvidence(globallyRanked, plan.subTasks());
@@ -2065,8 +2576,11 @@ public class FinancialRagService {
         globallyRanked = deduplicateNearDuplicateEvidence(globallyRanked);
         List<FinancialChunk> selected = taskBalancedTopK(globallyRanked, plan.subTasks(), finalTopK);
         selected = rescueMissingTaskCoverage(plan, selected, retrievalMode, finalTopK, warnings);
+        logRetrievalTaskTrace("selected", plan.subTasks(), selected);
+        warnings.addAll(missingDirectSupport(plan.subTasks(), selected));
         warnings.addAll(missingScopedCoverage(plan.subTasks(), selected));
         String quality = warnings.isEmpty() ? "NORMAL" : "DEGRADED";
+        logStage("retrieval", elapsedMs(retrievalStartedAt));
         return new SearchOutcome(selected, quality, List.copyOf(new LinkedHashSet<>(warnings)));
     }
 
@@ -2090,51 +2604,152 @@ public class FinancialRagService {
         return new RetrievalPolicy(finalLimit, candidateLimit);
     }
 
+    List<FinancialRetrievalTask> atomicRetrievalScopes(List<FinancialRetrievalTask> tasks) {
+        List<FinancialRetrievalTask> scoped = new ArrayList<>();
+        for (FinancialRetrievalTask task : tasks) {
+            if (!"retrieve".equalsIgnoreCase(task.operation())) {
+                scoped.add(task);
+                continue;
+            }
+            List<String> companies = task.companies().isEmpty() ? List.of("") : task.companies();
+            List<String> years = task.years().isEmpty() ? List.of("") : task.years();
+            for (String company : companies) {
+                for (String year : years) {
+                    scoped.add(new FinancialRetrievalTask(task.id(), task.query(),
+                            company.isBlank() ? List.of() : List.of(company),
+                            year.isBlank() ? List.of() : List.of(year), task.metric(), task.operation(),
+                            task.modality(), task.dependsOn()));
+                }
+            }
+        }
+        return List.copyOf(scoped);
+    }
+
     private List<FinancialChunk> rescueMissingTaskCoverage(
             FinancialRetrievalPlan plan, List<FinancialChunk> selected,
             FinancialRetrievalMode retrievalMode, int finalTopK, List<String> warnings) {
         Map<String, FinancialChunk> pool = selected.stream().collect(java.util.stream.Collectors.toMap(
                 FinancialChunk::chunkId, FinancialChunk::copy, (left, right) -> left, LinkedHashMap::new));
         List<FinancialSearchRequest> requests = taskScopedRequests(plan);
-        for (FinancialRetrievalTask task : plan.subTasks()) {
-            if (!"retrieve".equalsIgnoreCase(task.operation()) || hasTaskCoverage(task, pool.values())) {
+        for (FinancialRetrievalTask task : atomicRetrievalScopes(plan.subTasks())) {
+            if (!"retrieve".equalsIgnoreCase(task.operation()) || hasDirectTaskCoverage(task, pool.values())) {
                 continue;
             }
-            for (FinancialSearchRequest request : requests) {
-                if (!task.id().equals(request.taskId())) {
-                    continue;
-                }
-                int retryLimit = Math.max(16, Math.max(finalTopK, hybridTopK));
-                List<FinancialChunk> retryRows = search(
-                        request.query() + " exact filing passage", retryLimit, retrievalMode,
-                        request.company(), request.year(), request.modality(), false);
-                retryRows = enforceRequestedSection(
-                        request, retryRows, retryLimit, retrievalMode).stream()
-                        .map(chunk -> chunk.withMatchedTask(task.id()))
-                        .filter(chunk -> evidenceMatchesTaskScope(task, chunk)).toList();
-                retryRows = preferNarrativeForQualitativeLanguage(request, retryRows);
-                if (retryRows.isEmpty()) {
-                    continue;
-                }
-                FinancialChunk rescued = retryRows.get(0);
-                FinancialChunk existing = pool.get(rescued.chunkId());
-                if (existing == null) {
-                    pool.put(rescued.chunkId(), rescued);
-                } else {
-                    existing.matchedTaskIds.addAll(rescued.matchedTaskIds);
-                }
-                break;
+            FinancialSearchRequest request = requests.stream().filter(candidate ->
+                    task.id().equals(candidate.taskId())
+                            && (task.companies().isEmpty() || task.companies().contains(candidate.company()))
+                            && (task.years().isEmpty() || task.years().contains(candidate.year())))
+                    .findFirst().orElse(null);
+            if (request == null) {
+                continue;
+            }
+            // Exactly one targeted retry for this missing atomic task.
+            int retryLimit = Math.max(16, Math.max(finalTopK, hybridTopK));
+            String retryQuery = directSupportRetryQuery(task, request);
+            String retryModality = requiresDirectMetricEvidence(task) ? "hybrid" : request.modality();
+            FinancialSearchRequest retryRequest = new FinancialSearchRequest(
+                    retryQuery, request.company(), request.year(), retryModality,
+                    request.taskId(), request.requestedItem());
+            List<FinancialChunk> retryRows = search(
+                    retryQuery, retryLimit, retrievalMode,
+                    request.company(), request.year(), retryModality, false);
+            retryRows = enforceRequestedSection(
+                    retryRequest, retryRows, retryLimit, retrievalMode).stream()
+                    .map(chunk -> chunk.withMatchedTask(task.id()))
+                    .filter(chunk -> evidenceSupport(task, chunk) == EvidenceSupport.DIRECT_SUPPORT)
+                    .toList();
+            retryRows = preferCompleteAuditEvidence(task, retryRows);
+            retryRows = preferNarrativeForQualitativeLanguage(retryRequest, retryRows);
+            FinancialChunk rescued = retryRows.isEmpty() ? null : retryRows.get(0);
+            if (rescued == null && isAuditOpinionTask(task)) {
+                rescued = rescueCompleteAuditOpinionFromScopedFiling(task, retryRequest);
+            }
+            if (rescued == null) {
+                continue;
+            }
+            FinancialChunk existing = pool.get(rescued.chunkId());
+            if (existing == null) {
+                pool.put(rescued.chunkId(), rescued);
+            } else {
+                existing.matchedTaskIds.addAll(rescued.matchedTaskIds);
             }
         }
-        int retrievalTaskCount = (int) plan.subTasks().stream()
+        int retrievalTaskCount = (int) atomicRetrievalScopes(plan.subTasks()).stream()
                 .filter(task -> "retrieve".equalsIgnoreCase(task.operation())).count();
         return taskBalancedTopK(List.copyOf(pool.values()), plan.subTasks(),
                 Math.max(finalTopK, retrievalTaskCount));
     }
 
-    private boolean hasTaskCoverage(FinancialRetrievalTask task, Collection<FinancialChunk> chunks) {
+    private FinancialChunk rescueCompleteAuditOpinionFromScopedFiling(
+            FinancialRetrievalTask task, FinancialSearchRequest request) {
+        String table = resolveTableName();
+        RetrievalFilters filters = explicitFilters(
+                table, request.company(), request.year(), "text");
+        FinancialChunk rescued = bestCompleteAuditOpinionCandidate(
+                task, request.requestedItem(), fetchMetadataCandidates(table, filters));
+        if (rescued != null) {
+            rescued = rescued.withMatchedTask(task.id());
+            log.info("financial_retrieval_rescue type=complete_audit_filing_scan task_id={} company={} year={} chunk_id={}",
+                    task.id(), request.company(), request.year(), rescued.chunkId());
+        }
+        return rescued;
+    }
+
+    FinancialChunk bestCompleteAuditOpinionCandidate(
+            FinancialRetrievalTask task, String requestedItem, List<FinancialChunk> candidates) {
+        return candidates.stream()
+                .filter(chunk -> requestedItem == null || requestedItem.isBlank()
+                        || requestedItem.equalsIgnoreCase(canonicalItem(chunk)))
+                .filter(chunk -> auditEvidenceMatches(task, chunk.content()))
+                .max(Comparator
+                        .comparingInt((FinancialChunk chunk) -> auditEvidenceCompletenessScore(chunk.content()))
+                        .thenComparingDouble(FinancialChunk::finalScore))
+                .orElse(null);
+    }
+
+    private void logRetrievalTaskTrace(String stage, List<FinancialRetrievalTask> tasks,
+                                       Collection<FinancialChunk> chunks) {
+        if (!log.isDebugEnabled()) {
+            return;
+        }
+        for (FinancialRetrievalTask task : atomicRetrievalScopes(tasks)) {
+            if (!"retrieve".equalsIgnoreCase(task.operation())) {
+                continue;
+            }
+            long matched = chunks.stream().filter(chunk -> chunk.matchedTaskIds.contains(task.id())).count();
+            long direct = chunks.stream()
+                    .filter(chunk -> chunk.matchedTaskIds.contains(task.id()))
+                    .filter(chunk -> evidenceSupport(task, chunk) == EvidenceSupport.DIRECT_SUPPORT)
+                    .count();
+            log.debug("financial_retrieval_trace stage={} task_id={} companies={} years={} candidates={} direct_support={}",
+                    stage, task.id(), task.companies(), task.years(), matched, direct);
+        }
+    }
+
+    private boolean hasDirectTaskCoverage(FinancialRetrievalTask task, Collection<FinancialChunk> chunks) {
         return chunks.stream().anyMatch(chunk -> chunk.matchedTaskIds.contains(task.id())
-                && evidenceMatchesTaskScope(task, chunk));
+                && evidenceSupport(task, chunk) == EvidenceSupport.DIRECT_SUPPORT);
+    }
+
+    private String directSupportRetryQuery(FinancialRetrievalTask task, FinancialSearchRequest request) {
+        String scope = cleanLine(request.company() + " FY" + request.year());
+        String metric = cleanLine(defaultIfBlank(task.metric(), task.query()).replace('_', ' '));
+        if (isAuditOpinionTask(task)) {
+            return cleanLine(scope
+                    + " report of independent registered public accounting firm opinions on the financial statements"
+                    + " and internal control over financial reporting present fairly maintained effective internal"
+                    + " control COSO PCAOB");
+        }
+        if (isGuaranteeEvidenceTask(task)) {
+            return cleanLine(scope
+                    + " guarantees bond indemnities indemnification agreements maximum stated amount collateral");
+        }
+        if (requiresDirectMetricEvidence(task)) {
+            return cleanLine(scope + " " + metric + " " + expandQueryTerms(metric)
+                    + " exact row consolidated financial results table reported value");
+        }
+        return cleanLine(scope + " " + request.requestedItem() + " " + metric + " "
+                + request.query() + " exact wording direct filing passage");
     }
 
     private List<FinancialChunk> preferNarrativeForQualitativeLanguage(
@@ -2214,7 +2829,7 @@ public class FinancialRagService {
     private List<FinancialChunk> enforceRequestedSection(
             FinancialSearchRequest request, List<FinancialChunk> rows, int limit,
             FinancialRetrievalMode retrievalMode) {
-        if (request.requestedItem().isBlank() || rows.isEmpty()) {
+        if (request.requestedItem().isBlank()) {
             return rows;
         }
         List<FinancialChunk> scoped = rows.stream()
@@ -2231,6 +2846,21 @@ public class FinancialRagService {
                 .toList();
         if (!retried.isEmpty()) {
             return retried.stream().limit(limit).toList();
+        }
+        // A topic can legitimately be absent from the requested Item. Supply one representative passage from
+        // that same filing section so the answer can report the scoped asymmetry without falling back to a
+        // different Item. These zero-score metadata candidates remain lower priority than semantic matches.
+        String table = resolveTableName();
+        RetrievalFilters filters = explicitFilters(table, request.company(), request.year(), request.modality());
+        List<FinancialChunk> sectionFallback = fetchMetadataCandidates(table, filters).stream()
+                .filter(chunk -> request.requestedItem().equalsIgnoreCase(canonicalItem(chunk)))
+                .sorted(Comparator
+                        .comparing((FinancialChunk chunk) -> !"text".equalsIgnoreCase(chunk.chunkType()))
+                        .thenComparingInt(chunk -> chunk.content().length()))
+                .limit(1)
+                .toList();
+        if (!sectionFallback.isEmpty()) {
+            return sectionFallback;
         }
         // A task can have several semantic-anchor requests. One anchor missing the requested Item is not a
         // task-level failure when another anchor succeeds; final coverage is evaluated after all requests merge.
@@ -2399,9 +3029,66 @@ public class FinancialRagService {
         return missing;
     }
 
+    List<String> missingDirectSupport(
+            List<FinancialRetrievalTask> tasks, List<FinancialChunk> chunks) {
+        List<String> missing = new ArrayList<>();
+        for (FinancialRetrievalTask task : atomicRetrievalScopes(tasks)) {
+            if (!"retrieve".equalsIgnoreCase(task.operation())
+                    || !(requiresDirectMetricEvidence(task) || isAuditEvidenceTask(task)
+                    || isGuaranteeEvidenceTask(task))) {
+                continue;
+            }
+            boolean supported = chunks.stream()
+                    .filter(chunk -> chunk.matchedTaskIds.contains(task.id()))
+                    .anyMatch(chunk -> evidenceSupport(task, chunk) == EvidenceSupport.DIRECT_SUPPORT);
+            if (!supported) {
+                missing.add("missing_direct_support: " + task.id()
+                        + " | companies=" + displayValues(task.companies())
+                        + " | years=" + displayValues(task.years())
+                        + " | metric=" + cleanLine(task.metric()));
+            }
+        }
+        return List.copyOf(missing);
+    }
+
     String canonicalItem(FinancialChunk chunk) {
-        return canonicalItem(chunk.metadataText("item"), chunk.chunkType(),
-                chunk.metadataText("section_title"), chunk.content());
+        String rawItem = normalizeItem(chunk.metadataText("item"));
+        String auditContext = String.join(" ",
+                chunk.metadataText("section_title"), chunk.metadataText("parent_context"),
+                truncateEnd(chunk.content(), 2400));
+        if (isIndependentAuditorReport(auditContext)) {
+            return "Item 8";
+        }
+        if (!rawItem.isBlank() && !"text".equalsIgnoreCase(chunk.chunkType())) {
+            return rawItem;
+        }
+        String inheritedContext = String.join(" ",
+                chunk.metadataText("section_title"), chunk.metadataText("evidence_section"),
+                chunk.metadataText("table_header"), truncateEnd(chunk.metadataText("parent_context"), 1600));
+        if (rawItem.isBlank() && isManagementDiscussionSection(inheritedContext)) {
+            return "Item 7";
+        }
+        return canonicalItem(rawItem, chunk.chunkType(), inheritedContext, chunk.content());
+    }
+
+    private boolean isIndependentAuditorReport(String content) {
+        String lower = cleanLine(content).toLowerCase(Locale.ROOT);
+        boolean opinionLanguage = containsAnyText(lower, "opinion on the financial statements",
+                "opinions on the financial statements")
+                || (lower.contains("in our opinion") && lower.contains("present fairly"));
+        boolean titledReport = lower.contains("report of independent registered public accounting firm")
+                && opinionLanguage;
+        boolean formalPcaobNarrative = lower.contains("pcaob")
+                && lower.contains("internal control over financial reporting")
+                && (opinionLanguage || lower.contains("our responsibility is to express opinions"));
+        return titledReport || formalPcaobNarrative;
+    }
+
+    private boolean isManagementDiscussionSection(String value) {
+        String lower = cleanLine(value).toLowerCase(Locale.ROOT);
+        return (lower.contains("management's discussion") || lower.contains("management’s discussion")
+                || lower.contains("management discussion") || lower.contains("md&a"))
+                && lower.contains("analysis");
     }
 
     String canonicalItem(String rawItem, String chunkType, String sectionTitle, String content) {
@@ -2432,17 +3119,23 @@ public class FinancialRagService {
                                                    List<FinancialRetrievalTask> tasks,
                                                    int limit) {
         Map<String, FinancialChunk> selected = new LinkedHashMap<>();
-        for (FinancialRetrievalTask task : tasks) {
+        for (FinancialRetrievalTask task : atomicRetrievalScopes(tasks)) {
             if (!"retrieve".equalsIgnoreCase(task.operation())) {
                 continue;
             }
-            List<FinancialChunk> taskCandidates = ranked.stream()
-                    .filter(chunk -> chunk.matchedTaskIds.contains(task.id())).toList();
+            List<FinancialChunk> scopedCandidates = ranked.stream()
+                    .filter(chunk -> chunk.matchedTaskIds.contains(task.id()))
+                    .filter(chunk -> evidenceSupport(task, chunk) != EvidenceSupport.IRRELEVANT)
+                    .toList();
+            List<FinancialChunk> taskCandidates = scopedCandidates.stream()
+                    .filter(chunk -> evidenceMatchesTaskScope(task, chunk)).toList();
+            taskCandidates = preferCompleteAuditEvidence(task, taskCandidates);
             FinancialChunk best = taskCandidates.stream()
                     .filter(chunk -> evidenceMatchesTaskScope(task, chunk))
                     .filter(chunk -> evidenceLedger.containsDirectMetricValue(task.metric(), chunk.content()))
                     .findFirst().orElse(taskCandidates.isEmpty() ? null : taskCandidates.get(0));
             if (best != null) {
+                best = enrichAuditEvidence(task, best, scopedCandidates);
                 selected.putIfAbsent(best.chunkId(), best);
             }
             if (selected.size() >= limit) {
@@ -2455,18 +3148,112 @@ public class FinancialRagService {
             if (chunk.matchedTaskIds.isEmpty()) {
                 continue;
             }
+            if (duplicatesSelectedAuditTask(chunk, selected.values(), tasks)) {
+                continue;
+            }
             selected.putIfAbsent(chunk.chunkId(), chunk);
             if (selected.size() >= limit) {
                 return List.copyOf(selected.values());
             }
         }
         for (FinancialChunk chunk : ranked) {
+            if (duplicatesSelectedAuditTask(chunk, selected.values(), tasks)) {
+                continue;
+            }
             selected.putIfAbsent(chunk.chunkId(), chunk);
             if (selected.size() >= limit) {
                 break;
             }
         }
         return List.copyOf(selected.values());
+    }
+
+    FinancialChunk enrichAuditEvidence(FinancialRetrievalTask task, FinancialChunk primary,
+                                       List<FinancialChunk> candidates) {
+        if (!isAuditOpinionTask(task) || containsAuditStandards(primary.content())) {
+            return primary;
+        }
+        FinancialChunk standards = candidates.stream()
+                .filter(candidate -> !candidate.chunkId().equals(primary.chunkId()))
+                .filter(candidate -> candidate.sourceFile().equalsIgnoreCase(primary.sourceFile()))
+                .filter(candidate -> auditStandardsPassage(candidate.content()))
+                .max(Comparator.comparingDouble(FinancialChunk::finalScore))
+                .orElse(null);
+        if (standards == null) {
+            return primary;
+        }
+        String supplement = centeredEvidenceWindow(standards.content(),
+                "standards of the PCAOB internal control over financial reporting", 900);
+        return primary.withSupplementalContent("Complementary audit-standards passage:\n" + supplement);
+    }
+
+    boolean containsAuditStandards(String content) {
+        String lower = cleanLine(content).toLowerCase(Locale.ROOT);
+        return lower.contains("pcaob") && containsAnyText(lower,
+                "standards of the pcaob", "standards established by the pcaob",
+                "public company accounting oversight board standards");
+    }
+
+    boolean auditStandardsPassage(String content) {
+        String lower = cleanLine(content).toLowerCase(Locale.ROOT);
+        return containsAuditStandards(lower)
+                && lower.contains("internal control over financial reporting")
+                && !containsAnyText(lower, "not required to have", "not engaged to perform")
+                && containsAnyText(lower, "our responsibility is to express opinions",
+                "effective internal control", "whether effective internal control");
+    }
+
+    List<FinancialChunk> preferCompleteAuditEvidence(
+            FinancialRetrievalTask task, List<FinancialChunk> candidates) {
+        if (!isAuditOpinionTask(task) || candidates.size() < 2) {
+            return List.copyOf(candidates);
+        }
+        return candidates.stream().sorted(
+                Comparator.comparingInt((FinancialChunk chunk) -> auditEvidenceCompletenessScore(chunk.content()))
+                        .reversed()
+                        .thenComparing(Comparator.comparingDouble(FinancialChunk::finalScore).reversed()))
+                .toList();
+    }
+
+    int auditEvidenceCompletenessScore(String content) {
+        String lower = cleanLine(content).toLowerCase(Locale.ROOT);
+        int score = 0;
+        if (lower.contains("report of independent registered public accounting firm")) {
+            score += 2;
+        }
+        if (containsAnyText(lower, "opinion on the financial statements", "opinions on the financial statements")) {
+            score += 3;
+        }
+        if (lower.contains("in our opinion") && lower.contains("present fairly")) {
+            score += 3;
+        }
+        if (lower.contains("also have audited") && lower.contains("internal control over financial reporting")) {
+            score += 4;
+        }
+        if (lower.contains("also in our opinion") && lower.contains("effective internal control")) {
+            score += 4;
+        }
+        if (lower.contains("pcaob")) {
+            score += 1;
+        }
+        if (containsAuditStandards(lower)) {
+            score += 3;
+        }
+        if (lower.contains("required to be independent")) {
+            score += 1;
+        }
+        return score;
+    }
+
+    boolean duplicatesSelectedAuditTask(FinancialChunk candidate,
+                                        Collection<FinancialChunk> selected,
+                                        List<FinancialRetrievalTask> tasks) {
+        return atomicRetrievalScopes(tasks).stream()
+                .filter(task -> "retrieve".equalsIgnoreCase(task.operation()))
+                .filter(this::isAuditEvidenceTask)
+                .filter(task -> candidate.matchedTaskIds.contains(task.id()))
+                .anyMatch(task -> selected.stream()
+                        .anyMatch(existing -> existing.matchedTaskIds.contains(task.id())));
     }
 
     private List<FinancialSearchRequest> taskScopedRequests(FinancialRetrievalPlan plan) {
@@ -2590,6 +3377,17 @@ public class FinancialRagService {
             anchors.add("consolidated performance highlights Global Streaming Memberships "
                     + "paid memberships at end of period");
         }
+        if (containsAnyText(lower, "audit opinion", "audit_opinion", "opinion on the financial statements",
+                "opinions on the financial statements")) {
+            anchors.add("Opinions on the Financial Statements and Internal Control over Financial Reporting "
+                    + "also in our opinion maintained effective internal control COSO PCAOB");
+            anchors.add("We also have audited the Company internal control over financial reporting "
+                    + "effective internal control present fairly");
+        } else if (containsAnyText(lower, "auditor independence", "auditor responsibility",
+                "independent registered public accounting firm")) {
+            anchors.add("Basis for Opinion public accounting firm registered with the PCAOB required to be independent "
+                    + "our responsibility is to express an opinion standards of the PCAOB");
+        }
         if (containsAnyText(lower, "referenced table", "referenced note", "references to financial",
                 "table references", "table note reference", "table or note reference", "segment table or note",
                 "additional information", "additional segment detail", "instead of narrative")
@@ -2618,10 +3416,32 @@ public class FinancialRagService {
 
     String effectiveTaskModality(FinancialRetrievalTask task) {
         String query = (cleanLine(task.query()) + " " + cleanLine(task.metric())).toLowerCase(Locale.ROOT);
-        if (query.matches(".*\\b(age|aged|biograph(?:y|ical)|executive|officer|director|language|quote|quotation|"
-                + "statement|states|stated|mention|mentions|mentioned|textual|narrative|objective|objectives|"
-                + "strategy|strategies|strategic|mission|vision)\\b.*")
-                || query.contains("management's discussion")
+        String metric = cleanLine(task.metric()).toLowerCase(Locale.ROOT);
+        if ("table".equalsIgnoreCase(task.modality()) && isHeaderOnlyTask(task)) {
+            return "table";
+        }
+        boolean explicitLanguageTask = query.matches(
+                ".*\\b(age|aged|biograph(?:y|ical)|executive|officer|director|language|quote|quotation|"
+                        + "statement|states|stated|mention|mentions|mentioned|textual|narrative|objective|objectives|"
+                        + "strategy|strategies|strategic|mission|vision)\\b.*");
+        boolean explicitlyRequestsLanguage = containsAnyText(query,
+                "exact quote", "quotation", "quoted language", "wording", "language used",
+                "states that", "stated that", "mentions", "mentioned", "textual", "narrative",
+                "objective", "strategy", "strategic", "mission", "vision");
+        if (explicitLanguageTask && (!isQuantitativeMetric(metric) || explicitlyRequestsLanguage)) {
+            return "text";
+        }
+        if (isQuantitativeMetric(metric)) {
+            return task.modality();
+        }
+        boolean explicitQuantitativeTable = "table".equalsIgnoreCase(task.modality())
+                && containsAnyText(metric,
+                "revenue", "sales", "income", "earnings", "profit", "cash", "asset",
+                "membership", "subscriber", "addition", "margin", "expense", "total");
+        if (explicitQuantitativeTable) {
+            return "table";
+        }
+        if (query.contains("management's discussion")
                 || query.contains("management’s discussion")
                 || query.contains("md&a")) {
             return "text";
@@ -3401,6 +4221,10 @@ public class FinancialRagService {
         return value == null ? "" : value.strip().replaceAll("\\R+", " ").replaceAll("\\s+", " ");
     }
 
+    String readableSectionTitle(String value) {
+        return cleanLine(value).replaceAll("(?i)Management\\x{FFFD}+s", "Management's");
+    }
+
     private String normalizeModality(String value) {
         String normalized = cleanLine(value).toLowerCase(Locale.ROOT);
         return switch (normalized) {
@@ -3554,6 +4378,26 @@ public class FinancialRagService {
         }
     }
 
+    record QueryIntent(List<String> companies, List<String> years, List<String> requestedTopics,
+                       boolean needsComparison, boolean needsCalculation) {
+        QueryIntent {
+            companies = companies == null ? List.of() : List.copyOf(companies);
+            years = years == null ? List.of() : List.copyOf(years);
+            requestedTopics = requestedTopics == null ? List.of() : List.copyOf(requestedTopics);
+        }
+
+        String render() {
+            return "companies=" + companies + " | years=" + years + " | requestedTopics=" + requestedTopics
+                    + " | needsComparison=" + needsComparison + " | needsCalculation=" + needsCalculation;
+        }
+    }
+
+    enum EvidenceSupport {
+        DIRECT_SUPPORT,
+        SCOPE_ONLY,
+        IRRELEVANT
+    }
+
     public enum FinancialRetrievalMode {
         DEFAULT,
         PARENT_CHILD;
@@ -3631,6 +4475,20 @@ public class FinancialRagService {
             if (taskIds != null) {
                 copy.matchedTaskIds.addAll(taskIds);
             }
+            return copy;
+        }
+
+        private FinancialChunk withSupplementalContent(String supplement) {
+            String merged = content + "\n\n" + supplement;
+            FinancialChunk copy = new FinancialChunk(chunkId, sourceFile, chunkType, merged, metadata, score);
+            copy.vectorRank = vectorRank;
+            copy.bm25Rank = bm25Rank;
+            copy.vectorScore = vectorScore;
+            copy.bm25Score = bm25Score;
+            copy.hybridScore = hybridScore;
+            copy.rerankScore = rerankScore;
+            copy.finalScore = finalScore;
+            copy.matchedTaskIds.addAll(matchedTaskIds);
             return copy;
         }
 

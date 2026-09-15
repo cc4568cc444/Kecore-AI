@@ -1,0 +1,2397 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "metric_version": "deterministic-v7-evidence-layers",
+  "metric_definitions": {
+    "document_presence_recall": "Fraction of dataset-labelled filing names present in the final Evidence Ledger. This is a file-presence metric, not passage relevance or answer support.",
+    "section_presence_recall": "Fraction of dataset-labelled filing/item pairs present in the final Evidence Ledger. This checks structural scope only.",
+    "direct_evidence_coverage": "Fraction of required Query Planner retrieval tasks having at least one backend-verified direct-support evidence chunk. This is system coverage, not gold-passage recall.",
+    "fact_value_recall": "Fraction of reference-answer numeric values recovered in structured Fact slots. Only applicable to numeric questions.",
+    "document_recall": "Deprecated compatibility alias of document_presence_recall.",
+    "retrieval_task_coverage": "Deprecated compatibility alias of planner_task_assignment_coverage."
+  },
+  "status": "complete",
+  "split": "test",
+  "subsets": [
+    "S3",
+    "S4",
+    "S5"
+  ],
+  "run_id": "evidence-fact-retry-v15-smoke",
+  "execution_id": "20260915055246915651-b41f94cc",
+  "dataset_scope_enabled": true,
+  "selected_question_ids": [
+    "md2025_1432",
+    "md2025_2282",
+    "md2025_2283",
+    "md2025_2286",
+    "md2025_2293",
+    "md2025_2294"
+  ],
+  "completed_count": 6,
+  "total_count": 6,
+  "generated_at": "2026-09-15T05:59:17.117108+00:00",
+  "summary": {
+    "overall": {
+      "count": 6,
+      "successful": 6,
+      "token_precision": 0.43774829275933175,
+      "token_recall": 0.6104593871526731,
+      "token_f1": 0.4513917467036981,
+      "rouge_l_f1": 0.3552438530328957,
+      "answer_overlap_score": 0.4513917467036981,
+      "numeric_precision": 0.7777777777777777,
+      "numeric_recall": 0.45740740740740743,
+      "numeric_f1": 0.5634920634920635,
+      "numeric_accuracy": 0.45740740740740743,
+      "numeric_question_count": 3,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 0.8333333333333334,
+      "direct_evidence_coverage": 0.8333333333333334,
+      "evidence_coverage_question_count": 6,
+      "document_recall": 1.0,
+      "retrieval_ranking_question_count": 6,
+      "document_recall_at_1": 0.3611111111111111,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.8611111111111112,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 0.9444444444444445,
+      "document_ndcg_at_3": 0.9608934394981036,
+      "document_complete_recall_at_3": 0.5,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 0.9861111111111112,
+      "document_ndcg_at_5": 0.9945779972481948,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 0.9861111111111112,
+      "document_ndcg_at_10": 0.9945779972481948,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.27777777777777773,
+      "section_mrr_at_1": 0.8333333333333334,
+      "section_map_at_1": 0.8333333333333334,
+      "section_ndcg_at_1": 0.8333333333333334,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.6944444444444445,
+      "section_mrr_at_3": 0.9166666666666666,
+      "section_map_at_3": 0.7361111111111112,
+      "section_ndcg_at_3": 0.7942267728314368,
+      "section_complete_recall_at_3": 0.16666666666666666,
+      "section_recall_at_5": 0.8333333333333334,
+      "section_mrr_at_5": 0.9166666666666666,
+      "section_map_at_5": 0.7777777777777778,
+      "section_ndcg_at_5": 0.8279113305815282,
+      "section_complete_recall_at_5": 0.6666666666666666,
+      "section_recall_at_10": 0.8333333333333334,
+      "section_mrr_at_10": 0.9166666666666666,
+      "section_map_at_10": 0.7777777777777778,
+      "section_ndcg_at_10": 0.8279113305815282,
+      "section_complete_recall_at_10": 0.6666666666666666,
+      "retrieval_task_recall_at_1": 0.2986111111111111,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.6875,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 0.9444444444444443,
+      "retrieval_task_ndcg_at_3": 0.9608934394981036,
+      "retrieval_task_complete_recall_at_3": 0.3333333333333333,
+      "retrieval_task_recall_at_5": 0.8055555555555557,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 0.8833333333333333,
+      "retrieval_task_ndcg_at_5": 0.917579560203415,
+      "retrieval_task_complete_recall_at_5": 0.5,
+      "retrieval_task_recall_at_10": 0.8333333333333334,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 0.8333333333333334,
+      "retrieval_task_ndcg_at_10": 0.8807703437711617,
+      "retrieval_task_complete_recall_at_10": 0.6666666666666666,
+      "retrieval_task_coverage": 0.8333333333333334,
+      "scope_item_match_rate": 0.8333333333333334,
+      "cross_section_contamination_rate": 0.16666666666666666,
+      "answer_task_coverage": 0.9444444444444445,
+      "degraded_retrieval_rate": 0.3333333333333333,
+      "retrieval_diagnostic_count": 6,
+      "fact_extraction_rate": 1.0,
+      "fact_extraction_question_count": 3,
+      "fact_value_recall": 0.4481481481481482,
+      "fact_value_question_count": 3,
+      "structured_value_recall": 0.6055555555555555,
+      "structured_value_question_count": 3,
+      "calculation_production_rate": 0.6666666666666666,
+      "calculation_plan_rate": 0.6666666666666666,
+      "calculation_plan_execution_rate": 1.0,
+      "planned_calculation_question_count": 2,
+      "calculation_question_count": 3,
+      "calculation_result_match": 1.0,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.7173362482070845,
+      "average_latency_ms": 65014.166666666664,
+      "latency_p50_ms": 67062.0,
+      "latency_p95_ms": 84313.25,
+      "planning_latency_p50_ms": 4983.5,
+      "planning_latency_p95_ms": 7472.25,
+      "retrieval_latency_p50_ms": 59335.0,
+      "retrieval_latency_p95_ms": 76532.25,
+      "generation_latency_p50_ms": 2584.0,
+      "generation_latency_p95_ms": 3210.25
+    },
+    "clean_overall": {
+      "count": 2,
+      "successful": 2,
+      "token_precision": 0.3765010351966873,
+      "token_recall": 0.6086378737541528,
+      "token_f1": 0.4316495659037095,
+      "rouge_l_f1": 0.3077348066298343,
+      "answer_overlap_score": 0.4316495659037095,
+      "numeric_precision": 1.0,
+      "numeric_recall": 0.75,
+      "numeric_f1": 0.8571428571428571,
+      "numeric_accuracy": 0.75,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 1.0,
+      "direct_evidence_coverage": 0.75,
+      "evidence_coverage_question_count": 2,
+      "document_recall": 1.0,
+      "retrieval_ranking_question_count": 2,
+      "document_recall_at_1": 0.29166666666666663,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.875,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 1.0,
+      "document_ndcg_at_3": 1.0,
+      "document_complete_recall_at_3": 0.5,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 1.0,
+      "document_ndcg_at_5": 1.0,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 1.0,
+      "document_ndcg_at_10": 1.0,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.29166666666666663,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.875,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 1.0,
+      "section_ndcg_at_3": 1.0,
+      "section_complete_recall_at_3": 0.5,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 1.0,
+      "section_ndcg_at_5": 1.0,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 1.0,
+      "section_ndcg_at_10": 1.0,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.3125,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.6875,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.5,
+      "retrieval_task_recall_at_5": 0.75,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 0.9,
+      "retrieval_task_ndcg_at_5": 0.934397461243829,
+      "retrieval_task_complete_recall_at_5": 0.5,
+      "retrieval_task_recall_at_10": 0.75,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 0.75,
+      "retrieval_task_ndcg_at_10": 0.823969811947069,
+      "retrieval_task_complete_recall_at_10": 0.5,
+      "retrieval_task_coverage": 0.75,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answer_task_coverage": 1.0,
+      "degraded_retrieval_rate": 0.5,
+      "retrieval_diagnostic_count": 2,
+      "fact_extraction_rate": 1.0,
+      "fact_extraction_question_count": 1,
+      "fact_value_recall": 0.5,
+      "fact_value_question_count": 1,
+      "structured_value_recall": 0.75,
+      "structured_value_question_count": 1,
+      "calculation_production_rate": 1.0,
+      "calculation_plan_rate": 1.0,
+      "calculation_plan_execution_rate": 1.0,
+      "planned_calculation_question_count": 1,
+      "calculation_question_count": 1,
+      "calculation_result_match": 1.0,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.7193962115232834,
+      "average_latency_ms": 60310.5,
+      "latency_p50_ms": 60310.5,
+      "latency_p95_ms": 84990.75,
+      "planning_latency_p50_ms": 4756.5,
+      "planning_latency_p95_ms": 5130.45,
+      "retrieval_latency_p50_ms": 53099.0,
+      "retrieval_latency_p95_ms": 77279.3,
+      "generation_latency_p50_ms": 2361.5,
+      "generation_latency_p95_ms": 3291.65
+    },
+    "known_issue_count": 4,
+    "by_subset": {
+      "S3": {
+        "task_type": "cross-year",
+        "known_issue_count": 0,
+        "count": 1,
+        "successful": 1,
+        "token_precision": 0.5428571428571428,
+        "token_recall": 0.5428571428571428,
+        "token_f1": 0.5428571428571428,
+        "rouge_l_f1": 0.4000000000000001,
+        "answer_overlap_score": 0.5428571428571428,
+        "numeric_precision": 1.0,
+        "numeric_recall": 0.75,
+        "numeric_f1": 0.8571428571428571,
+        "numeric_accuracy": 0.75,
+        "numeric_question_count": 1,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_presence_recall": 1.0,
+        "section_presence_recall": 1.0,
+        "direct_evidence_coverage": 1.0,
+        "evidence_coverage_question_count": 1,
+        "document_recall": 1.0,
+        "retrieval_ranking_question_count": 1,
+        "document_recall_at_1": 0.3333333333333333,
+        "document_mrr_at_1": 1.0,
+        "document_map_at_1": 1.0,
+        "document_ndcg_at_1": 1.0,
+        "document_complete_recall_at_1": 0.0,
+        "document_recall_at_3": 1.0,
+        "document_mrr_at_3": 1.0,
+        "document_map_at_3": 1.0,
+        "document_ndcg_at_3": 1.0,
+        "document_complete_recall_at_3": 1.0,
+        "document_recall_at_5": 1.0,
+        "document_mrr_at_5": 1.0,
+        "document_map_at_5": 1.0,
+        "document_ndcg_at_5": 1.0,
+        "document_complete_recall_at_5": 1.0,
+        "document_recall_at_10": 1.0,
+        "document_mrr_at_10": 1.0,
+        "document_map_at_10": 1.0,
+        "document_ndcg_at_10": 1.0,
+        "document_complete_recall_at_10": 1.0,
+        "section_recall_at_1": 0.3333333333333333,
+        "section_mrr_at_1": 1.0,
+        "section_map_at_1": 1.0,
+        "section_ndcg_at_1": 1.0,
+        "section_complete_recall_at_1": 0.0,
+        "section_recall_at_3": 1.0,
+        "section_mrr_at_3": 1.0,
+        "section_map_at_3": 1.0,
+        "section_ndcg_at_3": 1.0,
+        "section_complete_recall_at_3": 1.0,
+        "section_recall_at_5": 1.0,
+        "section_mrr_at_5": 1.0,
+        "section_map_at_5": 1.0,
+        "section_ndcg_at_5": 1.0,
+        "section_complete_recall_at_5": 1.0,
+        "section_recall_at_10": 1.0,
+        "section_mrr_at_10": 1.0,
+        "section_map_at_10": 1.0,
+        "section_ndcg_at_10": 1.0,
+        "section_complete_recall_at_10": 1.0,
+        "retrieval_task_recall_at_1": 0.5,
+        "retrieval_task_mrr_at_1": 1.0,
+        "retrieval_task_map_at_1": 1.0,
+        "retrieval_task_ndcg_at_1": 1.0,
+        "retrieval_task_complete_recall_at_1": 0.0,
+        "retrieval_task_recall_at_3": 1.0,
+        "retrieval_task_mrr_at_3": 1.0,
+        "retrieval_task_map_at_3": 1.0,
+        "retrieval_task_ndcg_at_3": 1.0,
+        "retrieval_task_complete_recall_at_3": 1.0,
+        "retrieval_task_recall_at_5": 1.0,
+        "retrieval_task_mrr_at_5": 1.0,
+        "retrieval_task_map_at_5": 1.0,
+        "retrieval_task_ndcg_at_5": 1.0,
+        "retrieval_task_complete_recall_at_5": 1.0,
+        "retrieval_task_recall_at_10": 1.0,
+        "retrieval_task_mrr_at_10": 1.0,
+        "retrieval_task_map_at_10": 1.0,
+        "retrieval_task_ndcg_at_10": 1.0,
+        "retrieval_task_complete_recall_at_10": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "scope_item_match_rate": 1.0,
+        "cross_section_contamination_rate": 0.0,
+        "answer_task_coverage": 1.0,
+        "degraded_retrieval_rate": 0.0,
+        "retrieval_diagnostic_count": 1,
+        "fact_extraction_rate": 1.0,
+        "fact_extraction_question_count": 1,
+        "fact_value_recall": 0.5,
+        "fact_value_question_count": 1,
+        "structured_value_recall": 0.75,
+        "structured_value_question_count": 1,
+        "calculation_production_rate": 1.0,
+        "calculation_plan_rate": 1.0,
+        "calculation_plan_execution_rate": 1.0,
+        "planned_calculation_question_count": 1,
+        "calculation_question_count": 1,
+        "calculation_result_match": 1.0,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.9285714285714286,
+        "average_latency_ms": 32888.0,
+        "latency_p50_ms": 32888.0,
+        "latency_p95_ms": 32888.0,
+        "planning_latency_p50_ms": 5172.0,
+        "planning_latency_p95_ms": 5172.0,
+        "retrieval_latency_p50_ms": 26232.0,
+        "retrieval_latency_p95_ms": 26232.0,
+        "generation_latency_p50_ms": 1328.0,
+        "generation_latency_p95_ms": 1328.0
+      },
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "known_issue_count": 4,
+        "count": 5,
+        "successful": 5,
+        "token_precision": 0.4167265227397695,
+        "token_recall": 0.6239798360117792,
+        "token_f1": 0.4330986674730092,
+        "rouge_l_f1": 0.34629262363947483,
+        "answer_overlap_score": 0.4330986674730092,
+        "numeric_precision": 0.6666666666666666,
+        "numeric_recall": 0.3111111111111111,
+        "numeric_f1": 0.41666666666666663,
+        "numeric_accuracy": 0.3111111111111111,
+        "numeric_question_count": 2,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_presence_recall": 1.0,
+        "section_presence_recall": 0.8,
+        "direct_evidence_coverage": 0.8,
+        "evidence_coverage_question_count": 5,
+        "document_recall": 1.0,
+        "retrieval_ranking_question_count": 5,
+        "document_recall_at_1": 0.36666666666666664,
+        "document_mrr_at_1": 1.0,
+        "document_map_at_1": 1.0,
+        "document_ndcg_at_1": 1.0,
+        "document_complete_recall_at_1": 0.0,
+        "document_recall_at_3": 0.8333333333333334,
+        "document_mrr_at_3": 1.0,
+        "document_map_at_3": 0.9333333333333333,
+        "document_ndcg_at_3": 0.9530721273977243,
+        "document_complete_recall_at_3": 0.4,
+        "document_recall_at_5": 1.0,
+        "document_mrr_at_5": 1.0,
+        "document_map_at_5": 0.9833333333333334,
+        "document_ndcg_at_5": 0.9934935966978339,
+        "document_complete_recall_at_5": 1.0,
+        "document_recall_at_10": 1.0,
+        "document_mrr_at_10": 1.0,
+        "document_map_at_10": 0.9833333333333334,
+        "document_ndcg_at_10": 0.9934935966978339,
+        "document_complete_recall_at_10": 1.0,
+        "section_recall_at_1": 0.26666666666666666,
+        "section_mrr_at_1": 0.8,
+        "section_map_at_1": 0.8,
+        "section_ndcg_at_1": 0.8,
+        "section_complete_recall_at_1": 0.0,
+        "section_recall_at_3": 0.6333333333333333,
+        "section_mrr_at_3": 0.9,
+        "section_map_at_3": 0.6833333333333333,
+        "section_ndcg_at_3": 0.7530721273977243,
+        "section_complete_recall_at_3": 0.0,
+        "section_recall_at_5": 0.8,
+        "section_mrr_at_5": 0.9,
+        "section_map_at_5": 0.7333333333333333,
+        "section_ndcg_at_5": 0.7934935966978338,
+        "section_complete_recall_at_5": 0.6,
+        "section_recall_at_10": 0.8,
+        "section_mrr_at_10": 0.9,
+        "section_map_at_10": 0.7333333333333333,
+        "section_ndcg_at_10": 0.7934935966978338,
+        "section_complete_recall_at_10": 0.6,
+        "retrieval_task_recall_at_1": 0.25833333333333336,
+        "retrieval_task_mrr_at_1": 1.0,
+        "retrieval_task_map_at_1": 1.0,
+        "retrieval_task_ndcg_at_1": 1.0,
+        "retrieval_task_complete_recall_at_1": 0.0,
+        "retrieval_task_recall_at_3": 0.625,
+        "retrieval_task_mrr_at_3": 1.0,
+        "retrieval_task_map_at_3": 0.9333333333333332,
+        "retrieval_task_ndcg_at_3": 0.9530721273977243,
+        "retrieval_task_complete_recall_at_3": 0.2,
+        "retrieval_task_recall_at_5": 0.7666666666666667,
+        "retrieval_task_mrr_at_5": 1.0,
+        "retrieval_task_map_at_5": 0.86,
+        "retrieval_task_ndcg_at_5": 0.901095472244098,
+        "retrieval_task_complete_recall_at_5": 0.4,
+        "retrieval_task_recall_at_10": 0.8,
+        "retrieval_task_mrr_at_10": 1.0,
+        "retrieval_task_map_at_10": 0.8,
+        "retrieval_task_ndcg_at_10": 0.856924412525394,
+        "retrieval_task_complete_recall_at_10": 0.6,
+        "retrieval_task_coverage": 0.8,
+        "scope_item_match_rate": 0.8,
+        "cross_section_contamination_rate": 0.2,
+        "answer_task_coverage": 0.9333333333333332,
+        "degraded_retrieval_rate": 0.4,
+        "retrieval_diagnostic_count": 5,
+        "fact_extraction_rate": 1.0,
+        "fact_extraction_question_count": 2,
+        "fact_value_recall": 0.4222222222222222,
+        "fact_value_question_count": 2,
+        "structured_value_recall": 0.5333333333333333,
+        "structured_value_question_count": 2,
+        "calculation_production_rate": 0.5,
+        "calculation_plan_rate": 0.5,
+        "calculation_plan_execution_rate": 1.0,
+        "planned_calculation_question_count": 1,
+        "calculation_question_count": 2,
+        "calculation_result_match": 1.0,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.6750892121342156,
+        "average_latency_ms": 71439.4,
+        "latency_p50_ms": 72775.0,
+        "latency_p95_ms": 84997.2,
+        "planning_latency_p50_ms": 4827.0,
+        "planning_latency_p95_ms": 7619.2,
+        "retrieval_latency_p50_ms": 62003.0,
+        "retrieval_latency_p95_ms": 77219.0,
+        "generation_latency_p50_ms": 2653.0,
+        "generation_latency_p95_ms": 3247.2
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_1432",
+      "subset": "S3",
+      "task_type": "cross-year",
+      "question": "What was the percentage change in total revenue from fiscal year 2022 to fiscal year 2024?",
+      "evidence_section": "Item 7 / MD&A - Executive Overview / Financial Results",
+      "expected_answer": "Revenue increased from $28,541.4 million in 2022 to $45,042.7 million in 2024. The percentage change is approximately 57.9% (calculated as (45,042.7 - 28,541.4) / 28,541.4 * 100).",
+      "predicted_answer": "The percentage change in total revenue from fiscal year 2022 to fiscal year 2024 was 57.8% [C1]. LLY's total revenue was $28,541.4 million in 2022 [F1][E3] and $45,042.7 million in 2024 [F2][E2].\n\nSources: [E3] LLY_2023.html - Management's Discussion and Analysis of Results of Operations and Financial Condition; [E2] LLY_2024.html - Management's Discussion and Analysis of Results of Operations and Financial Condition",
+      "token_precision": 0.5428571428571428,
+      "token_recall": 0.5428571428571428,
+      "token_f1": 0.5428571428571428,
+      "rouge_l_f1": 0.4000000000000001,
+      "answer_overlap_score": 0.5428571428571428,
+      "numeric_precision": 1.0,
+      "numeric_recall": 0.75,
+      "numeric_f1": 0.8571428571428571,
+      "numeric_accuracy": 0.75,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "calculation",
+      "task_count": 3,
+      "task_trace": [
+        {
+          "id": "retrieve_lly_fy2022_total_revenue",
+          "query": "Eli Lilly and Company LLY total revenue fiscal year 2022 consolidated statements of operations Item 7",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "total revenue",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lly_fy2024_total_revenue",
+          "query": "Eli Lilly and Company LLY total revenue fiscal year 2024 consolidated statements of operations Item 7",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "total revenue",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_explicit_lly_2023",
+          "query": "LLY FY2023 What was the percentage change in total revenue from fiscal year 2022 to fiscal year 2024? Item 7",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2023"
+          ],
+          "metric": "",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "planner_task_assignment_coverage": 1.0,
+      "direct_evidence_labels_available": true,
+      "directly_supported_task_count": 2,
+      "missing_direct_evidence_task_ids": [],
+      "direct_evidence_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 2,
+      "fact_produced": true,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E3",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "metric": "total revenue",
+          "rawValue": "$28,541.4",
+          "value": "28541.4",
+          "unit": "usd",
+          "scale": "million"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E2",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "metric": "total revenue",
+          "rawValue": "$45,042.7",
+          "value": "45042.7",
+          "unit": "usd",
+          "scale": "million"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.5,
+      "structured_value_recall": 0.75,
+      "calculation_count": 1,
+      "calculation_produced": true,
+      "calculation_plan_count": 1,
+      "calculation_plan_trace": [
+        {
+          "id": "calculate_lly_total_revenue_percent_change_fy2022_fy2024",
+          "operator": "PERCENT_CHANGE",
+          "operands": [
+            {
+              "role": "start",
+              "sourceTaskId": "retrieve_lly_fy2022_total_revenue",
+              "company": "LLY",
+              "fiscalYear": "2022",
+              "metric": "total revenue",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            },
+            {
+              "role": "end",
+              "sourceTaskId": "retrieve_lly_fy2024_total_revenue",
+              "company": "LLY",
+              "fiscalYear": "2024",
+              "metric": "total revenue",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            }
+          ],
+          "outputUnit": "percent",
+          "outputScale": "unit",
+          "precision": 1,
+          "periods": 0
+        }
+      ],
+      "calculation_plan_execution_rate": 1.0,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "percentage_change",
+          "expression": "PERCENT_CHANGE(F1 -> F2)",
+          "result": "57.8",
+          "unit": "percent",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F1",
+            "F2"
+          ]
+        }
+      ],
+      "calculation_result_match": 1.0,
+      "requires_calculation": true,
+      "requires_structured_calculation": true,
+      "expected_sources": [
+        "LLY_2022.html",
+        "LLY_2023.html",
+        "LLY_2024.html"
+      ],
+      "expected_sections": [
+        "LLY_2022.html::item 7",
+        "LLY_2023.html::item 7",
+        "LLY_2024.html::item 7"
+      ],
+      "retrieved_sources": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "LLY_2023.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-772e9b298b32915783754baf",
+          "sourceFile": "LLY_2022.html",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_fy2022_total_revenue"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_lly_fy2022_total_revenue"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-efcbecc7fac77d286db40a71",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_fy2024_total_revenue"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_lly_fy2024_total_revenue"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-0c57120a64504026c51d8e16",
+          "sourceFile": "LLY_2023.html",
+          "company": "LLY",
+          "fiscalYear": "2023",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_explicit_lly_2023"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_explicit_lly_2023"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-f71511287eefcb68d277f808",
+          "sourceFile": "LLY_2023.html",
+          "company": "LLY",
+          "fiscalYear": "2023",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_explicit_lly_2023"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_explicit_lly_2023"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "LLY_2022.html",
+        "LLY_2023.html",
+        "LLY_2024.html"
+      ],
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 1.0,
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.3333333333333333,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 1.0,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 1.0,
+      "document_ndcg_at_3": 1.0,
+      "document_complete_recall_at_3": 1.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 1.0,
+      "document_ndcg_at_5": 1.0,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 1.0,
+      "document_ndcg_at_10": 1.0,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.3333333333333333,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 1.0,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 1.0,
+      "section_ndcg_at_3": 1.0,
+      "section_complete_recall_at_3": 1.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 1.0,
+      "section_ndcg_at_5": 1.0,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 1.0,
+      "section_ndcg_at_10": 1.0,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.5,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 1.0,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 1.0,
+      "retrieval_task_recall_at_5": 1.0,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 1.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.9285714285714286,
+      "planning_ms": 5172,
+      "retrieval_ms": 26232,
+      "generation_ms": 1328,
+      "latency_ms": 32888,
+      "error": "",
+      "known_issue": null
+    },
+    {
+      "id": "md2025_2282",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "In their Item 7 MD&A, which company explicitly states that they provide quantitative information about the impact of changes in volume and pricing on sales, and at which organizational level do they report this? Provide textual evidence from both ECL's FY2022 and LIN's FY2024 filings, and identify which financial table or note is referenced for additional segment detail.",
+      "evidence_section": "Item 7, Management's Discussion and Analysis",
+      "expected_answer": "ECL's FY2022 Item 7 states: 'We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency at the corporate and reportable segment level.' LIN's FY2024 Item 7 does not contain a similar explicit statement; instead it directs readers to 'Note 18 to the consolidated financial statements for additional information related to Linde’s reportable segments.' This Note 18 constitutes the financial table referenced for segment details.",
+      "predicted_answer": "**Conclusion:** Only ECL explicitly states in Item 7 MD&A that it provides quantitative information on volume and pricing impacts; the supplied evidence does not contain the corresponding LIN FY2024 Item 7 statement.\n\n- **ECL FY2022 (volume/pricing):** \"We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency **at the corporate and reportable segment level**.\" [E1]\n- **LIN FY2024 (volume/pricing):** Not found in the supplied evidence — the only LIN excerpt is from Item 1 (Business), not Item 7 MD&A. [E2]\n- **Segment detail reference:** LIN's Item 1 excerpt directs readers to \"**Note 18 to the consolidated financial statements** for additional information related to Linde's reportable segments.\" [E2] The supplied ECL FY2022 excerpt references its consolidated financial statements and related notes generally, but names no specific segment note or table. [E1]\n\n**Contrast:** ECL makes the volume/pricing quantitative disclosure at the corporate and reportable segment level, whereas the supplied LIN evidence addresses segment detail via Note 18 rather than an Item 7 volume/pricing statement.\n\n**Sources**\n[E1] ECL_2022.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations.\n[E2] LIN_2024.html — Item 1. BUSINESS",
+      "token_precision": 0.4245810055865922,
+      "token_recall": 0.8941176470588236,
+      "token_f1": 0.5757575757575757,
+      "rouge_l_f1": 0.5,
+      "answer_overlap_score": 0.5757575757575757,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "source_lookup",
+      "task_count": 4,
+      "task_trace": [
+        {
+          "id": "retrieve_ecl_fy2022_mdna_volume_pricing_quantitative_disclosure",
+          "query": "Ecolab ECL FY2022 Item 7 MD&A statement quantitative information impact of changes in volume and pricing on sales organizational level segment disclosure",
+          "companies": [
+            "ECL"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "volume and pricing impact on sales quantitative disclosure",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lin_fy2024_mdna_volume_pricing_quantitative_disclosure",
+          "query": "Linde plc LIN FY2024 Item 7 MD&A statement quantitative information impact of changes in volume and pricing on sales organizational level segment disclosure",
+          "companies": [
+            "LIN"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "volume and pricing impact on sales quantitative disclosure",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_ecl_fy2022_segment_note_reference",
+          "query": "Ecolab ECL FY2022 Item 7 MD&A reference to financial table or note for additional segment detail segment information note",
+          "companies": [
+            "ECL"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "segment detail financial table or note reference",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lin_fy2024_segment_note_reference",
+          "query": "Linde plc LIN FY2024 Item 7 MD&A reference to financial table or note for additional segment detail segment information note",
+          "companies": [
+            "LIN"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "segment detail financial table or note reference",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 4,
+      "matched_task_count": 2,
+      "task_coverage": 0.5,
+      "planner_task_assignment_coverage": 0.5,
+      "direct_evidence_labels_available": true,
+      "directly_supported_task_count": 2,
+      "missing_direct_evidence_task_ids": [
+        "retrieve_ecl_fy2022_mdna_volume_pricing_quantitative_disclosure",
+        "retrieve_lin_fy2024_mdna_volume_pricing_quantitative_disclosure"
+      ],
+      "direct_evidence_coverage": 0.5,
+      "scope_item_match_rate": 0.5,
+      "cross_section_contamination_rate": 0.5,
+      "answered_task_count": 4,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_produced": false,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_produced": false,
+      "calculation_plan_count": 0,
+      "calculation_plan_trace": [],
+      "calculation_plan_execution_rate": null,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "expected_sections": [
+        "ECL_2022.html::item 7",
+        "LIN_2024.html::item 7"
+      ],
+      "retrieved_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-185794ca365016dabf2cce29",
+          "sourceFile": "ECL_2022.html",
+          "company": "ECL",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations.",
+          "matchedTaskIds": [
+            "retrieve_ecl_fy2022_segment_note_reference"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_ecl_fy2022_segment_note_reference"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-15a704823e7ddf1b8f74d241",
+          "sourceFile": "LIN_2024.html",
+          "company": "LIN",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 1",
+          "sectionTitle": "BUSINESS",
+          "matchedTaskIds": [
+            "retrieve_lin_fy2024_segment_note_reference"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_lin_fy2024_segment_note_reference"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 0.5,
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.5,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 1.0,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 1.0,
+      "document_ndcg_at_3": 1.0,
+      "document_complete_recall_at_3": 1.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 1.0,
+      "document_ndcg_at_5": 1.0,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 1.0,
+      "document_ndcg_at_10": 1.0,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.5,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.5,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 0.5,
+      "section_ndcg_at_3": 0.6131471927654584,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 0.5,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 0.5,
+      "section_ndcg_at_5": 0.6131471927654584,
+      "section_complete_recall_at_5": 0.0,
+      "section_recall_at_10": 0.5,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 0.5,
+      "section_ndcg_at_10": 0.6131471927654584,
+      "section_complete_recall_at_10": 0.0,
+      "retrieval_task_recall_at_1": 0.25,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.5,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 0.6666666666666666,
+      "retrieval_task_ndcg_at_3": 0.7653606369886217,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 0.5,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 0.5,
+      "retrieval_task_ndcg_at_5": 0.6366824387328317,
+      "retrieval_task_complete_recall_at_5": 0.0,
+      "retrieval_task_recall_at_10": 0.5,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 0.5,
+      "retrieval_task_ndcg_at_10": 0.6366824387328317,
+      "retrieval_task_complete_recall_at_10": 0.0,
+      "retrieval_quality_status": "DEGRADED",
+      "retrieval_warnings": [
+        "missing_direct_support: retrieve_ecl_fy2022_mdna_volume_pricing_quantitative_disclosure | companies=ECL | years=2022 | metric=volume and pricing impact on sales quantitative disclosure",
+        "missing_direct_support: retrieve_lin_fy2024_mdna_volume_pricing_quantitative_disclosure | companies=LIN | years=2024 | metric=volume and pricing impact on sales quantitative disclosure"
+      ],
+      "rag_quality_score": 0.6378787878787879,
+      "planning_ms": 8239,
+      "retrieval_ms": 62003,
+      "generation_ms": 2515,
+      "latency_ms": 72775,
+      "error": "",
+      "known_issue": "Gold attributes Linde's Note 18 cross-reference to FY2024 Item 7, but the quoted sentence appears in Item 1 and points readers to Item 7 and Note 18."
+    },
+    {
+      "id": "md2025_2283",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Compare the language used by LIN in FY2024 and ECL in FY2022 regarding the provision of quantitative sales driver information. Does LIN's FY2024 Item 7 mention quantitative sales drivers at all, or does it rely solely on references to financial tables? Support your answer with exact quotes from both filings and indicate which fiscal years are represented.",
+      "evidence_section": "Item 7, Management's Discussion and Analysis",
+      "expected_answer": "ECL's FY2022 Item 7 states: 'We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency at the corporate and reportable segment level.' LIN's FY2024 Item 7 does not contain any mention of quantitative sales drivers; it only states: 'Item 7, Management's Discussion and Analysis, for a discussion of consolidated sales and Note 18 to the consolidated financial statements for additional information related to Linde’s reportable segments.' Thus, LIN relies entirely on referencing the financial tables (Note 18) rather than providing quantitative descriptions in the text.",
+      "predicted_answer": "**Conclusion:** ECL's FY2022 Item 7 explicitly commits to quantitative sales driver disclosure; LIN's FY2024 evidence does not show any Item 7 language on quantitative sales drivers — the supplied evidence only points to Item 7 rather than quoting it.\n\n- **ECL FY2022:** Its Item 7 states: \"We provide quantitative information about the material sales drivers including the impact of changes in volume and pricing and the effect of acquisitions and changes in foreign currency at the corporate and reportable segment level.\" [E2]\n- **LIN FY2024:** No Item 7 quantitative sales-driver language appears in the evidence. The only LIN excerpt is from Item 1, which merely refers readers to Item 7: \"Refer to Item 7, Management's Discussion and Analysis, for a discussion of consolidated sales and Note 18 to the consolidated financial statements for additional information related to Linde's reportable segments.\" [E1]\n- **Contrast:** ECL affirmatively describes quantitative sales-driver disclosure in Item 7, whereas LIN's retrieved evidence shows only a cross-reference to Item 7, not its content. [E1][E2]\n\n**Gap:** LIN FY2024 Item 7 text itself was not retrieved, so whether it mentions quantitative sales drivers at all, or relies solely on references to financial tables, cannot be determined from the supplied evidence.\n\nSources\n[E1] LIN_2024.html — Item 1. BUSINESS\n[E2] ECL_2022.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations",
+      "token_precision": 0.4752475247524752,
+      "token_recall": 0.897196261682243,
+      "token_f1": 0.6213592233009708,
+      "rouge_l_f1": 0.5436893203883494,
+      "answer_overlap_score": 0.6213592233009708,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 2,
+      "task_trace": [
+        {
+          "id": "retrieve_lin_2024_item7_quantitative_sales_drivers",
+          "query": "Linde plc LIN FY2024 Item 7 Management's Discussion and Analysis language on quantitative sales drivers, sales volume, price, mix, and references to financial tables",
+          "companies": [
+            "LIN"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "quantitative sales driver disclosure language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_ecl_2022_item7_quantitative_sales_drivers",
+          "query": "Ecolab Inc. ECL FY2022 Item 7 Management's Discussion and Analysis language on quantitative sales drivers, sales volume, price, mix, and references to financial tables",
+          "companies": [
+            "ECL"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "quantitative sales driver disclosure language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 2,
+      "matched_task_count": 2,
+      "task_coverage": 1.0,
+      "planner_task_assignment_coverage": 1.0,
+      "direct_evidence_labels_available": true,
+      "directly_supported_task_count": 2,
+      "missing_direct_evidence_task_ids": [],
+      "direct_evidence_coverage": 1.0,
+      "scope_item_match_rate": 0.5,
+      "cross_section_contamination_rate": 0.5,
+      "answered_task_count": 2,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_produced": false,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_produced": false,
+      "calculation_plan_count": 0,
+      "calculation_plan_trace": [],
+      "calculation_plan_execution_rate": null,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "expected_sections": [
+        "ECL_2022.html::item 7",
+        "LIN_2024.html::item 7"
+      ],
+      "retrieved_sources": [
+        "LIN_2024.html",
+        "ECL_2022.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-15a704823e7ddf1b8f74d241",
+          "sourceFile": "LIN_2024.html",
+          "company": "LIN",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 1",
+          "sectionTitle": "BUSINESS",
+          "matchedTaskIds": [
+            "retrieve_lin_2024_item7_quantitative_sales_drivers"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_lin_2024_item7_quantitative_sales_drivers"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-185794ca365016dabf2cce29",
+          "sourceFile": "ECL_2022.html",
+          "company": "ECL",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations.",
+          "matchedTaskIds": [
+            "retrieve_ecl_2022_item7_quantitative_sales_drivers"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_ecl_2022_item7_quantitative_sales_drivers"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "ECL_2022.html",
+        "LIN_2024.html"
+      ],
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 0.5,
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.5,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 1.0,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 1.0,
+      "document_ndcg_at_3": 1.0,
+      "document_complete_recall_at_3": 1.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 1.0,
+      "document_ndcg_at_5": 1.0,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 1.0,
+      "document_ndcg_at_10": 1.0,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.0,
+      "section_mrr_at_1": 0.0,
+      "section_map_at_1": 0.0,
+      "section_ndcg_at_1": 0.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.5,
+      "section_mrr_at_3": 0.5,
+      "section_map_at_3": 0.25,
+      "section_ndcg_at_3": 0.38685280723454163,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 0.5,
+      "section_mrr_at_5": 0.5,
+      "section_map_at_5": 0.25,
+      "section_ndcg_at_5": 0.38685280723454163,
+      "section_complete_recall_at_5": 0.0,
+      "section_recall_at_10": 0.5,
+      "section_mrr_at_10": 0.5,
+      "section_map_at_10": 0.25,
+      "section_ndcg_at_10": 0.38685280723454163,
+      "section_complete_recall_at_10": 0.0,
+      "retrieval_task_recall_at_1": 0.5,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 1.0,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 1.0,
+      "retrieval_task_recall_at_5": 1.0,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 1.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.8106796116504853,
+      "planning_ms": 2790,
+      "retrieval_ms": 56667,
+      "generation_ms": 1880,
+      "latency_ms": 61349,
+      "error": "",
+      "known_issue": "Gold says LIN FY2024 Item 7 contains no quantitative sales-driver descriptions, but Item 7 explicitly reports price, volume, cost pass-through, and currency percentage effects; its quoted Note 18 cross-reference appears in Item 1."
+    },
+    {
+      "id": "md2025_2286",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Compare the forward-looking statement language in Item 7 of LLY and PFE for fiscal years 2022 and 2024. What specific wording change occurs for LLY between the two years, and how does PFE's language remain consistent? Additionally, based on the common structure of MD&A, which financial statement line item (commonly found in the financial tables) would an analyst use to quantify the risk associated with the forward-looking statements about 'cash generated from operations'?",
+      "evidence_section": "Item 7 for both companies both years",
+      "expected_answer": "LLY's 2022 Item 7 text includes the phrase 'differ materially from these forward-looking statements', while the 2024 text omits 'materially' and states 'differ from these forward-looking statements'. PFE's Item 7 text is identical in both 2022 and 2024, using the standard 'MANAGEMENT’S DISCUSSION AND ANALYSIS...' opening without any variation. To quantify the risk for 'cash generated from operations', an analyst would refer to the Statement of Cash Flows in the financial tables, specifically the line 'Net cash provided by operating activities'.",
+      "predicted_answer": "**Conclusion:** For LLY, the only visible wording shift between FY2022 and FY2024 is a substitution of \"differ **materially** from those anticipated\" with \"differ from those anticipated,\" plus a new reference to \"cash generated from operations\" in the FY2024 MD&A. PFE's Item 7 language remains consistent in emphasizing \"an evaluation of the amounts and certainty of cash flows from operations.\" However, the evidence does not contain enough of PFE's actual forward-looking statement clause to confirm whether its wording changed.\n\n**LLY specific wording change (FY2022 → FY2024):**\n- FY2022: \"...could cause actual results or events to **differ materially from** those anticipated...\" [E1]\n- FY2024: \"...could cause actual results or events to **differ from** those anticipated...\" [E2]\n- FY2024 also explicitly ties risk to \"**cash generated from operations**\" in Item 7 (\"may cause our actual results, financial position, and cash generated from operations to differ from these forward-looking statements\") [E5]\n\n**PFE consistency:**\n- FY2022 Item 7 GENERAL states MD&A assists in \"an evaluation of the amounts and certainty of cash flows from operations and from outside sources\" [E3]\n- FY2024 Item 7 similarly presents a \"Diverse sources of funds\" table linking \"Operating cash flows\" to the \"Consolidated Statements of Cash Flows – Operating Activities\" [E4]\n- The retrieved PFE evidence does not include the actual forward-looking statement paragraph, so I cannot confirm PFE's exact cautionary wording.\n\n**Contrast sentence:** LLY's FY2024 language is less qualified (\"differ from\" vs. \"differ materially from\"), whereas PFE's accessible Item 7 text consistently frames MD&A around amounts and certainty of cash flows.\n\n**Financial statement line item for quantifying cash-from-operations risk:** **Net cash provided by operating activities** (per the Consolidated Statements of Cash Flows – Operating Activities). [E4]\n\n**Sources:**\n[E1] LLY_2022.html — Item 7\n[E2] LLY_2024.html — Item 7\n[E3] PFE_2022.html — Item 7 (Business)\n[E4] PFE_2024.html — Item 7\n[E5] LLY_2024.html — Item 7",
+      "token_precision": 0.21014492753623187,
+      "token_recall": 0.6744186046511628,
+      "token_f1": 0.32044198895027626,
+      "rouge_l_f1": 0.2154696132596685,
+      "answer_overlap_score": 0.32044198895027626,
+      "numeric_precision": null,
+      "numeric_recall": null,
+      "numeric_f1": null,
+      "numeric_accuracy": null,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 8,
+      "task_trace": [
+        {
+          "id": "retrieve_lly_2022_fwd_language",
+          "query": "LLY 2022 Item 7 MD&A forward-looking statement language wording",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lly_2024_fwd_language",
+          "query": "LLY 2024 Item 7 MD&A forward-looking statement language wording",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2022_fwd_language",
+          "query": "PFE 2022 Item 7 MD&A forward-looking statement language wording",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2024_fwd_language",
+          "query": "PFE 2024 Item 7 MD&A forward-looking statement language wording",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "forward-looking statement language",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lly_2022_cash_from_operations",
+          "query": "LLY 2022 Item 7 MD&A cash generated from operations financial statement line item",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "cash generated from operations",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_lly_2024_cash_from_operations",
+          "query": "LLY 2024 Item 7 MD&A cash generated from operations financial statement line item",
+          "companies": [
+            "LLY"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "cash generated from operations",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2022_cash_from_operations",
+          "query": "PFE 2022 Item 7 MD&A cash generated from operations financial statement line item",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "cash generated from operations",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_pfe_2024_cash_from_operations",
+          "query": "PFE 2024 Item 7 MD&A cash generated from operations financial statement line item",
+          "companies": [
+            "PFE"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "cash generated from operations",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 8,
+      "matched_task_count": 4,
+      "task_coverage": 0.5,
+      "planner_task_assignment_coverage": 0.5,
+      "direct_evidence_labels_available": true,
+      "directly_supported_task_count": 4,
+      "missing_direct_evidence_task_ids": [
+        "retrieve_lly_2022_cash_from_operations",
+        "retrieve_lly_2024_cash_from_operations",
+        "retrieve_pfe_2022_cash_from_operations",
+        "retrieve_pfe_2024_cash_from_operations"
+      ],
+      "direct_evidence_coverage": 0.5,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 8,
+      "answer_task_coverage": 1.0,
+      "fact_count": 0,
+      "fact_produced": false,
+      "fact_trace": [],
+      "fact_extracted": null,
+      "fact_value_recall": null,
+      "structured_value_recall": null,
+      "calculation_count": 0,
+      "calculation_produced": false,
+      "calculation_plan_count": 0,
+      "calculation_plan_trace": [],
+      "calculation_plan_execution_rate": null,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": false,
+      "requires_structured_calculation": false,
+      "expected_sources": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "expected_sections": [
+        "LLY_2022.html::item 7",
+        "LLY_2024.html::item 7",
+        "PFE_2022.html::item 7",
+        "PFE_2024.html::item 7"
+      ],
+      "retrieved_sources": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-6819880929d87d1b226d7154",
+          "sourceFile": "LLY_2022.html",
+          "company": "LLY",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "matchedTaskIds": [
+            "retrieve_lly_2022_fwd_language"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_lly_2022_fwd_language"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-cc8b75864aaaaa481c6747a8",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_fwd_language"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_lly_2024_fwd_language"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-c09b17163b503c134789d322",
+          "sourceFile": "PFE_2022.html",
+          "company": "PFE",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Business",
+          "matchedTaskIds": [
+            "retrieve_pfe_2022_fwd_language"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_pfe_2022_fwd_language"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-94e15514da740c3fb32856a2",
+          "sourceFile": "PFE_2024.html",
+          "company": "PFE",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "matchedTaskIds": [
+            "retrieve_pfe_2024_fwd_language"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_pfe_2024_fwd_language"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-efcbecc7fac77d286db40a71",
+          "sourceFile": "LLY_2024.html",
+          "company": "LLY",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Results of Operations and Financial Condition",
+          "matchedTaskIds": [
+            "retrieve_lly_2024_fwd_language"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_lly_2024_fwd_language"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "LLY_2022.html",
+        "LLY_2024.html",
+        "PFE_2022.html",
+        "PFE_2024.html"
+      ],
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 1.0,
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.25,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.75,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 1.0,
+      "document_ndcg_at_3": 1.0,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 1.0,
+      "document_ndcg_at_5": 1.0,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 1.0,
+      "document_ndcg_at_10": 1.0,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.25,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.75,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 1.0,
+      "section_ndcg_at_3": 1.0,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 1.0,
+      "section_ndcg_at_5": 1.0,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 1.0,
+      "section_ndcg_at_10": 1.0,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.125,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.375,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 0.5,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 0.8,
+      "retrieval_task_ndcg_at_5": 0.8687949224876582,
+      "retrieval_task_complete_recall_at_5": 0.0,
+      "retrieval_task_recall_at_10": 0.5,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 0.5,
+      "retrieval_task_ndcg_at_10": 0.647939623894138,
+      "retrieval_task_complete_recall_at_10": 0.0,
+      "retrieval_quality_status": "DEGRADED",
+      "retrieval_warnings": [
+        "missing_direct_support: retrieve_lly_2022_cash_from_operations | companies=LLY | years=2022 | metric=cash generated from operations",
+        "missing_direct_support: retrieve_lly_2024_cash_from_operations | companies=LLY | years=2024 | metric=cash generated from operations",
+        "missing_direct_support: retrieve_pfe_2022_cash_from_operations | companies=PFE | years=2022 | metric=cash generated from operations",
+        "missing_direct_support: retrieve_pfe_2024_cash_from_operations | companies=PFE | years=2024 | metric=cash generated from operations",
+        "missing_scoped_coverage: retrieve_pfe_2022_cash_from_operations | Item 7"
+      ],
+      "rag_quality_score": 0.5102209944751381,
+      "planning_ms": 4341,
+      "retrieval_ms": 79966,
+      "generation_ms": 3395,
+      "latency_ms": 87733,
+      "error": "",
+      "known_issue": null
+    },
+    {
+      "id": "md2025_2293",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Calculate the percentage increase in NFLX's total revenues from FY2022 to FY2024 and the percentage increase in paid memberships over the same period. How do these growth rates compare, and what does META's FY2022 and FY2024 MD&A provide for user or revenue metrics?",
+      "evidence_section": "NFLX FY2022 Item 7 table (Total revenues, Paid memberships at end of period) and NFLX FY2024 Item 7 table (Total revenues, Paid memberships at end of period); META FY2022 Item 7 text and META FY2024 Item 7 text",
+      "expected_answer": "NFLX total revenues grew from $31,615,550 thousand in FY2022 to $39,000,966 thousand in FY2024, a 23.4% increase ($39,000,966 - $31,615,550) / $31,615,550 * 100 = 23.35%). Paid memberships at end of period grew from 230,747 thousand to 301,626 thousand, a 30.7% increase (($301,626 - $230,747) / $230,747 * 100 = 30.73%). Revenue grew slower than membership base, indicating ARPU pressure or mix shift. META's Item 7 for both FY2022 and FY2024 provides only introductory text with forward-looking statements, no revenue or user metrics, so no comparable data exists in the provided documents.",
+      "predicted_answer": "NFLX FY2022 total revenues was $31,615,550 [F1][E3]; NFLX FY2024 total revenues was $39,000,966 [F2][E4]. The percentage change was 23.4 percent [C1][E3][E4].\n\nSources:\n[E3] NFLX_2022.html\n[E4] NFLX_2024.html",
+      "token_precision": 0.6086956521739131,
+      "token_recall": 0.13333333333333333,
+      "token_f1": 0.21875000000000003,
+      "rouge_l_f1": 0.17187500000000003,
+      "answer_overlap_score": 0.21875000000000003,
+      "numeric_precision": 0.6666666666666666,
+      "numeric_recall": 0.2222222222222222,
+      "numeric_f1": 0.3333333333333333,
+      "numeric_accuracy": 0.2222222222222222,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "calculation",
+      "task_count": 6,
+      "task_trace": [
+        {
+          "id": "retrieve_nflx_2022_total_revenues",
+          "query": "Netflix NFLX FY2022 Item 7 table Total revenues",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Total revenues",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_2024_total_revenues",
+          "query": "Netflix NFLX FY2024 Item 7 table Total revenues",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Total revenues",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_2022_paid_memberships",
+          "query": "Netflix NFLX FY2022 Item 7 table Paid memberships at end of period",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Paid memberships at end of period",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_2024_paid_memberships",
+          "query": "Netflix NFLX FY2024 Item 7 table Paid memberships at end of period",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Paid memberships at end of period",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_meta_2022_mda_user_revenue_metrics",
+          "query": "Meta Platforms META FY2022 Item 7 MD&A user metrics revenue metrics",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "user metrics, revenue metrics",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_meta_2024_mda_user_revenue_metrics",
+          "query": "Meta Platforms META FY2024 Item 7 MD&A user metrics revenue metrics",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "user metrics, revenue metrics",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 6,
+      "matched_task_count": 6,
+      "task_coverage": 1.0,
+      "planner_task_assignment_coverage": 1.0,
+      "direct_evidence_labels_available": true,
+      "directly_supported_task_count": 6,
+      "missing_direct_evidence_task_ids": [],
+      "direct_evidence_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 4,
+      "answer_task_coverage": 0.6666666666666666,
+      "fact_count": 4,
+      "fact_produced": true,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E3",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "metric": "Total revenues",
+          "rawValue": "$31,615,550",
+          "value": "31615550",
+          "unit": "usd",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E4",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "metric": "Total revenues",
+          "rawValue": "$39,000,966",
+          "value": "39000966",
+          "unit": "usd",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F3",
+          "evidenceId": "E3",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "metric": "Paid memberships at end of period",
+          "rawValue": "230,747",
+          "value": "230747",
+          "unit": "count",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F4",
+          "evidenceId": "E4",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "metric": "Paid memberships at end of period",
+          "rawValue": "301,626",
+          "value": "301626",
+          "unit": "count",
+          "scale": "thousand"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.4444444444444444,
+      "structured_value_recall": 0.6666666666666666,
+      "calculation_count": 2,
+      "calculation_produced": true,
+      "calculation_plan_count": 2,
+      "calculation_plan_trace": [
+        {
+          "id": "calculate_nflx_total_revenues_percent_change",
+          "operator": "PERCENT_CHANGE",
+          "operands": [
+            {
+              "role": "start",
+              "sourceTaskId": "retrieve_nflx_2022_total_revenues",
+              "company": "NFLX",
+              "fiscalYear": "2022",
+              "metric": "Total revenues",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            },
+            {
+              "role": "end",
+              "sourceTaskId": "retrieve_nflx_2024_total_revenues",
+              "company": "NFLX",
+              "fiscalYear": "2024",
+              "metric": "Total revenues",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            }
+          ],
+          "outputUnit": "percent",
+          "outputScale": "unit",
+          "precision": 1,
+          "periods": 0
+        },
+        {
+          "id": "calculate_nflx_paid_memberships_percent_change",
+          "operator": "PERCENT_CHANGE",
+          "operands": [
+            {
+              "role": "start",
+              "sourceTaskId": "retrieve_nflx_2022_paid_memberships",
+              "company": "NFLX",
+              "fiscalYear": "2022",
+              "metric": "Paid memberships at end of period",
+              "rawValue": "",
+              "unit": "count",
+              "scale": "million"
+            },
+            {
+              "role": "end",
+              "sourceTaskId": "retrieve_nflx_2024_paid_memberships",
+              "company": "NFLX",
+              "fiscalYear": "2024",
+              "metric": "Paid memberships at end of period",
+              "rawValue": "",
+              "unit": "count",
+              "scale": "million"
+            }
+          ],
+          "outputUnit": "percent",
+          "outputScale": "unit",
+          "precision": 1,
+          "periods": 0
+        }
+      ],
+      "calculation_plan_execution_rate": 1.0,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "percentage_change",
+          "expression": "PERCENT_CHANGE(F1 -> F2)",
+          "result": "23.4",
+          "unit": "percent",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F1",
+            "F2"
+          ]
+        },
+        {
+          "calculationId": "C2",
+          "type": "percentage_change",
+          "expression": "PERCENT_CHANGE(F3 -> F4)",
+          "result": "30.7",
+          "unit": "percent",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F3",
+            "F4"
+          ]
+        }
+      ],
+      "calculation_result_match": 1.0,
+      "requires_calculation": true,
+      "requires_structured_calculation": true,
+      "expected_sources": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "expected_sections": [
+        "META_2022.html::item 7",
+        "META_2024.html::item 7",
+        "NFLX_2022.html::item 7",
+        "NFLX_2024.html::item 7"
+      ],
+      "retrieved_sources": [
+        "NFLX_2022.html",
+        "NFLX_2024.html",
+        "META_2022.html",
+        "META_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-11cc77f1e34d65c02e27984c",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2022_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-f5eb03fc9c780ea2904c614a",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2024_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2024_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-260a336cde83887bf34ea724",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_paid_memberships",
+            "retrieve_nflx_2022_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2022_paid_memberships",
+            "retrieve_nflx_2022_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-a2a48a934bcbb4136f84b917",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2024_paid_memberships",
+            "retrieve_nflx_2024_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2024_paid_memberships",
+            "retrieve_nflx_2024_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-cdb22936d381e6dcdacdde11",
+          "sourceFile": "META_2022.html",
+          "company": "META",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_meta_2022_mda_user_revenue_metrics"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_meta_2022_mda_user_revenue_metrics"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-67fbe443eed7cbcf9f0df242",
+          "sourceFile": "META_2024.html",
+          "company": "META",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "matchedTaskIds": [
+            "retrieve_meta_2024_mda_user_revenue_metrics"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_meta_2024_mda_user_revenue_metrics"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 1.0,
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.25,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.75,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 1.0,
+      "document_ndcg_at_3": 1.0,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 1.0,
+      "document_ndcg_at_5": 1.0,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 1.0,
+      "document_ndcg_at_10": 1.0,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.25,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.75,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 1.0,
+      "section_ndcg_at_3": 1.0,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 1.0,
+      "section_ndcg_at_5": 1.0,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 1.0,
+      "section_ndcg_at_10": 1.0,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.16666666666666666,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.5,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 0.8333333333333334,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 0.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.6666666666666667,
+      "planning_ms": 5140,
+      "retrieval_ms": 66231,
+      "generation_ms": 2653,
+      "latency_ms": 74054,
+      "error": "",
+      "known_issue": "Gold says META FY2022 and FY2024 Item 7 provide no user or revenue metrics, but the filings explicitly report FY2022 worldwide ARPP and Facebook DAU/MAU/ARPU, and FY2024 worldwide DAP and ARPP metrics."
+    },
+    {
+      "id": "md2025_2294",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "NFLX's paid net membership additions were 8,903 thousand in FY2022 and 41,350 thousand in FY2024. What does this 364% increase imply about the company's subscriber growth trajectory? How does META's Management Discussion in FY2022 and FY2024 reflect a different disclosure approach, and what challenge does this present for cross-company subscriber growth analysis?",
+      "evidence_section": "NFLX FY2022 Item 7 table (Paid net membership additions) and NFLX FY2024 Item 7 table (Paid net membership additions); META FY2022 Item 7 text and META FY2024 Item 7 text",
+      "expected_answer": "NFLX's paid net membership additions surged from 8,903 thousand in FY2022 to 41,350 thousand in FY2024, a 364% increase (($41,350 - $8,903) / $8,903 * 100 = 364.5%). This indicates a dramatic acceleration in subscriber acquisition after a relatively weak 2022. META's Item 7 for both FY2022 and FY2024 contains only standardized forward-looking statement language and does not disclose any user, membership, or net addition metrics. Therefore, no subscriber growth comparison between NFLX and META is possible from the provided content, highlighting the disparity in disclosure practices between the two companies.",
+      "predicted_answer": "**NFLX:** Paid net membership additions were 8,903 thousand in FY2022 [F1][E2] and 41,350 thousand in FY2024 [F2][E3]; the FY2024 table also shows a 40% change versus FY2023 [E3], which is the only growth-rate metric disclosed. The two-point increase implies a sharp acceleration, but the evidence does not attribute a cause.\n\n**META:** META's Item 7 discloses revenue, operating income, and Family metrics (ad impressions, price per ad) but the retrieved text contains no paid-subscription or membership additions metric for FY2022 [E1] or FY2024 [E4].\n\n**Contrast/challenge:** META reports \"key Family metrics\" such as ad impressions and average price per ad [E4], not subscriber additions, so no directly comparable membership-growth line exists for cross-company analysis; the differing metric definitions and units between the two filers make a like-for-like subscriber trajectory comparison unsupported by this evidence.\n\nSources:\n[E1] META_2022.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations\n[E2] NFLX_2022.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations\n[E3] NFLX_2024.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations\n[E4] META_2024.html — Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations",
+      "token_precision": 0.36496350364963503,
+      "token_recall": 0.5208333333333334,
+      "token_f1": 0.4291845493562232,
+      "rouge_l_f1": 0.30042918454935624,
+      "answer_overlap_score": 0.4291845493562232,
+      "numeric_precision": 0.6666666666666666,
+      "numeric_recall": 0.4,
+      "numeric_f1": 0.5,
+      "numeric_accuracy": 0.4,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 4,
+      "task_trace": [
+        {
+          "id": "retrieve_scope_meta_2022",
+          "query": "META FY2022 NFLX's paid net membership additions were 8,903 thousand in FY2022 and 41,350 thousand in FY2024. What does this 364% increase imply about the company's subscriber growth trajectory? How does META's Management Discussion in FY2022 and FY2024 reflect a different disclosure approach, and what challenge does this present for cross-company subscriber growth analysis? Item 7",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_scope_nflx_2022",
+          "query": "NFLX FY2022 NFLX's paid net membership additions were 8,903 thousand in FY2022 and 41,350 thousand in FY2024. What does this 364% increase imply about the company's subscriber growth trajectory? How does META's Management Discussion in FY2022 and FY2024 reflect a different disclosure approach, and what challenge does this present for cross-company subscriber growth analysis? Item 7",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_scope_nflx_2024",
+          "query": "NFLX FY2024 NFLX's paid net membership additions were 8,903 thousand in FY2022 and 41,350 thousand in FY2024. What does this 364% increase imply about the company's subscriber growth trajectory? How does META's Management Discussion in FY2022 and FY2024 reflect a different disclosure approach, and what challenge does this present for cross-company subscriber growth analysis? Item 7",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_scope_meta_2024",
+          "query": "META FY2024 NFLX's paid net membership additions were 8,903 thousand in FY2022 and 41,350 thousand in FY2024. What does this 364% increase imply about the company's subscriber growth trajectory? How does META's Management Discussion in FY2022 and FY2024 reflect a different disclosure approach, and what challenge does this present for cross-company subscriber growth analysis? Item 7",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "",
+          "operation": "retrieve",
+          "modality": "hybrid",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 4,
+      "matched_task_count": 4,
+      "task_coverage": 1.0,
+      "planner_task_assignment_coverage": 1.0,
+      "direct_evidence_labels_available": true,
+      "directly_supported_task_count": 4,
+      "missing_direct_evidence_task_ids": [],
+      "direct_evidence_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 4,
+      "answer_task_coverage": 1.0,
+      "fact_count": 2,
+      "fact_produced": true,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E2",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "metric": "paid net membership additions",
+          "rawValue": "8,903",
+          "value": "8903",
+          "unit": "count",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E3",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "metric": "paid net membership additions",
+          "rawValue": "41,350",
+          "value": "41350",
+          "unit": "count",
+          "scale": "thousand"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.4,
+      "structured_value_recall": 0.4,
+      "calculation_count": 0,
+      "calculation_produced": false,
+      "calculation_plan_count": 0,
+      "calculation_plan_trace": [],
+      "calculation_plan_execution_rate": null,
+      "calculation_trace": [],
+      "calculation_result_match": null,
+      "requires_calculation": true,
+      "requires_structured_calculation": true,
+      "expected_sources": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html"
+      ],
+      "expected_sections": [
+        "META_2022.html::item 7",
+        "META_2024.html::item 7",
+        "NFLX_2022.html::item 7"
+      ],
+      "retrieved_sources": [
+        "META_2022.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html",
+        "META_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-cdb22936d381e6dcdacdde11",
+          "sourceFile": "META_2022.html",
+          "company": "META",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_scope_meta_2022"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_scope_meta_2022"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-92b07b960a394e1436c2a11b",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_scope_nflx_2022"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_scope_nflx_2022"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-bd14cb8b1d3df0c6f5466048",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_scope_nflx_2024"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_scope_nflx_2024"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-5e687d1f638e4199fbda04b4",
+          "sourceFile": "META_2024.html",
+          "company": "META",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_scope_meta_2024"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_scope_meta_2024"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-4eebd81f0a85ee9084cb2d46",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_scope_nflx_2022"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_scope_nflx_2022"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-77ee308e7b6c4c2b073b3088",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_scope_nflx_2024"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_scope_nflx_2024"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html"
+      ],
+      "document_presence_recall": 1.0,
+      "section_presence_recall": 1.0,
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.3333333333333333,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.6666666666666666,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 0.6666666666666666,
+      "document_ndcg_at_3": 0.7653606369886217,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 0.9166666666666666,
+      "document_ndcg_at_5": 0.9674679834891693,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 0.9166666666666666,
+      "document_ndcg_at_10": 0.9674679834891693,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.3333333333333333,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.6666666666666666,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 0.6666666666666666,
+      "section_ndcg_at_3": 0.7653606369886217,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 0.9166666666666666,
+      "section_ndcg_at_5": 0.9674679834891693,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 0.9166666666666666,
+      "section_ndcg_at_10": 0.9674679834891693,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.25,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.75,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 1.0,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 1.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.75,
+      "planning_ms": 4827,
+      "retrieval_ms": 53791,
+      "generation_ms": 2656,
+      "latency_ms": 61286,
+      "error": "",
+      "known_issue": "Gold says META FY2022 and FY2024 Item 7 contain only standardized forward-looking language and no user metrics, but both filings explicitly discuss measured user/people metrics, including DAU/MAU/DAP and their limitations."
+    }
+  ]
+}

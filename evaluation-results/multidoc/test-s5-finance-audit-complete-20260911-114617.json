@@ -1,0 +1,1580 @@
+{
+  "dataset": "Multi-Doc-2025",
+  "metric_version": "deterministic-v6",
+  "status": "complete",
+  "split": "test",
+  "subsets": [
+    "S5"
+  ],
+  "run_id": "finance-audit-complete",
+  "execution_id": "20260911114617637285-c9c72a15",
+  "dataset_scope_enabled": true,
+  "selected_question_ids": [
+    "md2025_2291",
+    "md2025_2293",
+    "md2025_2294"
+  ],
+  "completed_count": 3,
+  "total_count": 3,
+  "generated_at": "2026-09-11T11:49:00.232553+00:00",
+  "summary": {
+    "overall": {
+      "count": 3,
+      "successful": 3,
+      "token_precision": 0.3791072405233708,
+      "token_recall": 0.4981580346915398,
+      "token_f1": 0.4287069650209319,
+      "rouge_l_f1": 0.29319904207840225,
+      "answer_overlap_score": 0.4287069650209319,
+      "numeric_precision": 0.4331232492997199,
+      "numeric_recall": 0.7555555555555555,
+      "numeric_f1": 0.55011655011655,
+      "numeric_accuracy": 0.7555555555555555,
+      "numeric_question_count": 3,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_ranking_question_count": 3,
+      "document_recall_at_1": 0.3055555555555555,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.6944444444444443,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 0.7037037037037036,
+      "document_ndcg_at_3": 0.8026120593560897,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 0.8703703703703702,
+      "document_ndcg_at_5": 0.9373502903564548,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 0.8703703703703702,
+      "document_ndcg_at_10": 0.9373502903564548,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.3055555555555555,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.6944444444444443,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 0.7037037037037036,
+      "section_ndcg_at_3": 0.8026120593560897,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 0.8703703703703702,
+      "section_ndcg_at_5": 0.9373502903564548,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 0.8703703703703702,
+      "section_ndcg_at_10": 0.9373502903564548,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.2222222222222222,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.6666666666666666,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 0.9444444444444445,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 0.6666666666666666,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answer_task_coverage": 1.0,
+      "degraded_retrieval_rate": 0.0,
+      "retrieval_diagnostic_count": 3,
+      "fact_extraction_rate": 1.0,
+      "fact_extraction_question_count": 3,
+      "fact_value_recall": 0.4481481481481482,
+      "fact_value_question_count": 3,
+      "structured_value_recall": 0.5888888888888889,
+      "structured_value_question_count": 3,
+      "calculation_production_rate": 1.0,
+      "calculation_plan_rate": 1.0,
+      "calculation_plan_execution_rate": 1.0,
+      "calculation_question_count": 3,
+      "calculation_result_match": 1.0,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.775058275058275,
+      "average_latency_ms": 54161.666666666664,
+      "latency_p50_ms": 50006.0,
+      "latency_p95_ms": 61949.9,
+      "planning_latency_p50_ms": 4458.0,
+      "planning_latency_p95_ms": 4809.9,
+      "retrieval_latency_p50_ms": 43174.0,
+      "retrieval_latency_p95_ms": 54685.899999999994,
+      "generation_latency_p50_ms": 2929.0,
+      "generation_latency_p95_ms": 2947.8999999999996
+    },
+    "clean_overall": {
+      "count": 1,
+      "successful": 1,
+      "token_precision": 0.41007194244604317,
+      "token_recall": 0.5876288659793815,
+      "token_f1": 0.48305084745762716,
+      "rouge_l_f1": 0.2627118644067797,
+      "answer_overlap_score": 0.48305084745762716,
+      "numeric_precision": 0.5714285714285714,
+      "numeric_recall": 1.0,
+      "numeric_f1": 0.7272727272727273,
+      "numeric_accuracy": 1.0,
+      "numeric_question_count": 1,
+      "evidence_citation_rate": 1.0,
+      "citation_valid_rate": 1.0,
+      "citation_block_rate": 0.0,
+      "document_recall": 1.0,
+      "retrieval_ranking_question_count": 1,
+      "document_recall_at_1": 0.3333333333333333,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.6666666666666666,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 0.5555555555555555,
+      "document_ndcg_at_3": 0.7039180890341347,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 0.8055555555555555,
+      "document_ndcg_at_5": 0.9060254355346823,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 0.8055555555555555,
+      "document_ndcg_at_10": 0.9060254355346823,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.3333333333333333,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.6666666666666666,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 0.5555555555555555,
+      "section_ndcg_at_3": 0.7039180890341347,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 0.8055555555555555,
+      "section_ndcg_at_5": 0.9060254355346823,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 0.8055555555555555,
+      "section_ndcg_at_10": 0.9060254355346823,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.25,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.75,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 1.0,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 1.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answer_task_coverage": 1.0,
+      "degraded_retrieval_rate": 0.0,
+      "retrieval_diagnostic_count": 1,
+      "fact_extraction_rate": 1.0,
+      "fact_extraction_question_count": 1,
+      "fact_value_recall": 0.5,
+      "fact_value_question_count": 1,
+      "structured_value_recall": 0.5,
+      "structured_value_question_count": 1,
+      "calculation_production_rate": 1.0,
+      "calculation_plan_rate": 1.0,
+      "calculation_plan_execution_rate": 1.0,
+      "calculation_question_count": 1,
+      "calculation_result_match": 1.0,
+      "refusal_rate": 0.0,
+      "rag_quality_score": 0.8636363636363635,
+      "average_latency_ms": 50006.0,
+      "latency_p50_ms": 50006.0,
+      "latency_p95_ms": 50006.0,
+      "planning_latency_p50_ms": 4458.0,
+      "planning_latency_p95_ms": 4458.0,
+      "retrieval_latency_p50_ms": 43174.0,
+      "retrieval_latency_p95_ms": 43174.0,
+      "generation_latency_p50_ms": 2161.0,
+      "generation_latency_p95_ms": 2161.0
+    },
+    "known_issue_count": 2,
+    "by_subset": {
+      "S5": {
+        "task_type": "cross-company-year-hybrid",
+        "known_issue_count": 2,
+        "count": 3,
+        "successful": 3,
+        "token_precision": 0.3791072405233708,
+        "token_recall": 0.4981580346915398,
+        "token_f1": 0.4287069650209319,
+        "rouge_l_f1": 0.29319904207840225,
+        "answer_overlap_score": 0.4287069650209319,
+        "numeric_precision": 0.4331232492997199,
+        "numeric_recall": 0.7555555555555555,
+        "numeric_f1": 0.55011655011655,
+        "numeric_accuracy": 0.7555555555555555,
+        "numeric_question_count": 3,
+        "evidence_citation_rate": 1.0,
+        "citation_valid_rate": 1.0,
+        "citation_block_rate": 0.0,
+        "document_recall": 1.0,
+        "retrieval_ranking_question_count": 3,
+        "document_recall_at_1": 0.3055555555555555,
+        "document_mrr_at_1": 1.0,
+        "document_map_at_1": 1.0,
+        "document_ndcg_at_1": 1.0,
+        "document_complete_recall_at_1": 0.0,
+        "document_recall_at_3": 0.6944444444444443,
+        "document_mrr_at_3": 1.0,
+        "document_map_at_3": 0.7037037037037036,
+        "document_ndcg_at_3": 0.8026120593560897,
+        "document_complete_recall_at_3": 0.0,
+        "document_recall_at_5": 1.0,
+        "document_mrr_at_5": 1.0,
+        "document_map_at_5": 0.8703703703703702,
+        "document_ndcg_at_5": 0.9373502903564548,
+        "document_complete_recall_at_5": 1.0,
+        "document_recall_at_10": 1.0,
+        "document_mrr_at_10": 1.0,
+        "document_map_at_10": 0.8703703703703702,
+        "document_ndcg_at_10": 0.9373502903564548,
+        "document_complete_recall_at_10": 1.0,
+        "section_recall_at_1": 0.3055555555555555,
+        "section_mrr_at_1": 1.0,
+        "section_map_at_1": 1.0,
+        "section_ndcg_at_1": 1.0,
+        "section_complete_recall_at_1": 0.0,
+        "section_recall_at_3": 0.6944444444444443,
+        "section_mrr_at_3": 1.0,
+        "section_map_at_3": 0.7037037037037036,
+        "section_ndcg_at_3": 0.8026120593560897,
+        "section_complete_recall_at_3": 0.0,
+        "section_recall_at_5": 1.0,
+        "section_mrr_at_5": 1.0,
+        "section_map_at_5": 0.8703703703703702,
+        "section_ndcg_at_5": 0.9373502903564548,
+        "section_complete_recall_at_5": 1.0,
+        "section_recall_at_10": 1.0,
+        "section_mrr_at_10": 1.0,
+        "section_map_at_10": 0.8703703703703702,
+        "section_ndcg_at_10": 0.9373502903564548,
+        "section_complete_recall_at_10": 1.0,
+        "retrieval_task_recall_at_1": 0.2222222222222222,
+        "retrieval_task_mrr_at_1": 1.0,
+        "retrieval_task_map_at_1": 1.0,
+        "retrieval_task_ndcg_at_1": 1.0,
+        "retrieval_task_complete_recall_at_1": 0.0,
+        "retrieval_task_recall_at_3": 0.6666666666666666,
+        "retrieval_task_mrr_at_3": 1.0,
+        "retrieval_task_map_at_3": 1.0,
+        "retrieval_task_ndcg_at_3": 1.0,
+        "retrieval_task_complete_recall_at_3": 0.0,
+        "retrieval_task_recall_at_5": 0.9444444444444445,
+        "retrieval_task_mrr_at_5": 1.0,
+        "retrieval_task_map_at_5": 1.0,
+        "retrieval_task_ndcg_at_5": 1.0,
+        "retrieval_task_complete_recall_at_5": 0.6666666666666666,
+        "retrieval_task_recall_at_10": 1.0,
+        "retrieval_task_mrr_at_10": 1.0,
+        "retrieval_task_map_at_10": 1.0,
+        "retrieval_task_ndcg_at_10": 1.0,
+        "retrieval_task_complete_recall_at_10": 1.0,
+        "retrieval_task_coverage": 1.0,
+        "scope_item_match_rate": 1.0,
+        "cross_section_contamination_rate": 0.0,
+        "answer_task_coverage": 1.0,
+        "degraded_retrieval_rate": 0.0,
+        "retrieval_diagnostic_count": 3,
+        "fact_extraction_rate": 1.0,
+        "fact_extraction_question_count": 3,
+        "fact_value_recall": 0.4481481481481482,
+        "fact_value_question_count": 3,
+        "structured_value_recall": 0.5888888888888889,
+        "structured_value_question_count": 3,
+        "calculation_production_rate": 1.0,
+        "calculation_plan_rate": 1.0,
+        "calculation_plan_execution_rate": 1.0,
+        "calculation_question_count": 3,
+        "calculation_result_match": 1.0,
+        "refusal_rate": 0.0,
+        "rag_quality_score": 0.775058275058275,
+        "average_latency_ms": 54161.666666666664,
+        "latency_p50_ms": 50006.0,
+        "latency_p95_ms": 61949.9,
+        "planning_latency_p50_ms": 4458.0,
+        "planning_latency_p95_ms": 4809.9,
+        "retrieval_latency_p50_ms": 43174.0,
+        "retrieval_latency_p95_ms": 54685.899999999994,
+        "generation_latency_p50_ms": 2929.0,
+        "generation_latency_p95_ms": 2947.8999999999996
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "md2025_2291",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Using the financial data provided in the DIS FY2024 text, calculate the percentage revenue growth from fiscal 2023 to fiscal 2024. Then, referring to the NFLX FY2022 and FY2024 table headers, determine if a similar growth rate can be computed for Netflix for the corresponding periods. Support your answer with direct quotes.",
+      "expected_answer": "From DIS FY2024: 'Revenues for fiscal 2024 increased 3%, or $2.5 billion, to $91.4 billion'. Therefore, prior-year revenue = $91.4B - $2.5B = $88.9B, and the percentage growth is given as 3%. For NFLX, the table headers in both FY2022 (Item 7) and FY2024 (Item 7) list columns for fiscal years (e.g., 2022, 2021, 2020 in FY2022; 2024, 2023, 2022 in FY2024) but include no actual numerical values for revenue per membership or other metrics in the provided excerpt. Consequently, a comparable growth rate cannot be calculated for Netflix from the given content.",
+      "predicted_answer": "**DIS FY2024 revenue growth (FY2023 → FY2024):** Revenues rose from $88.9 billion in fiscal 2023 [F1][E5] to $91.4 billion in fiscal 2024 [F2][E1], a 2.8% increase [C1]. Disney itself states: \"Revenues for fiscal 2024 increased 3%, or $2.5 billion, to $91.4 billion\" [E1].\n\n**NFLX comparable growth rate (2023 → 2024):** A similar calculation is possible. Per the NFLX FY2024 Item 7 table headers, the table covers \"2024 and 2023 items and year-to-year comparisons between 2024 and 2023\" [E4], with total revenues of $39,000,966 thousand (2024) and $33,723,297 thousand (2023) [F5][F6][E4]. The NFLX FY2022 table headers, however, cover only \"2022 and 2021 items and year-to-year comparisons between 2022 and 2021\" [E3], so the 2023→2024 rate cannot be derived from the FY2022 table; the matching FY2023 prior-year base is not in the supplied FY2022 excerpts.\n\nSources:\n[E1] DIS_2024.html — Item 7, MD&A\n[E5] DIS_2023.html — Item 7, MD&A\n[E3] NFLX_2022.html — Item 7, MD&A\n[E4] NFLX_2024.html — Item 7, MD&A",
+      "token_precision": 0.41007194244604317,
+      "token_recall": 0.5876288659793815,
+      "token_f1": 0.48305084745762716,
+      "rouge_l_f1": 0.2627118644067797,
+      "answer_overlap_score": 0.48305084745762716,
+      "numeric_precision": 0.5714285714285714,
+      "numeric_recall": 1.0,
+      "numeric_f1": 0.7272727272727273,
+      "numeric_accuracy": 1.0,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "calculation",
+      "task_count": 4,
+      "task_trace": [
+        {
+          "id": "retrieve_dis_fy2024_revenue",
+          "query": "DIS The Walt Disney Company fiscal 2024 total revenues in Item 7 MD&A results of operations",
+          "companies": [
+            "DIS"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "total revenues",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_dis_fy2023_revenue",
+          "query": "DIS The Walt Disney Company fiscal 2023 total revenues in Item 7 MD&A results of operations",
+          "companies": [
+            "DIS"
+          ],
+          "years": [
+            "2023"
+          ],
+          "metric": "total revenues",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_fy2022_table_headers",
+          "query": "NFLX Netflix fiscal 2022 Item 7 MD&A table headers and column labels for period-over-period comparison",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Item 7 table headers",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_fy2024_table_headers",
+          "query": "NFLX Netflix fiscal 2024 Item 7 MD&A table headers and column labels for period-over-period comparison",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Item 7 table headers",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 4,
+      "matched_task_count": 4,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 4,
+      "answer_task_coverage": 1.0,
+      "fact_count": 6,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E5",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "metric": "total revenues",
+          "rawValue": "$88.9 billion",
+          "value": "88.9",
+          "unit": "usd",
+          "scale": "billion"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E1",
+          "company": "DIS",
+          "fiscalYear": "2024",
+          "metric": "total revenues",
+          "rawValue": "$91.4 billion",
+          "value": "91.4",
+          "unit": "usd",
+          "scale": "billion"
+        },
+        {
+          "factId": "F3",
+          "evidenceId": "E3",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "metric": "total revenues",
+          "rawValue": "$31,615,550",
+          "value": "31615550",
+          "unit": "usd",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F4",
+          "evidenceId": "E3",
+          "company": "NFLX",
+          "fiscalYear": "2021",
+          "metric": "total revenues",
+          "rawValue": "$29,697,844",
+          "value": "29697844",
+          "unit": "usd",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F5",
+          "evidenceId": "E4",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "metric": "total revenues",
+          "rawValue": "$39,000,966",
+          "value": "39000966",
+          "unit": "usd",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F6",
+          "evidenceId": "E4",
+          "company": "NFLX",
+          "fiscalYear": "2023",
+          "metric": "total revenues",
+          "rawValue": "$33,723,297",
+          "value": "33723297",
+          "unit": "usd",
+          "scale": "thousand"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.5,
+      "structured_value_recall": 0.5,
+      "calculation_count": 1,
+      "calculation_plan_count": 1,
+      "calculation_plan_trace": [
+        {
+          "id": "calculate_dis_revenue_growth_fy2023_fy2024",
+          "operator": "PERCENT_CHANGE",
+          "operands": [
+            {
+              "role": "start",
+              "sourceTaskId": "retrieve_dis_fy2023_revenue",
+              "company": "DIS",
+              "fiscalYear": "2023",
+              "metric": "total revenues",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            },
+            {
+              "role": "end",
+              "sourceTaskId": "retrieve_dis_fy2024_revenue",
+              "company": "DIS",
+              "fiscalYear": "2024",
+              "metric": "total revenues",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            }
+          ],
+          "outputUnit": "percent",
+          "outputScale": "unit",
+          "precision": 1,
+          "periods": 1
+        }
+      ],
+      "calculation_plan_execution_rate": 1.0,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "percentage_change",
+          "expression": "PERCENT_CHANGE(F1 -> F2)",
+          "result": "2.8",
+          "unit": "percent",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F1",
+            "F2"
+          ]
+        }
+      ],
+      "calculation_result_match": 1.0,
+      "requires_calculation": true,
+      "requires_structured_calculation": true,
+      "expected_sources": [
+        "DIS_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "expected_sections": [
+        "DIS_2024.html::item 7",
+        "NFLX_2022.html::item 7",
+        "NFLX_2024.html::item 7"
+      ],
+      "retrieved_sources": [
+        "DIS_2024.html",
+        "DIS_2023.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-ad038db5be6f082a00316992",
+          "sourceFile": "DIS_2024.html",
+          "company": "DIS",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_dis_fy2024_revenue"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_dis_fy2024_revenue"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-d7f30826a9169fca73778a1d",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_dis_fy2023_revenue"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_dis_fy2023_revenue"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-908dfbde01fc81b3f537a667",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_fy2022_table_headers"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_fy2022_table_headers"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-88432ae1b5f9580b8861dee8",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_fy2024_table_headers"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_fy2024_table_headers"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-ed1092cc90e59bbf178907e5",
+          "sourceFile": "DIS_2023.html",
+          "company": "DIS",
+          "fiscalYear": "2023",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_dis_fy2023_revenue"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_dis_fy2023_revenue"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "DIS_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.3333333333333333,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.6666666666666666,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 0.5555555555555555,
+      "document_ndcg_at_3": 0.7039180890341347,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 0.8055555555555555,
+      "document_ndcg_at_5": 0.9060254355346823,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 0.8055555555555555,
+      "document_ndcg_at_10": 0.9060254355346823,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.3333333333333333,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.6666666666666666,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 0.5555555555555555,
+      "section_ndcg_at_3": 0.7039180890341347,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 0.8055555555555555,
+      "section_ndcg_at_5": 0.9060254355346823,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 0.8055555555555555,
+      "section_ndcg_at_10": 0.9060254355346823,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.25,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.75,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 1.0,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 1.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.8636363636363635,
+      "planning_ms": 4458,
+      "retrieval_ms": 43174,
+      "generation_ms": 2161,
+      "latency_ms": 50006,
+      "error": "",
+      "known_issue": null
+    },
+    {
+      "id": "md2025_2293",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "Calculate the percentage increase in NFLX's total revenues from FY2022 to FY2024 and the percentage increase in paid memberships over the same period. How do these growth rates compare, and what does META's FY2022 and FY2024 MD&A provide for user or revenue metrics?",
+      "expected_answer": "NFLX total revenues grew from $31,615,550 thousand in FY2022 to $39,000,966 thousand in FY2024, a 23.4% increase ($39,000,966 - $31,615,550) / $31,615,550 * 100 = 23.35%). Paid memberships at end of period grew from 230,747 thousand to 301,626 thousand, a 30.7% increase (($301,626 - $230,747) / $230,747 * 100 = 30.73%). Revenue grew slower than membership base, indicating ARPU pressure or mix shift. META's Item 7 for both FY2022 and FY2024 provides only introductory text with forward-looking statements, no revenue or user metrics, so no comparable data exists in the provided documents.",
+      "predicted_answer": "NFLX total revenues rose 23.4% from $31,615,550 thousand in FY2022 [F1][E3] to $39,000,966 thousand in FY2024 [F2][E4][C1]. Paid memberships grew faster, up 30.7% from 230,747 thousand to 301,626 thousand [F3][F4][E3][E4][C2]. Membership growth therefore outpaced revenue growth by about 7.3 percentage points.\n\nMETA's FY2022 MD&A reports total revenue of $116.61 billion, down 1% year over year, including a $5.96 billion negative foreign-exchange impact; constant-currency revenue was $122.57 billion, up 4% [E5]. META's FY2024 MD&A reports worldwide DAP of 3.35 billion, up 5% from 3.19 billion in December 2023 [F5][E6], and annual worldwide ARPP of $49.63, up 15% from 2023 [F6][E6].",
+      "token_precision": 0.40350877192982454,
+      "token_recall": 0.4380952380952381,
+      "token_f1": 0.4200913242009133,
+      "rouge_l_f1": 0.3105022831050228,
+      "answer_overlap_score": 0.4200913242009133,
+      "numeric_precision": 0.35294117647058826,
+      "numeric_recall": 0.6666666666666666,
+      "numeric_f1": 0.46153846153846156,
+      "numeric_accuracy": 0.6666666666666666,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "calculation",
+      "task_count": 6,
+      "task_trace": [
+        {
+          "id": "retrieve_nflx_2022_total_revenues",
+          "query": "Netflix NFLX FY2022 Item 7 table Total revenues",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Total revenues",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_2024_total_revenues",
+          "query": "Netflix NFLX FY2024 Item 7 table Total revenues",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Total revenues",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_2022_paid_memberships",
+          "query": "Netflix NFLX FY2022 Item 7 table Paid memberships at end of period",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Paid memberships at end of period",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_2024_paid_memberships",
+          "query": "Netflix NFLX FY2024 Item 7 table Paid memberships at end of period",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Paid memberships at end of period",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_meta_2022_mda_user_revenue_metrics",
+          "query": "Meta Platforms META FY2022 Item 7 MD&A user metrics revenue metrics",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "user or revenue metrics",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_meta_2024_mda_user_revenue_metrics",
+          "query": "Meta Platforms META FY2024 Item 7 MD&A user metrics revenue metrics",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "user or revenue metrics",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        }
+      ],
+      "retrieval_task_count": 6,
+      "matched_task_count": 6,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 6,
+      "answer_task_coverage": 1.0,
+      "fact_count": 6,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E3",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "metric": "Total revenues",
+          "rawValue": "$31,615,550 thousand",
+          "value": "31615550",
+          "unit": "usd",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E4",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "metric": "Total revenues",
+          "rawValue": "$39,000,966 thousand",
+          "value": "39000966",
+          "unit": "usd",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F3",
+          "evidenceId": "E3",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "metric": "Paid memberships at end of period",
+          "rawValue": "230,747 thousand",
+          "value": "230747",
+          "unit": "count",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F4",
+          "evidenceId": "E4",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "metric": "Paid memberships at end of period",
+          "rawValue": "301,626 thousand",
+          "value": "301626",
+          "unit": "count",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F5",
+          "evidenceId": "E6",
+          "company": "META",
+          "fiscalYear": "2024",
+          "metric": "Worldwide DAP",
+          "rawValue": "3.35 billion",
+          "value": "3.35",
+          "unit": "count",
+          "scale": "billion"
+        },
+        {
+          "factId": "F6",
+          "evidenceId": "E6",
+          "company": "META",
+          "fiscalYear": "2024",
+          "metric": "Annual worldwide ARPP",
+          "rawValue": "$ 49. 63",
+          "value": "49.63",
+          "unit": "usd",
+          "scale": "unit"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.4444444444444444,
+      "structured_value_recall": 0.6666666666666666,
+      "calculation_count": 2,
+      "calculation_plan_count": 2,
+      "calculation_plan_trace": [
+        {
+          "id": "calc_nflx_total_revenues_percent_change_2022_2024",
+          "operator": "PERCENT_CHANGE",
+          "operands": [
+            {
+              "role": "start",
+              "sourceTaskId": "retrieve_nflx_2022_total_revenues",
+              "company": "NFLX",
+              "fiscalYear": "2022",
+              "metric": "Total revenues",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            },
+            {
+              "role": "end",
+              "sourceTaskId": "retrieve_nflx_2024_total_revenues",
+              "company": "NFLX",
+              "fiscalYear": "2024",
+              "metric": "Total revenues",
+              "rawValue": "",
+              "unit": "usd",
+              "scale": "million"
+            }
+          ],
+          "outputUnit": "percent",
+          "outputScale": "unit",
+          "precision": 1,
+          "periods": 0
+        },
+        {
+          "id": "calc_nflx_paid_memberships_percent_change_2022_2024",
+          "operator": "PERCENT_CHANGE",
+          "operands": [
+            {
+              "role": "start",
+              "sourceTaskId": "retrieve_nflx_2022_paid_memberships",
+              "company": "NFLX",
+              "fiscalYear": "2022",
+              "metric": "Paid memberships at end of period",
+              "rawValue": "",
+              "unit": "count",
+              "scale": "million"
+            },
+            {
+              "role": "end",
+              "sourceTaskId": "retrieve_nflx_2024_paid_memberships",
+              "company": "NFLX",
+              "fiscalYear": "2024",
+              "metric": "Paid memberships at end of period",
+              "rawValue": "",
+              "unit": "count",
+              "scale": "million"
+            }
+          ],
+          "outputUnit": "percent",
+          "outputScale": "unit",
+          "precision": 1,
+          "periods": 0
+        }
+      ],
+      "calculation_plan_execution_rate": 1.0,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "percentage_change",
+          "expression": "PERCENT_CHANGE(F1 -> F2)",
+          "result": "23.4",
+          "unit": "percent",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F1",
+            "F2"
+          ]
+        },
+        {
+          "calculationId": "C2",
+          "type": "percentage_change",
+          "expression": "PERCENT_CHANGE(F3 -> F4)",
+          "result": "30.7",
+          "unit": "percent",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F3",
+            "F4"
+          ]
+        }
+      ],
+      "calculation_result_match": 1.0,
+      "requires_calculation": true,
+      "requires_structured_calculation": true,
+      "expected_sources": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "expected_sections": [
+        "META_2022.html::item 7",
+        "META_2024.html::item 7",
+        "NFLX_2022.html::item 7",
+        "NFLX_2024.html::item 7"
+      ],
+      "retrieved_sources": [
+        "NFLX_2022.html",
+        "NFLX_2024.html",
+        "META_2022.html",
+        "META_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-11cc77f1e34d65c02e27984c",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2022_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-f5eb03fc9c780ea2904c614a",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2024_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2024_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-260a336cde83887bf34ea724",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2022_paid_memberships",
+            "retrieve_nflx_2022_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2022_paid_memberships",
+            "retrieve_nflx_2022_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-a2a48a934bcbb4136f84b917",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_2024_paid_memberships",
+            "retrieve_nflx_2024_total_revenues"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_2024_paid_memberships",
+            "retrieve_nflx_2024_total_revenues"
+          ]
+        },
+        {
+          "evidenceId": "E5",
+          "chunkId": "s2-pc-cdb22936d381e6dcdacdde11",
+          "sourceFile": "META_2022.html",
+          "company": "META",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_meta_2022_mda_user_revenue_metrics"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_meta_2022_mda_user_revenue_metrics"
+          ]
+        },
+        {
+          "evidenceId": "E6",
+          "chunkId": "s2-pc-e39f250b61f2bbd64e68f10e",
+          "sourceFile": "META_2024.html",
+          "company": "META",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_meta_2024_mda_user_revenue_metrics"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_meta_2024_mda_user_revenue_metrics"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html",
+        "NFLX_2024.html"
+      ],
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.25,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.75,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 1.0,
+      "document_ndcg_at_3": 1.0,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 1.0,
+      "document_ndcg_at_5": 1.0,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 1.0,
+      "document_ndcg_at_10": 1.0,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.25,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.75,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 1.0,
+      "section_ndcg_at_3": 1.0,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 1.0,
+      "section_ndcg_at_5": 1.0,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 1.0,
+      "section_ndcg_at_10": 1.0,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.16666666666666666,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.5,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 0.8333333333333334,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 0.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.7307692307692308,
+      "planning_ms": 4329,
+      "retrieval_ms": 55965,
+      "generation_ms": 2950,
+      "latency_ms": 63277,
+      "error": "",
+      "known_issue": "Gold says META FY2022 and FY2024 Item 7 provide no user or revenue metrics, but the filings explicitly report FY2022 worldwide ARPP and Facebook DAU/MAU/ARPU, and FY2024 worldwide DAP and ARPP metrics."
+    },
+    {
+      "id": "md2025_2294",
+      "subset": "S5",
+      "task_type": "cross-company-year-hybrid",
+      "question": "NFLX's paid net membership additions were 8,903 thousand in FY2022 and 41,350 thousand in FY2024. What does this 364% increase imply about the company's subscriber growth trajectory? How does META's Management Discussion in FY2022 and FY2024 reflect a different disclosure approach, and what challenge does this present for cross-company subscriber growth analysis?",
+      "expected_answer": "NFLX's paid net membership additions surged from 8,903 thousand in FY2022 to 41,350 thousand in FY2024, a 364% increase (($41,350 - $8,903) / $8,903 * 100 = 364.5%). This indicates a dramatic acceleration in subscriber acquisition after a relatively weak 2022. META's Item 7 for both FY2022 and FY2024 contains only standardized forward-looking statement language and does not disclose any user, membership, or net addition metrics. Therefore, no subscriber growth comparison between NFLX and META is possible from the provided content, highlighting the disparity in disclosure practices between the two companies.",
+      "predicted_answer": "NFLX's paid net membership additions rose from 8,903 thousand in FY2022 [F1][E1] to 41,350 thousand in FY2024 [F2][E2], a 364.5% increase [C1], implying a sharp acceleration in subscriber growth.\n\nMETA's approach differs fundamentally: its FY2022 Item 7 MD&A discusses DAP and Family metrics estimates — noting an approximately 3% error margin, difficulty attributing accounts to people, and calibration updates adding roughly 60 million (2021) and 30 million (2022) DAP, with worldwide DAP up 5% to 2.96 billion [E3]. Its FY2024 Item 7 MD&A similarly flags limitations in Family metrics measurement and presents non-GAAP measures like constant-currency revenue and free cash flow [E4].\n\nThis divergence challenges cross-company subscriber growth analysis: NFLX reports auditable paid membership counts [E1][E2], while META relies on estimated unique-people metrics with disclosed error margins and periodic recalibrations [E3][E4], making direct comparisons unreliable.",
+      "token_precision": 0.3237410071942446,
+      "token_recall": 0.46875,
+      "token_f1": 0.3829787234042553,
+      "rouge_l_f1": 0.3063829787234043,
+      "answer_overlap_score": 0.3829787234042553,
+      "numeric_precision": 0.375,
+      "numeric_recall": 0.6,
+      "numeric_f1": 0.4615384615384615,
+      "numeric_accuracy": 0.6,
+      "has_evidence_citation": true,
+      "citation_blocked": false,
+      "citation_valid": true,
+      "citation_issues": [],
+      "refusal": false,
+      "planner_intent": "comparison",
+      "task_count": 6,
+      "task_trace": [
+        {
+          "id": "retrieve_nflx_fy2022_paid_net_membership_additions",
+          "query": "NFLX FY2022 Item 7 table paid net membership additions 8,903 thousand",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "paid net membership additions",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_nflx_fy2024_paid_net_membership_additions",
+          "query": "NFLX FY2024 Item 7 table paid net membership additions 41,350 thousand",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "paid net membership additions",
+          "operation": "retrieve",
+          "modality": "table",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_meta_fy2022_mda_text",
+          "query": "META FY2022 Item 7 Management Discussion and Analysis subscriber user metric disclosure text",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2022"
+          ],
+          "metric": "Management Discussion and Analysis text",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "retrieve_meta_fy2024_mda_text",
+          "query": "META FY2024 Item 7 Management Discussion and Analysis subscriber user metric disclosure text",
+          "companies": [
+            "META"
+          ],
+          "years": [
+            "2024"
+          ],
+          "metric": "Management Discussion and Analysis text",
+          "operation": "retrieve",
+          "modality": "text",
+          "dependsOn": []
+        },
+        {
+          "id": "compare_nflx_meta_subscriber_metric_disclosure_approach",
+          "query": "compare NFLX paid net membership additions table disclosure versus META MD&A text disclosure of subscriber or user growth metrics",
+          "companies": [
+            "NFLX",
+            "META"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "subscriber growth disclosure approach",
+          "operation": "compare",
+          "modality": "hybrid",
+          "dependsOn": [
+            "retrieve_nflx_fy2022_paid_net_membership_additions",
+            "retrieve_nflx_fy2024_paid_net_membership_additions",
+            "retrieve_meta_fy2022_mda_text",
+            "retrieve_meta_fy2024_mda_text"
+          ]
+        },
+        {
+          "id": "trend_nflx_subscriber_growth_trajectory",
+          "query": "NFLX paid net membership additions FY2022 to FY2024 subscriber growth trajectory trend",
+          "companies": [
+            "NFLX"
+          ],
+          "years": [
+            "2022",
+            "2024"
+          ],
+          "metric": "paid net membership additions trajectory",
+          "operation": "trend",
+          "modality": "hybrid",
+          "dependsOn": [
+            "retrieve_nflx_fy2022_paid_net_membership_additions",
+            "retrieve_nflx_fy2024_paid_net_membership_additions"
+          ]
+        }
+      ],
+      "retrieval_task_count": 4,
+      "matched_task_count": 4,
+      "task_coverage": 1.0,
+      "scope_item_match_rate": 1.0,
+      "cross_section_contamination_rate": 0.0,
+      "answered_task_count": 4,
+      "answer_task_coverage": 1.0,
+      "fact_count": 2,
+      "fact_trace": [
+        {
+          "factId": "F1",
+          "evidenceId": "E1",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "metric": "paid net membership additions",
+          "rawValue": "8903",
+          "value": "8903",
+          "unit": "count",
+          "scale": "thousand"
+        },
+        {
+          "factId": "F2",
+          "evidenceId": "E2",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "metric": "paid net membership additions",
+          "rawValue": "41350",
+          "value": "41350",
+          "unit": "count",
+          "scale": "thousand"
+        }
+      ],
+      "fact_extracted": true,
+      "fact_value_recall": 0.4,
+      "structured_value_recall": 0.6,
+      "calculation_count": 1,
+      "calculation_plan_count": 1,
+      "calculation_plan_trace": [
+        {
+          "id": "calculate_nflx_paid_net_membership_additions_percent_change",
+          "operator": "PERCENT_CHANGE",
+          "operands": [
+            {
+              "role": "start",
+              "sourceTaskId": "retrieve_nflx_fy2022_paid_net_membership_additions",
+              "company": "NFLX",
+              "fiscalYear": "2022",
+              "metric": "paid net membership additions",
+              "rawValue": "8903",
+              "unit": "count",
+              "scale": "thousand"
+            },
+            {
+              "role": "end",
+              "sourceTaskId": "retrieve_nflx_fy2024_paid_net_membership_additions",
+              "company": "NFLX",
+              "fiscalYear": "2024",
+              "metric": "paid net membership additions",
+              "rawValue": "41350",
+              "unit": "count",
+              "scale": "thousand"
+            }
+          ],
+          "outputUnit": "percent",
+          "outputScale": "unit",
+          "precision": 1,
+          "periods": 2
+        }
+      ],
+      "calculation_plan_execution_rate": 1.0,
+      "calculation_trace": [
+        {
+          "calculationId": "C1",
+          "type": "percentage_change",
+          "expression": "PERCENT_CHANGE(F1 -> F2)",
+          "result": "364.5",
+          "unit": "percent",
+          "scale": "unit",
+          "sourceFactIds": [
+            "F1",
+            "F2"
+          ]
+        }
+      ],
+      "calculation_result_match": 1.0,
+      "requires_calculation": true,
+      "requires_structured_calculation": true,
+      "expected_sources": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html"
+      ],
+      "expected_sections": [
+        "META_2022.html::item 7",
+        "META_2024.html::item 7",
+        "NFLX_2022.html::item 7"
+      ],
+      "retrieved_sources": [
+        "NFLX_2022.html",
+        "NFLX_2024.html",
+        "META_2022.html",
+        "META_2024.html"
+      ],
+      "evidence_trace": [
+        {
+          "evidenceId": "E1",
+          "chunkId": "s2-pc-260a336cde83887bf34ea724",
+          "sourceFile": "NFLX_2022.html",
+          "company": "NFLX",
+          "fiscalYear": "2022",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_fy2022_paid_net_membership_additions"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_fy2022_paid_net_membership_additions"
+          ]
+        },
+        {
+          "evidenceId": "E2",
+          "chunkId": "s2-pc-a2a48a934bcbb4136f84b917",
+          "sourceFile": "NFLX_2024.html",
+          "company": "NFLX",
+          "fiscalYear": "2024",
+          "modality": "table",
+          "item": "Item 7",
+          "sectionTitle": "Management’s Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_nflx_fy2024_paid_net_membership_additions"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_nflx_fy2024_paid_net_membership_additions"
+          ]
+        },
+        {
+          "evidenceId": "E3",
+          "chunkId": "s2-pc-08d8127a962c555ff23791d2",
+          "sourceFile": "META_2022.html",
+          "company": "META",
+          "fiscalYear": "2022",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_meta_fy2022_mda_text"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_meta_fy2022_mda_text"
+          ]
+        },
+        {
+          "evidenceId": "E4",
+          "chunkId": "s2-pc-bc45b5e0410c624b3d9ccf49",
+          "sourceFile": "META_2024.html",
+          "company": "META",
+          "fiscalYear": "2024",
+          "modality": "text",
+          "item": "Item 7",
+          "sectionTitle": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+          "matchedTaskIds": [
+            "retrieve_meta_fy2024_mda_text"
+          ],
+          "verifiedTaskIds": [
+            "retrieve_meta_fy2024_mda_text"
+          ]
+        }
+      ],
+      "retrieved_source_hits": [
+        "META_2022.html",
+        "META_2024.html",
+        "NFLX_2022.html"
+      ],
+      "document_recall": 1.0,
+      "document_recall_at_1": 0.3333333333333333,
+      "document_mrr_at_1": 1.0,
+      "document_map_at_1": 1.0,
+      "document_ndcg_at_1": 1.0,
+      "document_complete_recall_at_1": 0.0,
+      "document_recall_at_3": 0.6666666666666666,
+      "document_mrr_at_3": 1.0,
+      "document_map_at_3": 0.5555555555555555,
+      "document_ndcg_at_3": 0.7039180890341347,
+      "document_complete_recall_at_3": 0.0,
+      "document_recall_at_5": 1.0,
+      "document_mrr_at_5": 1.0,
+      "document_map_at_5": 0.8055555555555555,
+      "document_ndcg_at_5": 0.9060254355346823,
+      "document_complete_recall_at_5": 1.0,
+      "document_recall_at_10": 1.0,
+      "document_mrr_at_10": 1.0,
+      "document_map_at_10": 0.8055555555555555,
+      "document_ndcg_at_10": 0.9060254355346823,
+      "document_complete_recall_at_10": 1.0,
+      "section_recall_at_1": 0.3333333333333333,
+      "section_mrr_at_1": 1.0,
+      "section_map_at_1": 1.0,
+      "section_ndcg_at_1": 1.0,
+      "section_complete_recall_at_1": 0.0,
+      "section_recall_at_3": 0.6666666666666666,
+      "section_mrr_at_3": 1.0,
+      "section_map_at_3": 0.5555555555555555,
+      "section_ndcg_at_3": 0.7039180890341347,
+      "section_complete_recall_at_3": 0.0,
+      "section_recall_at_5": 1.0,
+      "section_mrr_at_5": 1.0,
+      "section_map_at_5": 0.8055555555555555,
+      "section_ndcg_at_5": 0.9060254355346823,
+      "section_complete_recall_at_5": 1.0,
+      "section_recall_at_10": 1.0,
+      "section_mrr_at_10": 1.0,
+      "section_map_at_10": 0.8055555555555555,
+      "section_ndcg_at_10": 0.9060254355346823,
+      "section_complete_recall_at_10": 1.0,
+      "retrieval_task_recall_at_1": 0.25,
+      "retrieval_task_mrr_at_1": 1.0,
+      "retrieval_task_map_at_1": 1.0,
+      "retrieval_task_ndcg_at_1": 1.0,
+      "retrieval_task_complete_recall_at_1": 0.0,
+      "retrieval_task_recall_at_3": 0.75,
+      "retrieval_task_mrr_at_3": 1.0,
+      "retrieval_task_map_at_3": 1.0,
+      "retrieval_task_ndcg_at_3": 1.0,
+      "retrieval_task_complete_recall_at_3": 0.0,
+      "retrieval_task_recall_at_5": 1.0,
+      "retrieval_task_mrr_at_5": 1.0,
+      "retrieval_task_map_at_5": 1.0,
+      "retrieval_task_ndcg_at_5": 1.0,
+      "retrieval_task_complete_recall_at_5": 1.0,
+      "retrieval_task_recall_at_10": 1.0,
+      "retrieval_task_mrr_at_10": 1.0,
+      "retrieval_task_map_at_10": 1.0,
+      "retrieval_task_ndcg_at_10": 1.0,
+      "retrieval_task_complete_recall_at_10": 1.0,
+      "retrieval_quality_status": "NORMAL",
+      "retrieval_warnings": [],
+      "rag_quality_score": 0.7307692307692308,
+      "planning_ms": 4849,
+      "retrieval_ms": 41412,
+      "generation_ms": 2929,
+      "latency_ms": 49202,
+      "error": "",
+      "known_issue": "Gold says META FY2022 and FY2024 Item 7 contain only standardized forward-looking language and no user metrics, but both filings explicitly discuss measured user/people metrics, including DAU/MAU/DAP and their limitations."
+    }
+  ]
+}

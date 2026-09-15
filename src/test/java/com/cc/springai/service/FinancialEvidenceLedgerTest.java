@@ -14,6 +14,30 @@ class FinancialEvidenceLedgerTest {
     private final FinancialEvidenceLedger ledger = new FinancialEvidenceLedger(new ObjectMapper());
 
     @Test
+    void extractionPromptDoesNotTreatHeaderTokensAsFinancialValues() {
+        String prompt = ledger.extractionPrompt("What was revenue?", List.of(document(
+                "E1", "NFLX_2024.html", "NFLX", "2024",
+                "Table header: 2024 | 2023 | 2022 | (in thousands)")));
+
+        assertThat(prompt).contains(
+                "A table header contains labels, periods, units and column structure, not row values",
+                "a year, date, unit, or other header token as the requested financial value");
+    }
+
+    @Test
+    void sourceTableHeaderOverridesInventedRawMagnitude() {
+        var evidence = List.of(document("E1", "AAA_2024.html", "AAA", "2024",
+                "Table header: 2024 | (in thousands)\n| Total revenues | 1,000 |"));
+        var result = ledger.build("total revenues", evidence, """
+                {"facts":[{"evidenceId":"E1","metric":"total revenues","rawValue":"1,000 million",
+                 "unit":"USD","scale":"million","quote":"| Total revenues | 1,000 |"}]}
+                """);
+        assertThat(result.facts()).hasSize(1);
+        assertThat(result.facts().get(0).scale()).isEqualTo("thousand");
+        assertThat(result.render()).contains("1000 thousand usd").doesNotContain("1,000 million");
+    }
+
+    @Test
     void usesDisplayedScaleForMixedMagnitudeCalculation() {
         var evidence = List.of(
                 document("E1", "AAA_2023.html", "AAA", "2023", "Revenue was $1,000 thousand."),
@@ -227,7 +251,7 @@ class FinancialEvidenceLedgerTest {
 
         FinancialEvidenceLedger.Ledger result = ledger.build(
                 "Net income for fiscal 2024 is $5.0 billion, an increase from the prior year. What was fiscal 2023?",
-                evidence, "{\"facts\":[]}", List.of(plan(FinancialEvidenceLedger.CalculationOperator.SUBTRACT,
+                evidence, "{\"facts\":[]}", List.of(plan(FinancialEvidenceLedger.CalculationOperator.DIFFERENCE,
                         operand("current", "DIS", "2024", "net income attributable to Disney"),
                         operand("prior", "DIS", "2023", "net income attributable to Disney"))));
 
@@ -297,12 +321,78 @@ class FinancialEvidenceLedgerTest {
     }
 
     @Test
+    void doesNotTreatRevenueAccrualValuesAsDirectTotalRevenueEvidence() {
+        String content = "Revenue recognition requires rebate and discount accruals. "
+                + "The rebate accrual increased by $125 million in fiscal 2024.";
+
+        assertThat(ledger.containsDirectMetricValue("total revenue", content)).isFalse();
+    }
+
+    @Test
+    void calculationPlanDropsIncidentalFactsOutsideItsOperands() {
+        List<FinancialEvidenceLedger.EvidenceDocument> evidence = List.of(
+                document("E1", "NFLX_2024.html", "NFLX", "2024",
+                        "| Total revenues | 39,000,966 |"),
+                document("E2", "META_2024.html", "META", "2024",
+                        "| Revenue | 164,501 |"));
+        FinancialEvidenceLedger.CalculationPlan growth = plan(
+                FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE,
+                operand("end", "NFLX", "2024", "total revenues"));
+
+        FinancialEvidenceLedger.Ledger result = ledger.build("Calculate NFLX revenue growth", evidence, """
+                {"facts":[
+                  {"evidenceId":"E1","company":"NFLX","fiscalYear":"2024","metric":"total revenues",
+                   "rawValue":"39,000,966","value":"39000966","unit":"USD","scale":"thousand",
+                   "quote":"| Total revenues | 39,000,966 |"},
+                  {"evidenceId":"E2","company":"META","fiscalYear":"2024","metric":"revenue",
+                   "rawValue":"164,501","value":"164501","unit":"USD","scale":"million",
+                   "quote":"| Revenue | 164,501 |"}
+                ]}
+                """, List.of(growth));
+
+        assertThat(result.facts()).singleElement()
+                .extracting(FinancialEvidenceLedger.FinancialFact::company)
+                .isEqualTo("NFLX");
+    }
+
+    @Test
+    void requiresNarrativeMetricAndSubstantiveValueInTheSameLocalStatement() {
+        String scopeOnly = "Net income is discussed for fiscal 2024. "
+                + "The pension sensitivity was 50 basis points.";
+        String direct = "Net income was $6,244.8 million in fiscal 2022.";
+
+        assertThat(ledger.containsDirectMetricValue("net income", scopeOnly)).isFalse();
+        assertThat(ledger.containsDirectMetricValue("net income", direct)).isTrue();
+    }
+
+    @Test
+    void rejectsSensitivityImpactAsReportedNetIncomeValue() {
+        String taxSensitivity = "As of December 31, 2022, a 5 percent change in uncertain tax positions "
+                + "would result in a change in net income of $85.0 million.";
+        String pensionSensitivity = "If the discount rate changed by a quarter percentage point, "
+                + "net income would be affected by $35.9 million.";
+
+        assertThat(ledger.containsDirectMetricValue("net income", taxSensitivity)).isFalse();
+        assertThat(ledger.containsDirectMetricValue("net income", pensionSensitivity)).isFalse();
+        assertThat(ledger.containsDirectMetricValue(
+                "net income", "Net income was $10,590.0 million in fiscal 2024.")).isTrue();
+    }
+
+    @Test
+    void recognizesEquivalentDilutedEpsLabels() {
+        assertThat(ledger.containsDirectMetricValue(
+                "diluted earnings per share", "Diluted EPS was $11.71 in fiscal 2024.")).isTrue();
+        assertThat(ledger.containsDirectMetricValue(
+                "diluted earnings per share", "| Earnings per share - diluted | $ | 11.71 |")).isTrue();
+    }
+
+    @Test
     void acceptsSecOfficerAgeQuotesAndExecutesTypedDifference() {
         List<FinancialEvidenceLedger.EvidenceDocument> evidence = List.of(
                 document("E1", "LIN_2022.html", "LIN", "2022", "Sanjiv Lamba, 58, was appointed CEO."),
                 document("E2", "LIN_2023.html", "LIN", "2023", "Sanjiv Lamba, 59, was appointed CEO."));
         FinancialEvidenceLedger.CalculationPlan ageChange = plan(
-                FinancialEvidenceLedger.CalculationOperator.SUBTRACT,
+                FinancialEvidenceLedger.CalculationOperator.DIFFERENCE,
                 operand("end", "LIN", "2023", "executive_age"),
                 operand("start", "LIN", "2022", "executive_age"));
 
@@ -331,7 +421,7 @@ class FinancialEvidenceLedgerTest {
                         new java.math.BigDecimal("1.2"), "usd", "billion", "1.2"));
 
         FinancialEvidenceLedger.CalculationPlan plan = new FinancialEvidenceLedger.CalculationPlan(
-                "difference", FinancialEvidenceLedger.CalculationOperator.SUBTRACT, List.of(
+                "difference", FinancialEvidenceLedger.CalculationOperator.DIFFERENCE, List.of(
                 operand("later", "AAPL", "2024", "net sales"),
                 operand("earlier", "AAPL", "2023", "net sales")), "usd", "billion", 4, 0);
         List<FinancialEvidenceLedger.VerifiedCalculation> calculations =
@@ -340,6 +430,32 @@ class FinancialEvidenceLedgerTest {
         assertThat(calculations).hasSize(1);
         assertThat(calculations.get(0).displayResult()).isEqualTo("1.1");
         assertThat(calculations.get(0).scale()).isEqualTo("billion");
+    }
+
+    @Test
+    void usesPlannerScaleOnlyToResolveRoundedAndPreciseAggregateDuplicates() {
+        List<FinancialEvidenceLedger.FinancialFact> facts = List.of(
+                new FinancialEvidenceLedger.FinancialFact("F1", "E1", "DIS", "2024", "total revenue",
+                        "$91.4 billion", new BigDecimal("91.4"), "usd", "billion", "total revenue was $91.4 billion"),
+                new FinancialEvidenceLedger.FinancialFact("F2", "E2", "DIS", "2024", "total revenue",
+                        "91,361", new BigDecimal("91361"), "usd", "million", "| Total revenue | 91,361 |"),
+                new FinancialEvidenceLedger.FinancialFact("F3", "E2", "DIS", "2023", "total revenue",
+                        "88,898", new BigDecimal("88898"), "usd", "million", "| Total revenue | 88,898 |"));
+        FinancialEvidenceLedger.CalculationPlan plan = new FinancialEvidenceLedger.CalculationPlan(
+                "growth", FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE, List.of(
+                new FinancialEvidenceLedger.CalculationOperand(
+                        "start", "", "DIS", "2023", "total revenue", "", "usd", "billion"),
+                new FinancialEvidenceLedger.CalculationOperand(
+                        "end", "", "DIS", "2024", "total revenue", "", "usd", "billion")),
+                "percent", "unit", 1, 0);
+
+        List<FinancialEvidenceLedger.VerifiedCalculation> calculations =
+                ledger.calculate(List.of(plan), facts, List.of());
+
+        assertThat(calculations).singleElement().satisfies(calculation -> {
+            assertThat(calculation.displayResult()).isEqualTo("2.8");
+            assertThat(calculation.sourceFactIds()).containsExactly("F3", "F1");
+        });
     }
 
     @Test
@@ -367,7 +483,7 @@ class FinancialEvidenceLedgerTest {
     }
 
     @Test
-    void calculatesRatioAcrossDifferentMetricsWithCompatibleUnits() {
+    void calculatesMarginAcrossDifferentMetricsWithCompatibleUnits() {
         List<FinancialEvidenceLedger.FinancialFact> facts = List.of(
                 new FinancialEvidenceLedger.FinancialFact(
                         "F1", "E1", "LLY", "2020", "income taxes", "14.33",
@@ -377,12 +493,12 @@ class FinancialEvidenceLedgerTest {
                         new java.math.BigDecimal("100"), "usd", "million", "100"));
 
         List<FinancialEvidenceLedger.VerifiedCalculation> calculations = ledger.calculate(
-                List.of(plan(FinancialEvidenceLedger.CalculationOperator.PERCENT_OF_TOTAL,
+                List.of(plan(FinancialEvidenceLedger.CalculationOperator.MARGIN,
                         operand("numerator", "LLY", "2020", "income taxes"),
                         operand("denominator", "LLY", "2020", "income before income taxes"))), facts, List.of());
 
         assertThat(calculations).hasSize(1);
-        assertThat(calculations.get(0).type()).isEqualTo("ratio");
+        assertThat(calculations.get(0).type()).isEqualTo("margin");
         assertThat(calculations.get(0).displayResult()).isEqualTo("14.33");
     }
 
@@ -397,7 +513,7 @@ class FinancialEvidenceLedgerTest {
                         new java.math.BigDecimal("391035"), "usd", "million", "$391,035 million"));
 
         List<FinancialEvidenceLedger.VerifiedCalculation> calculations = ledger.calculate(
-                List.of(plan(FinancialEvidenceLedger.CalculationOperator.DIVIDE,
+                List.of(plan(FinancialEvidenceLedger.CalculationOperator.RATIO,
                         operand("numerator", "AAPL", "2024", "total net sales"),
                         operand("denominator", "NVDA", "2024", "total revenue"))), facts, List.of());
 
@@ -435,7 +551,7 @@ class FinancialEvidenceLedgerTest {
                 ageFact("F3", "2024", "50"));
 
         List<FinancialEvidenceLedger.VerifiedCalculation> calculations = ledger.calculate(
-                List.of(plan(FinancialEvidenceLedger.CalculationOperator.SUBTRACT,
+                List.of(plan(FinancialEvidenceLedger.CalculationOperator.DIFFERENCE,
                         operand("later", "LIN", "2023", "age"),
                         operand("earlier", "LIN", "2022", "age"))), facts, List.of());
 
@@ -458,7 +574,7 @@ class FinancialEvidenceLedgerTest {
                         new java.math.BigDecimal("4491924"), "usd", "thousand", "$4491924 thousand"));
 
         List<FinancialEvidenceLedger.VerifiedCalculation> calculations = ledger.calculate(
-                List.of(plan(FinancialEvidenceLedger.CalculationOperator.SUBTRACT,
+                List.of(plan(FinancialEvidenceLedger.CalculationOperator.DIFFERENCE,
                         operand("current", "DIS", "2024", "net income attributable to Disney"),
                         operand("prior", "DIS", "2023", "net income attributable to Disney"))), facts, List.of());
 
@@ -506,7 +622,7 @@ class FinancialEvidenceLedgerTest {
                 "Net income for fiscal 2024 was $5.0 billion, an increase of $2.6 billion from the prior year.",
                 List.of("retrieve_explicit_dis_2024_anchor"));
         FinancialEvidenceLedger.CalculationPlan priorIncome = new FinancialEvidenceLedger.CalculationPlan(
-                "prior_income", FinancialEvidenceLedger.CalculationOperator.SUBTRACT, List.of(
+                "prior_income", FinancialEvidenceLedger.CalculationOperator.DIFFERENCE, List.of(
                 new FinancialEvidenceLedger.CalculationOperand(
                         "start", "retrieve_dis_net_income", "DIS", "2024", "net income",
                         "$5.0 billion", "usd", "billion"),
@@ -578,14 +694,14 @@ class FinancialEvidenceLedgerTest {
             FinancialEvidenceLedger.CalculationOperator operator,
             FinancialEvidenceLedger.CalculationOperand... operands) {
         String unit = switch (operator) {
-            case DIVIDE -> "times";
-            case PERCENT_CHANGE, PERCENT_OF_TOTAL, CAGR -> "percent";
+            case RATIO -> "times";
+            case PERCENT_CHANGE, MARGIN, CAGR -> "percent";
             case COUNT -> "count";
             default -> "usd";
         };
-        String scale = Set.of(FinancialEvidenceLedger.CalculationOperator.DIVIDE,
+        String scale = Set.of(FinancialEvidenceLedger.CalculationOperator.RATIO,
                 FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE,
-                FinancialEvidenceLedger.CalculationOperator.PERCENT_OF_TOTAL,
+                FinancialEvidenceLedger.CalculationOperator.MARGIN,
                 FinancialEvidenceLedger.CalculationOperator.COUNT,
                 FinancialEvidenceLedger.CalculationOperator.CAGR).contains(operator) ? "unit" : "";
         return new FinancialEvidenceLedger.CalculationPlan(

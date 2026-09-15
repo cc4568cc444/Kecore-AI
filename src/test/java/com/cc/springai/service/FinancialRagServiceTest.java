@@ -26,6 +26,292 @@ class FinancialRagServiceTest {
     );
 
     @Test
+    void appliesDatasetItemScopeToEveryOrdinaryRetrievalTask() {
+        var itemEight = new FinancialRagService.FinancialRetrievalTask(
+                "aep", "AEP non-GAAP Item 8", List.of("AEP"), List.of("2024"),
+                "non-GAAP disclosure", "retrieve", "text", List.of());
+        var unscoped = new FinancialRagService.FinancialRetrievalTask(
+                "xel", "XEL non-GAAP disclosure", List.of("XEL"), List.of("2024"),
+                "non-GAAP disclosure", "retrieve", "text", List.of());
+
+        assertThat(service.enforceRequestedItemScope(List.of(itemEight, unscoped), "Item 7"))
+                .extracting(FinancialRagService.FinancialRetrievalTask::query)
+                .allMatch(query -> query.contains("Item 7"))
+                .noneMatch(query -> query.contains("Item 8"));
+    }
+
+    @Test
+    void rejectsPercentagePlanForGenericChangeButKeepsExplicitGrowthRate() {
+        var plan = new FinancialEvidenceLedger.CalculationPlan(
+                "growth", FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE,
+                List.of(new FinancialEvidenceLedger.CalculationOperand(
+                        "start", "t1", "LLY", "2023", "candidate count")),
+                "percent", "unit", 1, 0);
+
+        assertThat(service.rejectUnrequestedPercentageChanges(
+                "How did the number of candidates change from 2023 to 2024?", List.of(plan))).isEmpty();
+        assertThat(service.rejectUnrequestedPercentageChanges(
+                "What was the percentage growth from 2023 to 2024?", List.of(plan))).containsExactly(plan);
+    }
+
+    @Test
+    void rejectsUnrequestedCagrButKeepsExplicitCompoundGrowthRequest() {
+        var plan = new FinancialEvidenceLedger.CalculationPlan(
+                "cagr", FinancialEvidenceLedger.CalculationOperator.CAGR,
+                List.of(new FinancialEvidenceLedger.CalculationOperand(
+                        "start", "t1", "LLY", "2022", "diluted earnings per share")),
+                "percent", "unit", 1, 2);
+
+        assertThat(service.rejectUnrequestedCagr(
+                "What were diluted EPS in each year and what was the overall trend?", List.of(plan))).isEmpty();
+        assertThat(service.rejectUnrequestedCagr(
+                "What was the compound annual growth rate of diluted EPS?", List.of(plan))).containsExactly(plan);
+    }
+
+    @Test
+    void repairsReplacementCharactersInManagementSectionTitle() {
+        assertThat(service.readableSectionTitle(
+                "Management\uFFFD\uFFFDs Discussion and Analysis of Financial Condition"))
+                .isEqualTo("Management's Discussion and Analysis of Financial Condition");
+    }
+
+    @Test
+    void inheritsItemSevenForUnlabelledTablesButKeepsExplicitTableItem() {
+        var inherited = new FinancialRagService.FinancialChunk(
+                "table-1", "LLY_2024.html", "table", "| Revenue | 45,042.7 |",
+                Map.of("company", "LLY", "year", "2024", "parent_context",
+                        "Item 7 Management's Discussion and Analysis of Results of Operations"), 0.9);
+        var explicit = new FinancialRagService.FinancialChunk(
+                "table-2", "AEP_2024.html", "table", "| Operating earnings | 1,000 |",
+                Map.of("company", "AEP", "year", "2024", "item", "Item 8", "parent_context",
+                        "Item 7 Management's Discussion and Analysis"), 0.8);
+
+        assertThat(service.canonicalItem(inherited)).isEqualTo("Item 7");
+        assertThat(service.canonicalItem(explicit)).isEqualTo("Item 8");
+    }
+
+    @Test
+    void repairsStaleItemMetadataForIndependentAuditorReport() {
+        var auditorReport = new FinancialRagService.FinancialChunk(
+                "ed-audit", "ED_2024.html", "table", "Table header: 84 | Annual Report",
+                Map.of("company", "ED", "year", "2024", "item", "Item 1A", "parent_context",
+                        "Report of Independent Registered Public Accounting Firm. "
+                                + "Opinions on the Financial Statements and Internal Control over Financial Reporting. "
+                                + "In our opinion, the consolidated financial statements present fairly in conformity with GAAP."),
+                0.9);
+
+        assertThat(service.canonicalItem(auditorReport)).isEqualTo("Item 8");
+    }
+
+    @Test
+    void keepsExplicitQuantitativeAndHeaderTasksInTableModality() {
+        var revenue = new FinancialRagService.FinancialRetrievalTask(
+                "revenue", "Item 7 MD&A total revenue", List.of("LLY"), List.of("2024"),
+                "total revenue", "retrieve", "table", List.of());
+        var headers = new FinancialRagService.FinancialRetrievalTask(
+                "headers", "financial statement table headers fiscal years", List.of("NFLX"), List.of("2024"),
+                "table headers", "retrieve", "table", List.of());
+
+        assertThat(service.effectiveTaskModality(revenue)).isEqualTo("table");
+        assertThat(service.effectiveTaskModality(headers)).isEqualTo("table");
+    }
+
+    @Test
+    void doesNotDowngradeNumericFinancialStatementQueryToTextEvidence() {
+        var task = new FinancialRagService.FinancialRetrievalTask(
+                "net_income", "LLY net income consolidated financial statements", List.of("LLY"), List.of("2024"),
+                "net income", "retrieve", "hybrid", List.of());
+        var sensitivity = new FinancialRagService.FinancialChunk(
+                "sensitivity", "LLY_2024.html", "text",
+                "If an assumption changed, net income would be affected by $35.9 million.",
+                Map.of("company", "LLY", "year", "2024", "item", "Item 7"), 0.9)
+                .withMatchedTask("net_income");
+
+        assertThat(service.effectiveTaskModality(task)).isEqualTo("hybrid");
+        assertThat(service.evidenceSupport(task, sensitivity))
+                .isEqualTo(FinancialRagService.EvidenceSupport.SCOPE_ONLY);
+        assertThat(service.missingDirectSupport(List.of(task), List.of(sensitivity)))
+                .singleElement().asString().contains("missing_direct_support", "net income");
+    }
+
+    @Test
+    void requiresCompleteTopicEvidenceForAuditAndGuaranteeTasks() {
+        var audit = new FinancialRagService.FinancialRetrievalTask(
+                "audit", "ED FY2024 audit opinion", List.of("ED"), List.of("2024"),
+                "audit_opinion", "retrieve", "text", List.of());
+        var unrelated = new FinancialRagService.FinancialChunk(
+                "sale", "ED_2024.html", "text", "Clean Energy Businesses were sold in March 2023.",
+                Map.of("company", "ED", "year", "2024", "item", "Item 8"), 0.9)
+                .withMatchedTask("audit");
+        var opinion = new FinancialRagService.FinancialChunk(
+                "opinion", "ED_2024.html", "text",
+                "Opinions on the Financial Statements and Internal Control over Financial Reporting. "
+                        + "In our opinion, the statements present fairly in conformity with GAAP. "
+                        + "Also in our opinion, the Company maintained effective internal control over financial reporting.",
+                Map.of("company", "ED", "year", "2024", "item", "Item 8"), 0.8)
+                .withMatchedTask("audit");
+
+        assertThat(service.evidenceSupport(audit, unrelated))
+                .isEqualTo(FinancialRagService.EvidenceSupport.SCOPE_ONLY);
+        assertThat(service.evidenceSupport(audit, opinion))
+                .isEqualTo(FinancialRagService.EvidenceSupport.DIRECT_SUPPORT);
+        assertThat(service.missingDirectSupport(List.of(audit), List.of(unrelated)))
+                .singleElement().asString().contains("missing_direct_support", "audit_opinion");
+    }
+
+    @Test
+    void prefersCompleteParentAuditOpinionOverSubsidiaryOnlyOpinion() {
+        var task = new FinancialRagService.FinancialRetrievalTask(
+                "audit", "AEP FY2024 audit opinion", List.of("AEP"), List.of("2024"),
+                "audit_opinion", "retrieve", "text", List.of());
+        String subsidiaryContent = "Report of Independent Registered Public Accounting Firm. "
+                + "Opinion on the Financial Statements. AEP Transmission Company, LLC. "
+                + "In our opinion, the statements present fairly. PCAOB.";
+        String parentContent = "Report of Independent Registered Public Accounting Firm. "
+                + "Opinions on the Financial Statements and Internal Control over Financial Reporting. "
+                + "We also have audited internal control over financial reporting. In our opinion, the statements "
+                + "present fairly. Also in our opinion, the Company maintained effective internal control. "
+                + "PCAOB; required to be independent.";
+        var subsidiary = new FinancialRagService.FinancialChunk(
+                "subsidiary", "AEP_2024.html", "text", subsidiaryContent,
+                Map.of("company", "AEP", "year", "2024", "item", "Item 8"), 0.95)
+                .withMatchedTask("audit");
+        var parent = new FinancialRagService.FinancialChunk(
+                "parent", "AEP_2024.html", "text", parentContent,
+                Map.of("company", "AEP", "year", "2024", "item", "Item 8"), 0.80)
+                .withMatchedTask("audit");
+
+        assertThat(service.preferCompleteAuditEvidence(task, List.of(subsidiary, parent)))
+                .extracting("chunkId").containsExactly("parent", "subsidiary");
+        assertThat(service.auditEvidenceCompletenessScore(parentContent))
+                .isGreaterThan(service.auditEvidenceCompletenessScore(subsidiaryContent));
+        assertThat(service.evidenceSupport(task, subsidiary))
+                .isEqualTo(FinancialRagService.EvidenceSupport.SCOPE_ONLY);
+        assertThat(service.evidenceSupport(task, parent))
+                .isEqualTo(FinancialRagService.EvidenceSupport.DIRECT_SUPPORT);
+        assertThat(service.bestCompleteAuditOpinionCandidate(
+                task, "Item 8", List.of(subsidiary, parent))).isSameAs(parent);
+        assertThat(service.duplicatesSelectedAuditTask(subsidiary, List.of(parent), List.of(task))).isTrue();
+        assertThat(service.duplicatesSelectedAuditTask(parent, List.of(), List.of(task))).isFalse();
+    }
+
+    @Test
+    void keepsAuditOpinionAnswerScopedToThePlannerTopic() {
+        var aepTask = new FinancialRagService.FinancialRetrievalTask(
+                "audit_aep", "AEP audit opinion", List.of("AEP"), List.of("2024"),
+                "audit_opinion", "retrieve", "text", List.of());
+        var edTask = new FinancialRagService.FinancialRetrievalTask(
+                "audit_ed", "ED audit opinion", List.of("ED"), List.of("2024"),
+                "audit_opinion", "retrieve", "text", List.of());
+        var plan = new FinancialRagService.FinancialRetrievalPlan(
+                "Compare AEP and ED audit opinions", "Compare AEP and ED audit opinions", "comparison",
+                List.of(), List.of(aepTask, edTask));
+        var ledger = new FinancialEvidenceLedger.Ledger(List.of(), List.of(), List.of());
+
+        assertThat(service.queryIntent(plan))
+                .extracting(FinancialRagService.QueryIntent::companies,
+                        FinancialRagService.QueryIntent::years,
+                        FinancialRagService.QueryIntent::requestedTopics,
+                        FinancialRagService.QueryIntent::needsComparison,
+                        FinancialRagService.QueryIntent::needsCalculation)
+                .containsExactly(List.of("AEP", "ED"), List.of("2024"), List.of("audit_opinion"), true, false);
+        assertThat(service.answerContract(plan, ledger))
+                .contains("Minimum-sufficient comparison", "requestedTopics=[audit_opinion]")
+                .doesNotContain("GAAP", "COSO", "PCAOB");
+    }
+
+    @Test
+    void doesNotApplyFullAuditOpinionContractToIndependenceResponsibilityQuestion() {
+        var aep = new FinancialRagService.FinancialRetrievalTask(
+                "aep_independence", "AEP auditor independence and responsibility", List.of("AEP"), List.of("2024"),
+                "auditor independence and responsibility", "retrieve", "text", List.of());
+        var xel = new FinancialRagService.FinancialRetrievalTask(
+                "xel_independence", "XEL auditor independence and responsibility", List.of("XEL"), List.of("2024"),
+                "auditor independence and responsibility", "retrieve", "text", List.of());
+        var plan = new FinancialRagService.FinancialRetrievalPlan(
+                "Compare auditor independence", "Compare auditor independence", "comparison",
+                List.of(), List.of(aep, xel));
+        var ledger = new FinancialEvidenceLedger.Ledger(List.of(), List.of(), List.of());
+
+        assertThat(service.isAuditOpinionComparison(plan)).isFalse();
+        assertThat(service.answerContract(plan, ledger))
+                .contains("Minimum-sufficient comparison", "auditor independence and responsibility")
+                .doesNotContain("internal control", "COSO");
+        assertThat(service.preferCompleteAuditEvidence(aep, List.of())).isEmpty();
+    }
+
+    @Test
+    void guaranteeComparisonContractExcludesUnrequestedDollarDetails() {
+        var aep = new FinancialRagService.FinancialRetrievalTask(
+                "aep", "AEP guarantees and indemnifications", List.of("AEP"), List.of("2024"),
+                "guarantees and indemnifications disclosure", "retrieve", "text", List.of());
+        var xel = new FinancialRagService.FinancialRetrievalTask(
+                "xel", "XEL guarantees and indemnifications", List.of("XEL"), List.of("2024"),
+                "guarantees and indemnifications disclosure", "retrieve", "text", List.of());
+        var plan = new FinancialRagService.FinancialRetrievalPlan(
+                "Compare guarantees", "Compare guarantees", "comparison", List.of(), List.of(aep, xel));
+
+        assertThat(service.answerContract(plan,
+                new FinancialEvidenceLedger.Ledger(List.of(), List.of(), List.of())))
+                .contains("Minimum-sufficient comparison", "guarantees and indemnifications disclosure",
+                        "Do not add adjacent");
+    }
+
+    @Test
+    void repairsStaleItemMetadataAndConsolidatesComplementaryAuditStandards() {
+        var task = new FinancialRagService.FinancialRetrievalTask(
+                "audit_ed", "ED FY2024 Item 8 audit opinion", List.of("ED"), List.of("2024"),
+                "audit_opinion", "retrieve", "text", List.of());
+        String primaryText = "Opinions on the Financial Statements and Internal Control over Financial Reporting. "
+                + "In our opinion, the statements present fairly under GAAP. Also in our opinion, the Company "
+                + "maintained effective internal control over financial reporting based on COSO criteria.";
+        String standardsText = "Our responsibility is to express opinions on the Company's consolidated financial "
+                + "statements and internal control over financial reporting. We conducted our audits in accordance "
+                + "with the standards of the PCAOB, including whether effective internal control was maintained.";
+        var primary = new FinancialRagService.FinancialChunk(
+                "primary", "ED_2024.html", "text", primaryText,
+                Map.of("company", "ED", "year", "2024", "item", "Item 8"), 0.9)
+                .withMatchedTask(task.id());
+        var staleItemStandards = new FinancialRagService.FinancialChunk(
+                "standards", "ED_2024.html", "text", standardsText,
+                Map.of("company", "ED", "year", "2024", "item", "Item 1A"), 0.8)
+                .withMatchedTask(task.id());
+
+        assertThat(service.canonicalItem(staleItemStandards)).isEqualTo("Item 8");
+        assertThat(service.auditStandardsPassage(standardsText)).isTrue();
+        assertThat(service.enrichAuditEvidence(task, primary, List.of(primary, staleItemStandards)))
+                .extracting("content").asString()
+                .contains(primaryText, "Complementary audit-standards passage", "standards of the PCAOB");
+        String oversized = primaryText + " background".repeat(250)
+                + "\n\nComplementary audit-standards passage:\n" + standardsText;
+        assertThat(service.compactAuditEvidence(oversized, task.query(), 1800))
+                .contains("present fairly", "effective internal control", "standards of the PCAOB")
+                .hasSizeLessThanOrEqualTo(1800);
+    }
+
+    @Test
+    void balancesEachFiscalYearInsideOnePlannerTask() {
+        var task = new FinancialRagService.FinancialRetrievalTask("headers", "AAA table headers",
+                List.of("AAA"), List.of("2022", "2024"), "table headers", "retrieve", "table", List.of());
+        var newer = new FinancialRagService.FinancialChunk("new", "AAA_2024.html", "table",
+                "Table header: 2024 | 2023 | 2022", Map.of("company", "AAA", "year", "2024"), 0.9)
+                .withMatchedTask("headers");
+        var duplicateYear = new FinancialRagService.FinancialChunk("new2", "AAA_2024.html", "table",
+                "Table header: 2024 | 2023", Map.of("company", "AAA", "year", "2024"), 0.8)
+                .withMatchedTask("headers");
+        var older = new FinancialRagService.FinancialChunk("old", "AAA_2022.html", "table",
+                "Table header: 2022 | 2021 | 2020", Map.of("company", "AAA", "year", "2022"), 0.7)
+                .withMatchedTask("headers");
+        var selected = service.verifyAndSelectEvidence(new FinancialRagService.FinancialRetrievalPlan(
+                "question", "question", "comparison", List.of(), List.of(task)),
+                List.of(newer, duplicateYear, older), 2, 2);
+        assertThat(selected).extracting("sourceFile")
+                .containsExactlyInAnyOrder("AAA_2022.html", "AAA_2024.html");
+        assertThat(service.atomicRetrievalScopes(List.of(task))).hasSize(2)
+                .allSatisfy(scope -> assertThat(scope.id()).isEqualTo("headers"));
+    }
+
+    @Test
     void rejectsOrphanNumericRowsAndPreservesFullTableOperands() {
         var task = new FinancialRagService.FinancialRetrievalTask("retrieve_total",
                 "AAA FY2024 total revenues", List.of("AAA"), List.of("2024"),
@@ -121,7 +407,7 @@ class FinancialRagServiceTest {
                              "years":["2024"],"metric":"total revenue","operation":"retrieve","modality":"table","dependsOn":[]}
                           ],
                           "calculationPlans":[{
-                            "id":"calculate_multiple","operator":"DIVIDE",
+                            "id":"calculate_multiple","operator":"RATIO",
                             "operands":[
                               {"role":"numerator","sourceTaskId":"retrieve_aapl","company":"AAPL","fiscalYear":"2024","metric":"total net sales",
                                "rawValue":"$391.0 million","unit":"usd","scale":"million"},
@@ -135,7 +421,7 @@ class FinancialRagServiceTest {
 
         assertThat(plan.calculationPlans()).hasSize(1);
         FinancialEvidenceLedger.CalculationPlan calculation = plan.calculationPlans().get(0);
-        assertThat(calculation.operator()).isEqualTo(FinancialEvidenceLedger.CalculationOperator.DIVIDE);
+        assertThat(calculation.operator()).isEqualTo(FinancialEvidenceLedger.CalculationOperator.RATIO);
         assertThat(calculation.operands()).extracting(FinancialEvidenceLedger.CalculationOperand::sourceTaskId)
                 .containsExactly("retrieve_aapl", "retrieve_nvda");
         assertThat(calculation.operands().get(0))
@@ -146,7 +432,7 @@ class FinancialRagServiceTest {
         assertThat(calculation.outputUnit()).isEqualTo("times");
         assertThat(calculation.precision()).isEqualTo(1);
         assertThat(service.calculationFactQuestion(plan))
-                .contains("Required typed calculation operands", "DIVIDE", "retrieve_aapl", "retrieve_nvda");
+                .contains("Required typed calculation operands", "RATIO", "retrieve_aapl", "retrieve_nvda");
     }
 
     @Test
@@ -253,6 +539,28 @@ class FinancialRagServiceTest {
         assertThat(completed).anyMatch(plan -> plan.operands().stream()
                 .map(FinancialEvidenceLedger.CalculationOperand::sourceTaskId)
                 .toList().equals(List.of("retrieve_2022", "retrieve_2023")));
+    }
+
+    @Test
+    void synthesizesAdjacentPercentagePlansFromStructuredTrendIntent() {
+        List<FinancialRagService.FinancialRetrievalTask> tasks = List.of(
+                new FinancialRagService.FinancialRetrievalTask(
+                        "retrieve_2022", "LLY net income 2022", List.of("LLY"), List.of("2022"),
+                        "net income", "retrieve", "hybrid", List.of()),
+                new FinancialRagService.FinancialRetrievalTask(
+                        "retrieve_2023", "LLY net income 2023", List.of("LLY"), List.of("2023"),
+                        "net income", "retrieve", "hybrid", List.of()),
+                new FinancialRagService.FinancialRetrievalTask(
+                        "retrieve_2024", "LLY net income 2024", List.of("LLY"), List.of("2024"),
+                        "net income", "retrieve", "hybrid", List.of()));
+
+        List<FinancialEvidenceLedger.CalculationPlan> plans =
+                service.completeTrendCalculationPlans("trend", tasks, List.of());
+
+        assertThat(plans).hasSize(2)
+                .allMatch(plan -> plan.operator() == FinancialEvidenceLedger.CalculationOperator.PERCENT_CHANGE);
+        assertThat(plans).extracting(FinancialEvidenceLedger.CalculationPlan::id)
+                .containsExactly("calculate_trend_lly_2022_2023", "calculate_trend_lly_2023_2024");
     }
 
     @Test
@@ -531,6 +839,21 @@ class FinancialRagServiceTest {
     }
 
     @Test
+    void plannerRewriteCannotTurnQualitativeNonGaapComparisonIntoFactExtraction() {
+        List<FinancialEvidenceLedger.EvidenceDocument> evidence = List.of(
+                new FinancialEvidenceLedger.EvidenceDocument(
+                        "E1", "c1", "XEL_2024.html", "XEL", "2024", "table", "Item 7", "Non-GAAP",
+                        "GAAP net income was $1,936 million and ongoing earnings were $1,969 million.",
+                        List.of("retrieve_xel")));
+        FinancialRagService.FinancialRetrievalPlan qualitative = new FinancialRagService.FinancialRetrievalPlan(
+                "Compare how AEP and XEL discuss non-GAAP financial measures.",
+                "Compare non-GAAP measures including the net income reconciliation amounts.",
+                "comparison", List.of(), List.of());
+
+        assertThat(service.needsEvidenceFacts(qualitative, evidence)).isFalse();
+    }
+
+    @Test
     void expandsItemSevenDescriptionQueriesWithStandardMdAndATerms() {
         String expanded = service.expandQueryTerms(
                 "PFE FY2024 description of Item 7 financial statement items mentioned");
@@ -802,7 +1125,8 @@ class FinancialRagServiceTest {
     @Test
     void asksForConciseInScopeQualitativeComparisons() {
         FinancialRagService.FinancialRetrievalPlan plan = new FinancialRagService.FinancialRetrievalPlan(
-                "Compare AEP and ED", "Compare AEP and ED", "comparison", List.of("competition"), List.of());
+                "Compare AEP and ED", "Compare AEP and ED", "comparison", List.of("competition"), List.of(
+                retrievalTask("retrieve_aep", "AEP"), retrievalTask("retrieve_ed", "ED")));
         FinancialEvidenceLedger.Ledger ledger = new FinancialEvidenceLedger.Ledger(
                 List.of(), List.of(), List.of());
 
@@ -810,19 +1134,62 @@ class FinancialRagServiceTest {
 
         assertThat(answerPrompt).contains(
                 "Required output language: English. This is mandatory",
-                "normally 40-90 words total",
-                "Never exceed 180 words",
-                "at most one concise bullet per company/year",
-                "literal parallel noun phrases",
-                "explicitly stated objective",
-                "Do not list risk factors as implied objectives",
-                "opening conclusion must not say that no company has one",
-                "explicitly requested Item",
-                "outside the requested",
-                "do not refuse merely because one side lacks a parallel discussion",
-                "state that asymmetry concisely");
+                "Lightweight QueryIntent (qualitative generation scope only)",
+                "Only answer the topics explicitly requested by the user",
+                "Question-specific answer contract:",
+                "Minimum-sufficient comparison",
+                "Answer only requestedTopics",
+                "Target 40-120 words",
+                "Never calculate freely in prose")
+                .doesNotContain("literal parallel noun phrases", "risk factors as implied objectives");
         assertThat(answerPrompt)
                 .doesNotContain("Retrieval preprocessing:", "retrievalQueries:", "typedSubTasks:");
+    }
+
+    @Test
+    void numericPromptUsesPlannerCoverageWithoutQueryIntentScope() {
+        FinancialRagService.FinancialRetrievalTask task = new FinancialRagService.FinancialRetrievalTask(
+                "retrieve_2024", "LLY net income 2024", List.of("LLY"), List.of("2024"),
+                "net income", "retrieve", "table", List.of());
+        FinancialRagService.FinancialRetrievalPlan plan = new FinancialRagService.FinancialRetrievalPlan(
+                "How much net income?", "How much net income?", "factual_metric", List.of(), List.of(task));
+        FinancialEvidenceLedger.FinancialFact fact = new FinancialEvidenceLedger.FinancialFact(
+                "F1", "E1", "LLY", "2024", "net income", "$10 million",
+                new java.math.BigDecimal("10"), "usd", "million", "$10 million");
+        FinancialEvidenceLedger.Ledger ledger = new FinancialEvidenceLedger.Ledger(
+                List.of(evidence("E1", task.id())), List.of(fact), List.of());
+
+        assertThat(service.answerPrompt("How much net income?", plan, ledger))
+                .contains("Numeric answer contract", "Required retrieval coverage (from Query Planner)",
+                        "every requested endpoint fact", "[F#][E#]")
+                .doesNotContain("Lightweight QueryIntent", "requestedTopics");
+    }
+
+    @Test
+    void qualitativeQuestionDoesNotUseNumericContractOnlyBecauseLedgerContainsFacts() {
+        FinancialRagService.FinancialRetrievalTask aep = new FinancialRagService.FinancialRetrievalTask(
+                "retrieve_aep", "AEP non-GAAP measures", List.of("AEP"), List.of("2024"),
+                "non-GAAP financial measures", "retrieve", "text", List.of());
+        FinancialRagService.FinancialRetrievalTask xel = new FinancialRagService.FinancialRetrievalTask(
+                "retrieve_xel", "XEL non-GAAP measures", List.of("XEL"), List.of("2024"),
+                "non-GAAP financial measures", "retrieve", "text", List.of());
+        FinancialRagService.FinancialRetrievalPlan plan = new FinancialRagService.FinancialRetrievalPlan(
+                "Compare how AEP and XEL discuss non-GAAP financial measures.",
+                "Compare how AEP and XEL discuss non-GAAP financial measures.",
+                "comparison", List.of(), List.of(aep, xel));
+        FinancialEvidenceLedger.FinancialFact incidental = new FinancialEvidenceLedger.FinancialFact(
+                "F1", "E1", "XEL", "2024", "GAAP net income", "$1,936 million",
+                new java.math.BigDecimal("1936"), "usd", "million", "$1,936 million");
+        FinancialEvidenceLedger.Ledger ledger = new FinancialEvidenceLedger.Ledger(
+                List.of(evidence("E1", xel.id())), List.of(incidental), List.of());
+
+        assertThat(service.usesNumericAnswerContract(
+                "Compare how AEP and XEL discuss non-GAAP financial measures.", plan)).isFalse();
+        assertThat(service.answerPrompt(
+                "Compare how AEP and XEL discuss non-GAAP financial measures.", plan, ledger))
+                .contains("Lightweight QueryIntent (qualitative generation scope only)",
+                        "Only answer the topics explicitly requested by the user")
+                .doesNotContain("Numeric answer contract");
     }
 
     @Test
@@ -857,7 +1224,103 @@ class FinancialRagServiceTest {
                 "AMD had $5.1 billion [E1].\n\nSources:\n[E1] AMD_2024.html\n[E2] MSFT_2024.html",
                 plan, ledger);
 
-        assertThat(missing).hasSize(1).first().asString().contains("retrieve_msft");
+        assertThat(missing).anyMatch(value -> value.contains("retrieve_msft"))
+                .anyMatch(value -> value.startsWith("comparison_clause"));
+    }
+
+    @Test
+    void specializesAnswerContractForVerifiedCalculations() {
+        FinancialRagService.FinancialRetrievalTask task = new FinancialRagService.FinancialRetrievalTask(
+                "retrieve_count", "LIN executive candidate count", List.of("LIN"), List.of("2023", "2024"),
+                "candidate count", "retrieve", "table", List.of());
+        FinancialRagService.FinancialRetrievalPlan plan = new FinancialRagService.FinancialRetrievalPlan(
+                "How did the count change?", "How did the count change?", "calculation", List.of(), List.of(task));
+        FinancialEvidenceLedger.Ledger ledger = new FinancialEvidenceLedger.Ledger(
+                List.of(), List.of(), List.of(new FinancialEvidenceLedger.VerifiedCalculation(
+                "C1", "difference", "DIFFERENCE(F2 - F1)", new java.math.BigDecimal("5"),
+                "count", "unit", List.of("F2", "F1"))));
+
+        assertThat(service.answerContract(plan, ledger))
+                .contains("chronological order", "one plain-language result sentence")
+                .doesNotContain("Top-10", "topK");
+    }
+
+    @Test
+    void givesHeaderOnlyTasksAValueSafetyContract() {
+        FinancialRagService.FinancialRetrievalTask task = new FinancialRagService.FinancialRetrievalTask(
+                "retrieve_header", "NFLX table header period labels", List.of("NFLX"), List.of("2024"),
+                "years covered", "retrieve", "table", List.of());
+        FinancialRagService.FinancialRetrievalPlan plan = new FinancialRagService.FinancialRetrievalPlan(
+                "Which years are shown?", "Which years are shown?", "factual", List.of(), List.of(task));
+
+        assertThat(service.answerContract(plan, new FinancialEvidenceLedger.Ledger(
+                List.of(), List.of(), List.of())))
+                .contains("labels or periods", "Do not claim or calculate a financial value");
+    }
+
+    @Test
+    void distinguishesScopeOnlyPassagesFromDirectNumericSupport() {
+        FinancialRagService.FinancialRetrievalTask task = new FinancialRagService.FinancialRetrievalTask(
+                "retrieve_income", "LLY net income FY2022 Item 7", List.of("LLY"), List.of("2022"),
+                "net income", "retrieve", "hybrid", List.of());
+        FinancialRagService.FinancialChunk scopeOnly = new FinancialRagService.FinancialChunk(
+                "scope", "LLY_2022.html", "text",
+                "Net income is discussed for fiscal 2022. Pension sensitivity was 50 basis points.",
+                Map.of("company", "LLY", "year", "2022", "item", "Item 7"), 0.9)
+                .withMatchedTask(task.id());
+        FinancialRagService.FinancialChunk direct = new FinancialRagService.FinancialChunk(
+                "direct", "LLY_2022.html", "text", "Net income was $6,244.8 million in fiscal 2022.",
+                Map.of("company", "LLY", "year", "2022", "item", "Item 7"), 0.8)
+                .withMatchedTask(task.id());
+
+        assertThat(service.evidenceSupport(task, scopeOnly))
+                .isEqualTo(FinancialRagService.EvidenceSupport.SCOPE_ONLY);
+        assertThat(service.evidenceSupport(task, direct))
+                .isEqualTo(FinancialRagService.EvidenceSupport.DIRECT_SUPPORT);
+        assertThat(service.missingDirectSupport(List.of(task), List.of(scopeOnly)))
+                .singleElement().asString().contains("missing_direct_support", "net income");
+        assertThat(service.missingDirectSupport(List.of(task), List.of(direct))).isEmpty();
+    }
+
+    @Test
+    void detectsMissingInterpretationAndComparisonChallengeClauses() {
+        String question = "What does this increase imply about the trajectory, and what challenge does the "
+                + "different disclosure approach present for cross-company comparison?";
+        FinancialRagService.FinancialRetrievalPlan plan = new FinancialRagService.FinancialRetrievalPlan(
+                question, question, "comparison", List.of(), List.of());
+        FinancialEvidenceLedger.Ledger ledger = new FinancialEvidenceLedger.Ledger(
+                List.of(), List.of(), List.of());
+
+        List<String> missing = service.missingAnswerCoverage(
+                "NFLX increased. META reports estimated user metrics.", plan, ledger);
+
+        assertThat(missing).anyMatch(value -> value.startsWith("comparison_clause"))
+                .anyMatch(value -> value.startsWith("interpretation_clause"))
+                .anyMatch(value -> value.startsWith("analysis_challenge_clause"));
+        assertThat(service.missingAnswerCoverage(
+                "The increase indicates re-acceleration. In contrast, META uses estimated people metrics; "
+                        + "this asymmetry limits direct comparison and presents a cross-company challenge.",
+                plan, ledger)).isEmpty();
+    }
+
+    @Test
+    void flagsComparativeNumberWithoutVerifiedCalculationResult() {
+        FinancialEvidenceLedger.Ledger ledger = new FinancialEvidenceLedger.Ledger(
+                List.of(), List.of(), List.of(
+                new FinancialEvidenceLedger.VerifiedCalculation(
+                        "C1", "percentage_change", "PERCENT_CHANGE(F1 -> F2)",
+                        new java.math.BigDecimal("23.4"), "percent", "unit", List.of("F1", "F2")),
+                new FinancialEvidenceLedger.VerifiedCalculation(
+                        "C2", "percentage_change", "PERCENT_CHANGE(F3 -> F4)",
+                        new java.math.BigDecimal("30.7"), "percent", "unit", List.of("F3", "F4"))));
+
+        assertThat(service.unsupportedComparativeNumbers(
+                "Membership growth outpaced revenue growth by 7.3 percentage points [C1][C2].",
+                "How do the growth rates compare?", ledger))
+                .containsExactly("7.3 percentage points");
+        assertThat(service.unsupportedComparativeNumbers(
+                "Revenue increased 23.4 percent [C1].",
+                "How did revenue change?", ledger)).isEmpty();
     }
 
     @Test
@@ -982,7 +1445,7 @@ class FinancialRagServiceTest {
                 "retrieve_nflx_header", "NFLX table header fiscal years 2022 2021 2020", List.of("NFLX"),
                 List.of("2022"), "fiscal years covered in table header", "retrieve", "table", List.of());
         FinancialEvidenceLedger.CalculationPlan subtract = new FinancialEvidenceLedger.CalculationPlan(
-                "prior", FinancialEvidenceLedger.CalculationOperator.SUBTRACT, List.of(
+                "prior", FinancialEvidenceLedger.CalculationOperator.DIFFERENCE, List.of(
                 new FinancialEvidenceLedger.CalculationOperand(
                         "start", wrongYear.id(), "DIS", "2024", "net income"),
                 new FinancialEvidenceLedger.CalculationOperand(
@@ -1044,6 +1507,36 @@ class FinancialRagServiceTest {
 
         assertThat(compact).extracting(FinancialEvidenceLedger.EvidenceDocument::evidenceId)
                 .containsExactly("E1", "E2", "E3", "E4");
+    }
+
+    @Test
+    void extractionRetryPrioritizesDocumentsForMissingNumericalTasks() {
+        List<FinancialEvidenceLedger.EvidenceDocument> documents = List.of(
+                evidence("E1", "task_complete"), evidence("E2", "task_complete"),
+                evidence("E3", "task_missing"));
+
+        List<FinancialEvidenceLedger.EvidenceDocument> compact =
+                service.compactExtractionDocuments(documents, 2, Set.of("task_missing"));
+
+        assertThat(compact).extracting(FinancialEvidenceLedger.EvidenceDocument::evidenceId)
+                .containsExactly("E3", "E1");
+    }
+
+    @Test
+    void detectsMissingFactForNumericRetrievalTaskWithoutCalculationPlan() {
+        FinancialRagService.FinancialRetrievalTask task = new FinancialRagService.FinancialRetrievalTask(
+                "retrieve_nflx_margin", "NFLX FY2024 operating margin", List.of("NFLX"),
+                List.of("2024"), "operating margin", "retrieve", "hybrid", List.of());
+        FinancialRagService.FinancialRetrievalPlan plan = new FinancialRagService.FinancialRetrievalPlan(
+                "Compare operating margin", "Compare operating margin", "comparison",
+                List.of(), List.of(task));
+        FinancialEvidenceLedger.EvidenceDocument document = new FinancialEvidenceLedger.EvidenceDocument(
+                "E1", "chunk-E1", "NFLX_2024.html", "NFLX", "2024", "table", "Item 7", "MD&A",
+                "| Operating margin | 27% |", List.of(task.id()));
+        FinancialEvidenceLedger.Ledger ledger = new FinancialEvidenceLedger.Ledger(
+                List.of(document), List.of(), List.of());
+
+        assertThat(service.missingNumericalTaskIds(plan, ledger)).containsExactly(task.id());
     }
 
     @Test

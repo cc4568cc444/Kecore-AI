@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -42,9 +43,10 @@ final class FinancialEvidenceLedger {
 
     Ledger build(String question, List<EvidenceDocument> documents, String extractionJson,
                  List<CalculationPlan> calculationPlans) {
-        List<FinancialFact> facts = filterPremiseConsistentFacts(question, mergeFacts(
+        List<FinancialFact> facts = filterPremiseConsistentFacts(question, retainRequestedOperandFacts(
+                calculationPlans, documents, mergeFacts(
                 groundedPlanFacts(calculationPlans, documents), mergeFacts(
-                        deterministicFacts(question, documents), parseVerifiedFacts(documents, extractionJson))));
+                        deterministicFacts(question, documents), parseVerifiedFacts(documents, extractionJson)))));
         List<EvidenceDocument> evidence = List.copyOf(documents);
         return new Ledger(evidence, facts, calculateAll(calculationPlans, facts, evidence));
     }
@@ -55,10 +57,10 @@ final class FinancialEvidenceLedger {
 
     Ledger augment(String question, Ledger existing, String extractionJson,
                    List<CalculationPlan> calculationPlans) {
-        List<FinancialFact> merged = mergeFacts(
+        List<FinancialFact> merged = retainRequestedOperandFacts(calculationPlans, existing.evidence(), mergeFacts(
                 groundedPlanFacts(calculationPlans, existing.evidence()),
                 mergeFacts(deterministicFacts(question, existing.evidence()),
-                        mergeFacts(existing.facts(), parseVerifiedFacts(existing.evidence(), extractionJson))));
+                        mergeFacts(existing.facts(), parseVerifiedFacts(existing.evidence(), extractionJson)))));
         List<FinancialFact> renumbered = new ArrayList<>();
         for (FinancialFact fact : merged) {
             renumbered.add(new FinancialFact(
@@ -68,6 +70,40 @@ final class FinancialEvidenceLedger {
         List<FinancialFact> facts = filterPremiseConsistentFacts(question, List.copyOf(renumbered));
         return new Ledger(existing.evidence(), facts,
                 calculateAll(calculationPlans, facts, existing.evidence()));
+    }
+
+    private List<FinancialFact> retainRequestedOperandFacts(
+            List<CalculationPlan> plans, List<EvidenceDocument> documents, List<FinancialFact> facts) {
+        if (plans == null || plans.isEmpty()) {
+            return facts;
+        }
+        List<CalculationOperand> operands = plans.stream()
+                .flatMap(plan -> plan.operands().stream())
+                .filter(operand -> planOperandNeedsFact(operand))
+                .toList();
+        if (operands.isEmpty()) {
+            return facts;
+        }
+        return facts.stream().filter(fact -> operands.stream().anyMatch(operand ->
+                operandMatchesFact(operand, fact, documents))).toList();
+    }
+
+    boolean hasFactForOperand(CalculationOperand operand, List<FinancialFact> facts,
+                              List<EvidenceDocument> documents) {
+        return planOperandNeedsFact(operand) && facts.stream().anyMatch(fact ->
+                operandMatchesFact(operand, fact, documents));
+    }
+
+    private boolean planOperandNeedsFact(CalculationOperand operand) {
+        return operand != null && !operand.metric().isBlank();
+    }
+
+    private boolean operandMatchesFact(CalculationOperand operand, FinancialFact fact,
+                                       List<EvidenceDocument> documents) {
+        return (operand.company().isBlank() || operand.company().equalsIgnoreCase(fact.company()))
+                && (operand.fiscalYear().isBlank() || operand.fiscalYear().equals(fact.fiscalYear()))
+                && (operand.metric().isBlank() || metricMatches(operand.metric(), fact.metric()))
+                && sourceTaskMatches(operand, fact, documents);
     }
 
     private List<FinancialFact> mergeFacts(List<FinancialFact> preferred, List<FinancialFact> additional) {
@@ -267,6 +303,9 @@ final class FinancialEvidenceLedger {
                 - Parenthesized financial values are negative.
                 - quote must be copied exactly from the selected evidence and contain the rawValue number; currency
                   and scale may come from the same table's header when they are not repeated in the selected row.
+                - A table header contains labels, periods, units and column structure, not row values. Never extract
+                  a year, date, unit, or other header token as the requested financial value. Header-only evidence may
+                  support a requested COUNT of explicitly listed labels, but no arithmetic over absent row values.
                 - Include only facts whose company, fiscal year, metric and period can be determined from the evidence.
                 - Extract every operand needed by every numerical clause, not merely the first matching or latest value.
                 - When a table row contains values for multiple requested fiscal years, emit one fact per requested
@@ -318,7 +357,7 @@ final class FinancialEvidenceLedger {
                 String fiscalYear = defaultIfBlank(text(node, "fiscalYear"), document.fiscalYear());
                 FinancialFact candidate = new FinancialFact(
                         "F" + (facts.size() + 1), evidenceId, company, fiscalYear, metric,
-                        rawValue, value, normalizeUnit(text(node, "unit")), verifiedScale(rawValue, text(node, "scale")), quote);
+                        rawValue, value, normalizeUnit(text(node, "unit")), verifiedScale(rawValue, text(node, "scale"), metric, quote, document.content()), quote);
                 boolean duplicate = facts.stream().anyMatch(existing -> sameFact(existing, candidate));
                 if (!duplicate) {
                     facts.add(candidate);
@@ -378,7 +417,7 @@ final class FinancialEvidenceLedger {
                             defaultIfBlank(operand.company(), document.company()),
                             defaultIfBlank(operand.fiscalYear(), document.fiscalYear()), operand.metric(),
                             operand.rawValue(), value, normalizeUnit(operand.unit()),
-                            verifiedScale(operand.rawValue(), operand.scale()), quote));
+                            verifiedScale(operand.rawValue(), operand.scale(), operand.metric(), quote, document.content()), quote));
                     break;
                 }
             }
@@ -457,13 +496,13 @@ final class FinancialEvidenceLedger {
         String defaultUnit = operands.get(0).unit();
         String defaultScale = operands.get(0).scale();
         switch (plan.operator()) {
-            case ADD, SUM -> result = values.stream().reduce(BigDecimal.ZERO,
+            case SUM -> result = values.stream().reduce(BigDecimal.ZERO,
                     (left, right) -> left.add(right, MATH_CONTEXT));
-            case SUBTRACT -> {
+            case DIFFERENCE -> {
                 if (values.size() != 2) return java.util.Optional.empty();
                 result = values.get(0).subtract(values.get(1), MATH_CONTEXT);
             }
-            case DIVIDE -> {
+            case RATIO -> {
                 if (values.size() != 2 || values.get(1).compareTo(BigDecimal.ZERO) == 0) {
                     return java.util.Optional.empty();
                 }
@@ -480,7 +519,7 @@ final class FinancialEvidenceLedger {
                 defaultUnit = "percent";
                 defaultScale = "unit";
             }
-            case PERCENT_OF_TOTAL -> {
+            case MARGIN -> {
                 if (values.size() != 2 || values.get(1).compareTo(BigDecimal.ZERO) == 0) {
                     return java.util.Optional.empty();
                 }
@@ -529,10 +568,10 @@ final class FinancialEvidenceLedger {
 
     private String calculationType(CalculationOperator operator, String outputUnit) {
         return switch (operator) {
-            case SUBTRACT -> "difference";
+            case DIFFERENCE -> "difference";
             case PERCENT_CHANGE -> "percentage_change";
-            case PERCENT_OF_TOTAL -> "ratio";
-            case DIVIDE -> "times".equalsIgnoreCase(outputUnit) ? "multiple" : "ratio";
+            case MARGIN -> "margin";
+            case RATIO -> "times".equalsIgnoreCase(outputUnit) ? "multiple" : "ratio";
             default -> operator.name().toLowerCase(Locale.ROOT);
         };
     }
@@ -550,7 +589,7 @@ final class FinancialEvidenceLedger {
                             || metricMatches(selector.metric(), fact.metric()))
                     .filter(fact -> sourceTaskMatches(selector, fact, documents))
                     .toList();
-            FinancialFact match = selectUnambiguousOperand(candidates);
+            FinancialFact match = selectUnambiguousOperand(selector, candidates);
             if (match == null || bound.stream().anyMatch(existing -> existing.factId().equals(match.factId()))) {
                 return List.of();
             }
@@ -594,7 +633,8 @@ final class FinancialEvidenceLedger {
                 && metricMatches(selector.metric(), fact.metric());
     }
 
-    private FinancialFact selectUnambiguousOperand(List<FinancialFact> candidates) {
+    private FinancialFact selectUnambiguousOperand(CalculationOperand selector,
+                                                   List<FinancialFact> candidates) {
         if (candidates.isEmpty()) {
             return null;
         }
@@ -609,8 +649,24 @@ final class FinancialEvidenceLedger {
             return distinct.get(0);
         }
         List<FinancialFact> aggregate = distinct.stream().filter(this::isAggregateFact).toList();
-        // Never choose an arbitrary regional or segment row for a company-level calculation.
-        return aggregate.size() == 1 ? aggregate.get(0) : null;
+        if (aggregate.size() == 1) {
+            return aggregate.get(0);
+        }
+        // A filing frequently states a rounded total in prose and repeats the precise total in a table.
+        // Use the planner scale only as a tie-breaker. Other compatible scales remain valid because
+        // baseValue normalizes every selected operand before arithmetic.
+        List<FinancialFact> scoped = aggregate.isEmpty() ? distinct : aggregate;
+        String requestedScale = normalizeScale(selector.scale());
+        if (!"unit".equals(requestedScale)) {
+            List<FinancialFact> sameScale = scoped.stream()
+                    .filter(fact -> requestedScale.equals(normalizeScale(fact.scale())))
+                    .toList();
+            if (sameScale.size() == 1) {
+                return sameScale.get(0);
+            }
+        }
+        // Never choose an arbitrary regional, segment, or materially different aggregate value.
+        return null;
     }
 
     private boolean isAggregateFact(FinancialFact fact) {
@@ -620,9 +676,9 @@ final class FinancialEvidenceLedger {
 
     private String expression(CalculationOperator operator, List<String> factIds) {
         String separator = switch (operator) {
-            case ADD, SUM -> " + ";
-            case SUBTRACT -> " - ";
-            case DIVIDE, PERCENT_OF_TOTAL -> " / ";
+            case SUM -> " + ";
+            case DIFFERENCE -> " - ";
+            case RATIO, MARGIN -> " / ";
             case PERCENT_CHANGE -> " -> ";
             case AVERAGE -> ", ";
             case CAGR -> " -> ";
@@ -722,15 +778,58 @@ final class FinancialEvidenceLedger {
         if (hasTableRows) {
             return false;
         }
-        return narrativeContainsMetric(metric, content) && NUMERIC_VALUE.matcher(content).find();
+        // Do not treat a long in-scope passage as direct evidence merely because the metric occurs in one
+        // paragraph and an unrelated year, Item number, pension assumption, or tax percentage occurs elsewhere.
+        // A usable narrative fact must co-locate the requested metric and a substantive value.
+        return Arrays.stream(content.split("(?<=[.!?;])\\s+|\\R+"))
+                .map(String::strip)
+                .filter(sentence -> !sentence.isBlank())
+                .anyMatch(sentence -> narrativeContainsMetric(metric, sentence)
+                        && containsSubstantiveNumericValue(sentence)
+                        && !isMetricSensitivityStatement(metric, sentence));
+    }
+
+    private boolean isMetricSensitivityStatement(String metric, String sentence) {
+        String canonical = canonicalMetric(metric);
+        if (!Set.of("net income", "operating income", "income before tax", "income taxes")
+                .contains(canonical)) {
+            return false;
+        }
+        String lower = normalize(sentence).toLowerCase(Locale.ROOT);
+        boolean hypothetical = lower.startsWith("if ")
+                || containsAny(lower, " would result in ", " would change ", " would be affected ",
+                " sensitivity ", " assumption ", " percentage point");
+        boolean reportsImpactRatherThanBalance = containsAny(lower,
+                "change in net income of", "change in income of", "impact on net income",
+                "effect on net income", "reduction of income tax expense");
+        return hypothetical || reportsImpactRatherThanBalance;
+    }
+
+    private boolean containsSubstantiveNumericValue(String value) {
+        Matcher matcher = NUMERIC_VALUE.matcher(defaultIfBlank(value, ""));
+        while (matcher.find()) {
+            String token = matcher.group().replace(",", "").strip();
+            if (token.matches("(?:19|20)\\d{2}")) {
+                continue;
+            }
+            String prefix = value.substring(Math.max(0, matcher.start() - 8), matcher.start())
+                    .toLowerCase(Locale.ROOT);
+            if (prefix.matches("(?s).*\\bitem\\s*$")) {
+                continue;
+            }
+            return true;
+        }
+        return false;
     }
 
     private boolean narrativeContainsMetric(String metric, String quote) {
         String canonical = canonicalMetric(metric);
         String lower = normalize(quote).toLowerCase(Locale.ROOT);
         return switch (canonical) {
-            case "revenue", "total revenue" -> containsAny(lower,
-                    "revenue", "revenues", "net sales", "total sales");
+            case "revenue" -> containsAny(lower, "revenue", "revenues", "net sales", "total sales");
+            case "total revenue" -> containsAny(lower, "total revenue", "total revenues",
+                    "consolidated revenue", "consolidated revenues", "net sales", "total sales")
+                    || lower.matches("(?s).*\\brevenues?\\s+(?:for|were|was|increased|decreased|of)\\b.*");
             case "net income" -> containsAny(lower, "net income", "net earnings", "net profit");
             case "net income change" -> containsAny(lower, "net income", "net earnings", "net profit")
                     && containsAny(lower, "increase", "decrease", "change", "difference");
@@ -738,6 +837,12 @@ final class FinancialEvidenceLedger {
                     "operating profit");
             case "income before tax" -> containsAny(lower, "income before income taxes", "income before provision",
                     "pre-tax income", "pretax income");
+            case "diluted earnings per share" -> containsAny(lower,
+                    "diluted earnings per share", "earnings per share - diluted", "earnings per share diluted",
+                    "diluted eps");
+            case "basic earnings per share" -> containsAny(lower,
+                    "basic earnings per share", "earnings per share - basic", "earnings per share basic",
+                    "basic eps");
             case "age" -> containsAny(lower, " age ", " aged ", " years old")
                     || Pattern.compile("(?i)\\b[A-Z][A-Za-z.'-]+(?:\\s+[A-Z][A-Za-z.'-]+){1,4}\\s*,\\s*"
                     + "(?:1[89]|[2-9]\\d)\\b").matcher(quote).find();
@@ -814,6 +919,14 @@ final class FinancialEvidenceLedger {
         if (containsAny(normalized, "net earnings", "net profit", "net income")) {
             return "net income";
         }
+        if ((normalized.contains("earnings per share") || normalized.contains("eps"))
+                && normalized.contains("diluted")) {
+            return "diluted earnings per share";
+        }
+        if ((normalized.contains("earnings per share") || normalized.contains("eps"))
+                && normalized.contains("basic")) {
+            return "basic earnings per share";
+        }
         if (containsAny(normalized, "income from operations", "operating profit", "operating income")) {
             return "operating income";
         }
@@ -844,8 +957,39 @@ final class FinancialEvidenceLedger {
                 || (requestedMetric.equals("revenue") && actualMetric.equals("total revenue"));
     }
 
-    private String verifiedScale(String rawValue, String proposedScale) {
-        // Displayed magnitude is authoritative; models sometimes copy the planner's assumed scale.
+    private String verifiedScale(String rawValue, String proposedScale, String metric,
+                                 String quote, String content) {
+        // Prefer magnitude printed next to the selected value in the actual source.
+        BigDecimal requested = parseRawDecimal(rawValue);
+        Matcher numbers = NUMERIC_VALUE.matcher(quote);
+        while (numbers.find()) {
+            BigDecimal value = parseDecimal(numbers.group());
+            if (value == null || requested == null || value.compareTo(requested) != 0) {
+                continue;
+            }
+            Matcher magnitude = Pattern.compile("(?i)^\\s*(thousand|million|billion)s?\\b")
+                    .matcher(quote.substring(numbers.end()));
+            if (magnitude.find()) {
+                return normalizeScale(magnitude.group(1));
+            }
+        }
+        if (quote.stripLeading().startsWith("|")) {
+            Matcher header = Pattern.compile("(?im)^Table header:([^\\r\\n]+)").matcher(content);
+            if (header.find()) {
+                String lowerHeader = header.group(1).toLowerCase(Locale.ROOT);
+                String lowerMetric = metric.toLowerCase(Locale.ROOT);
+                if (lowerHeader.contains("except") && containsAny(lowerMetric, "per share", "per membership",
+                        "per paying membership", "margin", "percent")) {
+                    return "unit";
+                }
+                Matcher magnitude = Pattern.compile("(?i)\\bin (thousands|millions|billions)\\b")
+                        .matcher(lowerHeader);
+                if (magnitude.find()) {
+                    return normalizeScale(magnitude.group(1));
+                }
+            }
+        }
+        // Fallback for excerpts without a printed magnitude: preserve the displayed raw value.
         Matcher explicit = Pattern.compile("(?i)\\b(thousand|million|billion)s?\\b")
                 .matcher(defaultIfBlank(rawValue, ""));
         return explicit.find() ? normalizeScale(explicit.group(1)) : normalizeScale(proposedScale);
@@ -880,14 +1024,22 @@ final class FinancialEvidenceLedger {
     }
 
     enum CalculationOperator {
-        NONE, ADD, SUBTRACT, DIVIDE, PERCENT_CHANGE, PERCENT_OF_TOTAL, SUM, COUNT, AVERAGE, CAGR;
+        NONE, SUM, DIFFERENCE, RATIO, PERCENT_CHANGE, MARGIN, AVERAGE, CAGR, COUNT;
 
         static CalculationOperator from(String value) {
             if (value == null || value.isBlank()) {
                 return NONE;
             }
+            String normalized = value.strip().toUpperCase(Locale.ROOT);
+            normalized = switch (normalized) {
+                case "ADD" -> "SUM";
+                case "SUBTRACT" -> "DIFFERENCE";
+                case "DIVIDE" -> "RATIO";
+                case "PERCENT_OF_TOTAL" -> "MARGIN";
+                default -> normalized;
+            };
             try {
-                return valueOf(value.strip().toUpperCase(Locale.ROOT));
+                return valueOf(normalized);
             } catch (IllegalArgumentException ignored) {
                 return NONE;
             }
@@ -974,8 +1126,7 @@ final class FinancialEvidenceLedger {
                 for (FinancialFact fact : facts) {
                     builder.append('[').append(fact.factId()).append("] ")
                             .append(fact.company()).append(' ').append(fact.fiscalYear()).append(' ')
-                            .append(fact.metric()).append(" = ").append(fact.rawValue())
-                            .append(" | normalized=").append(fact.value().toPlainString()).append(' ')
+                            .append(fact.metric()).append(" = ").append(fact.value().toPlainString()).append(' ')
                             .append(fact.scale()).append(' ').append(fact.unit())
                             .append(" | evidence=").append(fact.evidenceId()).append('\n');
                 }

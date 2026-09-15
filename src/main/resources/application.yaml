@@ -121,8 +121,6 @@ app:
       max-total-content-chars: 12000
       max-documents-per-task: 2
       retry-on-empty: true
-    answer-coverage-repair:
-      enabled: true
     citation-verifier:
       enabled: true
       strict: true

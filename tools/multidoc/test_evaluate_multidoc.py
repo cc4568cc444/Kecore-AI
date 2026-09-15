@@ -60,6 +60,15 @@ class EvaluateMultiDocTest(unittest.TestCase):
         self.assertEqual(1.0, metrics["section_recall_at_3"])
         self.assertEqual(0.5, metrics["section_mrr_at_3"])
 
+    def test_company_specific_section_labels_do_not_invent_section_for_no_mention(self):
+        row = {
+            "evidence_section": "AEP: no mention; XEL: Item 7 - Non-GAAP Financial Measures",
+        }
+
+        expected = MODULE.expected_section_keys(row, {"AEP_2024.html", "XEL_2024.html"})
+
+        self.assertEqual({("XEL_2024.html", "item 7")}, expected)
+
     def test_task_ranking_excludes_internal_scope_tasks_and_preserves_order(self):
         ranked = MODULE.ranked_task_ids([
             {"matchedTaskIds": ["task_b", "retrieve_explicit_2024"]},
@@ -77,6 +86,25 @@ class EvaluateMultiDocTest(unittest.TestCase):
         ])
 
         self.assertEqual(["task_verified"], ranked)
+
+    def test_direct_evidence_coverage_never_falls_back_to_assignment_labels(self):
+        coverage, verified, available = MODULE.direct_evidence_metrics(
+            {"task_a", "task_b"}, [
+                {"matchedTaskIds": ["task_a"], "verifiedTaskIds": ["task_a"]},
+                {"matchedTaskIds": ["task_b"], "verifiedTaskIds": []},
+            ])
+
+        self.assertTrue(available)
+        self.assertEqual({"task_a"}, verified)
+        self.assertEqual(0.5, coverage)
+
+    def test_old_reports_without_verified_labels_do_not_claim_direct_evidence(self):
+        coverage, verified, available = MODULE.direct_evidence_metrics(
+            {"task_a"}, [{"matchedTaskIds": ["task_a"]}])
+
+        self.assertFalse(available)
+        self.assertEqual(set(), verified)
+        self.assertIsNone(coverage)
 
     def test_percentile_interpolates_latency_distribution(self):
         self.assertEqual(25.0, MODULE.percentile([10, 20, 30, 40], 50))
@@ -330,6 +358,50 @@ class EvaluateMultiDocTest(unittest.TestCase):
         self.assertEqual(0, summary["fact_extraction_question_count"])
         self.assertIsNone(summary["calculation_production_rate"])
         self.assertEqual(0, summary["calculation_question_count"])
+        self.assertEqual(0, summary["planned_calculation_question_count"])
+
+    def test_reports_execution_for_backend_plans_even_without_dataset_calculation_label(self):
+        row = MODULE.evaluate_row(
+            {
+                "id": "trend",
+                "subset": "S3",
+                "question": "How did net income change?",
+                "answer": "It increased 10%.",
+                "requires_calculation": False,
+            },
+            "It increased 10% [C1][E1].",
+            10,
+            analysis={
+                "calculationPlans": [{"id": "change", "operator": "PERCENT_CHANGE"}],
+                "calculations": [{"calculationId": "C1", "result": "10", "unit": "percent"}],
+            },
+        )
+
+        summary = MODULE.summarize([row])
+
+        self.assertEqual(1.0, row["calculation_plan_execution_rate"])
+        self.assertEqual(1.0, summary["calculation_plan_execution_rate"])
+        self.assertEqual(1, summary["planned_calculation_question_count"])
+        self.assertEqual(1, summary["calculation_question_count"])
+        self.assertTrue(row["calculation_produced"])
+        self.assertEqual(1.0, summary["calculation_production_rate"])
+
+    def test_counts_fact_marker_as_produced_even_when_backend_trace_is_empty(self):
+        row = MODULE.evaluate_row(
+            {
+                "id": "fact-marker",
+                "subset": "S3",
+                "question": "What was revenue in 2024?",
+                "answer": "$10 million",
+            },
+            "$10 million [F1][E1].",
+            10,
+            analysis={"facts": [], "calculations": []},
+        )
+
+        self.assertTrue(row["fact_produced"])
+        self.assertTrue(row["fact_extracted"])
+        self.assertEqual(1.0, MODULE.summarize([row])["fact_extraction_rate"])
 
     def test_pairs_cross_company_year_documents_from_question(self):
         row = {
@@ -459,6 +531,33 @@ class EvaluateMultiDocTest(unittest.TestCase):
         self.assertEqual("20%", result["fact_trace"][0]["rawValue"])
         self.assertEqual("20%", result["calculation_trace"][0]["result"])
         self.assertGreater(result["rag_quality_score"], 0.0)
+
+    def test_presence_and_direct_support_are_reported_as_distinct_layers(self):
+        row = {
+            "id": "layers", "subset": "S4", "companies": ["A", "B"],
+            "years_required": ["2024"], "evidence_section": "Item 8", "answer": "comparison",
+        }
+        analysis = {
+            "tasks": [
+                {"id": "task_a", "operation": "retrieve"},
+                {"id": "task_b", "operation": "retrieve"},
+            ],
+            "evidence": [
+                {"sourceFile": "A_2024.html", "item": "Item 8",
+                 "matchedTaskIds": ["task_a"], "verifiedTaskIds": ["task_a"]},
+                {"sourceFile": "B_2024.html", "item": "Item 8",
+                 "matchedTaskIds": ["task_b"], "verifiedTaskIds": []},
+            ],
+            "citationAudit": {"valid": True},
+        }
+
+        result = MODULE.evaluate_row(row, "comparison [E1]", 10, analysis=analysis)
+
+        self.assertEqual(1.0, result["document_presence_recall"])
+        self.assertEqual(1.0, result["section_presence_recall"])
+        self.assertEqual(1.0, result["planner_task_assignment_coverage"])
+        self.assertEqual(0.5, result["direct_evidence_coverage"])
+        self.assertEqual(["task_b"], result["missing_direct_evidence_task_ids"])
 
     def test_records_compact_evidence_trace_without_chunk_content(self):
         analysis = {

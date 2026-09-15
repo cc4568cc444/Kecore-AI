@@ -82,10 +82,17 @@ final class FinancialCitationVerifier {
                 continue;
             }
             Set<String> sentenceEvidence = references(sentence, 'E');
-            if (hasDerivedCalculation(sentence) && references(sentence, 'C').isEmpty()) {
+            Set<String> sentenceCalculations = references(sentence, 'C');
+            if (hasDerivedCalculation(sentence) && sentenceCalculations.isEmpty()) {
                 issues.add(new Issue("unverified_calculation", "计算结论缺少确定性计算引用 [C#]", sentence.strip()));
             }
-            if (hasNumericClaim(sentence) && sentenceEvidence.isEmpty() && !isSourceHeading(sentence)) {
+            // A verified [C#] already traces through its source facts to [E#]. Requiring a repeated
+            // evidence marker on the same line caused complete trend answers to be replaced by a
+            // fallback that rendered only the first calculation.
+            boolean groundedCalculation = !sentenceCalculations.isEmpty()
+                    && validCalculations.containsAll(sentenceCalculations);
+            if (hasNumericClaim(sentence) && sentenceEvidence.isEmpty()
+                    && !groundedCalculation && !isSourceHeading(sentence)) {
                 issues.add(new Issue("uncited_numeric_claim", "数值结论缺少原始证据 [E#]", sentence.strip()));
                 continue;
             }
